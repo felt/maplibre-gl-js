@@ -1,20 +1,18 @@
 import Point from '@mapbox/point-geometry';
 
-import {mat4, vec4} from 'gl-matrix';
+import { mat4, vec4 } from 'gl-matrix';
+import { addDynamicAttributes } from '../data/bucket/symbol_bucket';
 import * as symbolSize from './symbol_size';
-import {addDynamicAttributes} from '../data/bucket/symbol_bucket';
 
-import type Painter from '../render/painter';
-import type Transform from '../geo/transform';
-import type SymbolBucket from '../data/bucket/symbol_bucket';
 import type {
-    GlyphOffsetArray,
-    SymbolLineVertexArray,
-    SymbolDynamicLayoutArray
+    GlyphOffsetArray, SymbolDynamicLayoutArray, SymbolLineVertexArray
 } from '../data/array_types.g';
-import {WritingMode} from '../symbol/shaping';
+import type SymbolBucket from '../data/bucket/symbol_bucket';
+import type Transform from '../geo/transform';
+import type Painter from '../render/painter';
+import { WritingMode } from '../symbol/shaping';
 
-export {updateLineLabels, hideGlyphs, getLabelPlaneMatrix, getGlCoordMatrix, project, getPerspectiveRatio, placeFirstAndLastGlyph, placeGlyphAlongLine, xyTransformMat4};
+export { updateLineLabels, hideGlyphs, getLabelPlaneMatrix, getGlCoordMatrix, project, getPerspectiveRatio, placeFirstAndLastGlyph, placeGlyphAlongLine, xyTransformMat4 };
 
 /*
  * # Overview of coordinate spaces
@@ -430,7 +428,7 @@ function placeGlyphAlongLine(
     const p = prevToCurrent.mult(segmentInterpolationT)._add(prev);
 
     // offset the point from the line to text-offset and icon-offset
-    p._add(prevToCurrent._unit()._perp()._mult(lineOffsetY * dir));
+    p._add(prevToCurrent._unit()._perp()._mult(lineOffsetY * dir * Math.random()));
 
     const segmentAngle = angle + Math.atan2(current.y - prev.y, current.x - prev.x);
 
