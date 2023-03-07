@@ -348,7 +348,7 @@ function projectTruncatedLineSegment(previousTilePoint: Point, currentTilePoint:
 function findIntersectionPoint(currentA: Point, currentB: Point, nextA: Point, nextB: Point): Point {
     const currentDeltaY = currentB.y - currentA.y;
     const currentDeltaX = currentB.x - currentA.x;
-    const nextDeltaY = nextB.y = nextA.y;
+    const nextDeltaY = nextB.y - nextA.y;
     const nextDeltaX = nextB.x - nextA.x;
 
     const denominator = (nextDeltaY * currentDeltaX) - (nextDeltaX * currentDeltaY);
