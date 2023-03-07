@@ -1,7 +1,7 @@
 import Point from '@mapbox/point-geometry';
 
-import { mat4, vec4 } from 'gl-matrix';
-import { addDynamicAttributes } from '../data/bucket/symbol_bucket';
+import {mat4, vec4} from 'gl-matrix';
+import {addDynamicAttributes} from '../data/bucket/symbol_bucket';
 import * as symbolSize from './symbol_size';
 
 import type {
@@ -10,9 +10,9 @@ import type {
 import type SymbolBucket from '../data/bucket/symbol_bucket';
 import type Transform from '../geo/transform';
 import type Painter from '../render/painter';
-import { WritingMode } from '../symbol/shaping';
+import {WritingMode} from '../symbol/shaping';
 
-export { updateLineLabels, hideGlyphs, getLabelPlaneMatrix, getGlCoordMatrix, project, getPerspectiveRatio, placeFirstAndLastGlyph, placeGlyphAlongLine, xyTransformMat4 };
+export {updateLineLabels, hideGlyphs, getLabelPlaneMatrix, getGlCoordMatrix, project, getPerspectiveRatio, placeFirstAndLastGlyph, placeGlyphAlongLine, xyTransformMat4};
 
 /*
  * # Overview of coordinate spaces
@@ -345,6 +345,31 @@ function projectTruncatedLineSegment(previousTilePoint: Point, currentTilePoint:
     return previousProjectedPoint.add(projectedUnitSegment._mult(minimumLength / projectedUnitSegment.mag()));
 }
 
+function findIntersectionPoint(currentA: Point, currentB: Point, nextA: Point, nextB: Point): Point {
+    const x1 = currentA.x;
+    const y1 = currentA.y;
+    const x2 = currentB.x;
+    const y2 = currentB.y;
+    const x3 = nextA.x;
+    const y3 = nextA.y;
+    const x4 = nextB.x;
+    const y4 = nextB.y;
+
+    const denominator = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1));
+
+    if (denominator === 0) {
+        // Lines are parallel -- we happen to know that the end of the first will touch
+        // beginning of second
+        return currentB;
+    }
+
+    const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
+
+    const x = x1 + (ua * (x2 - x1));
+    const y = y1 + (ua * (y2 - y1));
+    return new Point(x, y);
+}
+
 function placeGlyphAlongLine(
     offsetX: number,
     lineOffsetX: number,
@@ -390,6 +415,9 @@ function placeGlyphAlongLine(
     const absOffsetX = Math.abs(combinedOffsetX);
     const pathVertices = [];
 
+    let offsetPrev;
+    let intersectionPoint;
+    let currentLineSegment;
     while (distanceToPrev + currentSegmentDistance <= absOffsetX) {
         currentIndex += dir;
 
@@ -398,7 +426,7 @@ function placeGlyphAlongLine(
             return null;
 
         prev = current;
-        pathVertices.push(current);
+        offsetPrev = intersectionPoint;
 
         current = projectionCache[currentIndex];
         if (current === undefined) {
@@ -417,18 +445,47 @@ function placeGlyphAlongLine(
                 current = projectTruncatedLineSegment(previousTilePoint, currentVertex, prev, absOffsetX - distanceToPrev + 1, labelPlaneMatrix, getElevation);
             }
         }
-
+        // offset the point from the line to text-offset and icon-offset
         distanceToPrev += currentSegmentDistance;
-        currentSegmentDistance = prev.dist(current);
+        if (lineOffsetY !== 0) {
+            const prevToCurrent = current.sub(prev);
+            const prevToCurrentOffset = prevToCurrent.unit().perp().mult(lineOffsetY * dir);
+            // Offset the two vertices for this segment
+            if (!offsetPrev)
+                offsetPrev = prev.add(prevToCurrentOffset);
+            pathVertices.push(offsetPrev);
+            const offsetCurrent = current.add(prevToCurrentOffset);
+
+            if (currentIndex + dir >= lineStartIndex && currentIndex + dir < lineEndIndex) {
+                // Offset the vertices for the next segment
+                const nextVertex = new Point(lineVertexArray.getx(currentIndex + dir), lineVertexArray.gety(currentIndex + dir));
+                const projection = project(nextVertex, labelPlaneMatrix, getElevation);
+                const next = projection.point; // TODO CJK: Caching
+                const currentToNext = next.sub(current);
+                const currentToNextOffset = currentToNext.unit().perp().mult(lineOffsetY * dir);
+                const offsetNextBegin = current.add(currentToNextOffset);
+                const offsetNextEnd = next.add(currentToNextOffset);
+
+                // find the intersection of these two lines
+                intersectionPoint = findIntersectionPoint(offsetPrev, offsetCurrent, offsetNextBegin, offsetNextEnd);
+            } else {
+                // This is the end of the line, no intersection to calculate
+                intersectionPoint = offsetCurrent;
+            }
+
+            currentSegmentDistance = offsetPrev.dist(intersectionPoint);
+            currentLineSegment = intersectionPoint.sub(offsetPrev);
+        } else {
+            pathVertices.push(prev);
+            currentSegmentDistance = prev.dist(current);
+            currentLineSegment = current.sub(prev);
+        }
     }
 
     // The point is on the current segment. Interpolate to find it.
     const segmentInterpolationT = (absOffsetX - distanceToPrev) / currentSegmentDistance;
-    const prevToCurrent = current.sub(prev);
-    const p = prevToCurrent.mult(segmentInterpolationT)._add(prev);
-
-    // offset the point from the line to text-offset and icon-offset
-    p._add(prevToCurrent._unit()._perp()._mult(lineOffsetY * dir * Math.random()));
+    const p = currentLineSegment.mult(segmentInterpolationT).add(offsetPrev || prev);
+    console.log(p);
 
     const segmentAngle = angle + Math.atan2(current.y - prev.y, current.x - prev.x);
 
