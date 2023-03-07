@@ -77,6 +77,17 @@
         map.addSource("geojson", {
           type: "geojson",
           data: "../integration/assets/data/linestring.geojson",
+          //   data: {
+          //     type: "LineString",
+          //     coordinates: [
+          //       [-78, 40.0],
+          //       [-77.5, 39.0],
+          //       [-77.0, 38.9],
+          //       [-76.5, 38.9],
+          //       [-76.0, 39.0],
+          //       [-75.0, 40.0],
+          //     ],
+          //   },
           attribution: "GeoJSON Attribution",
         });
         map.addLayer({
@@ -85,28 +96,36 @@
           source: "geojson",
           paint: {
             "line-color": "#EC8D8D",
-            "line-width": {
-              base: 1.5,
-              stops: [
-                [5, 0.75],
-                [18, 32],
-              ],
-            },
+            "line-width": 5,
           },
         });
 
         map.addLayer({
-          id: "route-label",
+          id: "route-label-offset",
           type: "symbol",
           source: "geojson",
           layout: {
-            "text-field": "Route",
+            "text-field": "this is going very well",
             "symbol-placement": "line",
             "text-font": ["Open Sans Semibold"],
             "text-size": 12,
-            "text-offset": [0, 1],
+            "text-offset": [0, -1],
+            "symbol-spacing": 100,
           },
         });
+
+        // map.addLayer({
+        //   id: "route-label",
+        //   type: "symbol",
+        //   source: "geojson",
+        //   layout: {
+        //     "text-field": "Some long label, this is going very well",
+        //     "symbol-placement": "line",
+        //     "text-font": ["Open Sans Semibold"],
+        //     "text-size": 12,
+        //     "text-offset": [0, 0],
+        //   },
+        // });
 
         map.addSource("points", {
           type: "geojson",
