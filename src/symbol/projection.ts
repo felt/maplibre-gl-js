@@ -485,7 +485,16 @@ function placeGlyphAlongLine(
             currentLineSegment = current.sub(prev);
         } else {
             // Calculate the offset for this section
-            const prevToCurrentOffset = current.sub(prev)._unit()._perp()._mult(lineOffsetY * dir);
+            let prevToCurrentOffset;
+            const prevToCurrent = current.sub(prev);
+            if (prevToCurrent.mag() === 0) {
+                // We are starting with our anchor point directly on the vertex, so look one vertex ahead
+                // to calculate a normal
+                const next = projectVertexToViewport(currentIndex + dir);
+                prevToCurrentOffset = next.sub(current)._unit()._perp()._mult(lineOffsetY * dir);
+            } else {
+                prevToCurrentOffset = prevToCurrent._unit()._perp()._mult(lineOffsetY * dir);
+            }
             // Initialize offsetPrev on our first iteration, after that it will be pre-calculated
             if (!offsetPrev)
                 offsetPrev = prev.add(prevToCurrentOffset);
