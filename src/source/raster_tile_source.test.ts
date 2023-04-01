@@ -4,6 +4,7 @@ import {RequestManager} from '../util/request_manager';
 import Dispatcher from '../util/dispatcher';
 import {fakeServer, FakeServer} from 'nise';
 import Tile from './tile';
+import ImageRequest from '../util/image_request';
 
 function createSource(options, transformCallback?) {
     const source = new RasterTileSource('id', options, {send() {}} as any as Dispatcher, options.eventedParent);
@@ -128,6 +129,36 @@ describe('RasterTileSource', () => {
                 expect(transformSpy.mock.calls[0][0]).toBe('http://example.com/10/5/5.png');
                 expect(transformSpy.mock.calls[0][1]).toBe('Tile');
                 done();
+            }
+        });
+        server.respond();
+    });
+
+    test('handles no image data', done => {
+        server.respondWith('/source.json', JSON.stringify({
+            minzoom: 0,
+            maxzoom: 22,
+            attribution: 'MapLibre',
+            tiles: ['http://example.com/{z}/{x}/{y}.png'],
+            bounds: [-47, -7, -45, -5]
+        }));
+        server.respondWith('http://example.com/10/5/5.png', [204, {}, '']);
+
+        const source = createSource({url: '/source.json'});
+        source.on('data', (e) => {
+            if (e.sourceDataType === 'metadata') {
+                const tile = {
+                    tileID: new OverscaledTileID(10, 0, 10, 5, 5),
+                    state: 'loading',
+                    loadVectorData () {},
+                    setExpiryData() {}
+                } as any as Tile;
+                source.loadTile(tile, (err) => {
+                    expect(err).toBeNull();
+                    expect(tile.state).toBe('errored');
+                    done();
+                });
+                server.respond();
             }
         });
         server.respond();
