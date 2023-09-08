@@ -21,10 +21,12 @@ export class DEMData {
     min: number;
     max: number;
     encoding: 'mapbox' | 'terrarium';
+    base: number;
+    interval: number;
 
     // RGBAImage data has uniform 1px padding on all sides: square tile edge size defines stride
     // and dim is calculated as stride - 2.
-    constructor(uid: string, data: RGBAImage, encoding: 'mapbox' | 'terrarium') {
+    constructor(uid: string, data: RGBAImage, encoding: 'mapbox' | 'terrarium', base: number, interval: number) {
         this.uid = uid;
         if (data.height !== data.width) throw new RangeError('DEM tiles must be square');
         if (encoding && encoding !== 'mapbox' && encoding !== 'terrarium') {
@@ -35,6 +37,8 @@ export class DEMData {
         const dim = this.dim = data.height - 2;
         this.data = new Uint32Array(data.data.buffer);
         this.encoding = encoding || 'mapbox';
+        this.base = base || -10000;
+        this.interval = interval || 0.1;
 
         // in order to avoid flashing seams between tiles, here we are initially populating a 1px border of pixels around the image
         // with the data of the nearest pixel from the image. this data is eventually replaced when the tile's neighboring
@@ -75,7 +79,7 @@ export class DEMData {
     }
 
     getUnpackVector() {
-        return this.encoding === 'terrarium' ? [256.0, 1.0, 1.0 / 256.0, 32768.0] : [6553.6, 25.6, 0.1, 10000.0];
+        return this.encoding === 'terrarium' ? [256.0, 1.0, 1.0 / 256.0, 32768.0] : [256 * 256 * this.interval, 256 * this.interval, this.interval, -this.base];
     }
 
     _idx(x: number, y: number) {
@@ -86,7 +90,7 @@ export class DEMData {
     _unpackMapbox(r: number, g: number, b: number) {
         // unpacking formula for mapbox.terrain-rgb:
         // https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-        return ((r * 256 * 256 + g * 256.0 + b) / 10.0 - 10000.0);
+        return ((r * 256 * 256 + g * 256.0 + b) * this.interval + this.base);
     }
 
     _unpackTerrarium(r: number, g: number, b: number) {

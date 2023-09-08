@@ -34,6 +34,8 @@ import type {ExpiryData} from '../util/ajax';
  */
 export class RasterDEMTileSource extends RasterTileSource implements Source {
     encoding: 'mapbox' | 'terrarium';
+    base: number;
+    interval: number;
 
     constructor(id: string, options: RasterDEMSourceSpecification, dispatcher: Dispatcher, eventedParent: Evented) {
         super(id, options, dispatcher, eventedParent);
@@ -41,6 +43,8 @@ export class RasterDEMTileSource extends RasterTileSource implements Source {
         this.maxzoom = 22;
         this._options = extend({type: 'raster-dem'}, options);
         this.encoding = options.encoding || 'mapbox';
+        this.base = options.base || -10000;
+        this.interval = options.interval || 0.1;
     }
 
     loadTile(tile: Tile, callback: Callback<void>) {
@@ -67,7 +71,9 @@ export class RasterDEMTileSource extends RasterTileSource implements Source {
                     coord: tile.tileID,
                     source: this.id,
                     rawImageData,
-                    encoding: this.encoding
+                    encoding: this.encoding,
+                    base: this.base,
+                    interval: this.interval
                 };
 
                 if (!tile.actor || tile.state === 'expired') {
