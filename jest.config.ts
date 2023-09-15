@@ -8,7 +8,7 @@ const sharedConfig = {
         }],
     },
     // any tests that operate on dist files shouldn't compile them again.
-    transformIgnorePatterns: ['<rootDir>/dist'],
+    transformIgnorePatterns: ['<rootDir>/dist', '<rootDir>/node_modules/@maplibre/maplibre-gl-style-spec/dist'],
     modulePathIgnorePatterns: ['<rootDir>/dist']
 } as Partial<Config>;
 
