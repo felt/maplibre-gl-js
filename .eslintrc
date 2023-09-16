@@ -95,7 +95,7 @@
     "jest/no-deprecated-functions": "warn"
   },
   "reportUnusedDisableDirectives": true,
-  "ignorePatterns": ["build/*.js", "*.json"],
+  "ignorePatterns": ["build/*.js", "*.json", "dist/*"],
   "globals": {
     "performance": true
   },
