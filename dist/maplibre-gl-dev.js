@@ -36431,6 +36431,10 @@ class RasterDEMTileSource extends RasterTileSource {
         this.maxzoom = 22;
         this._options = performance.extend({ type: 'raster-dem' }, options);
         this.encoding = options.encoding || 'mapbox';
+        this.redMix = options.redMix;
+        this.greenMix = options.greenMix;
+        this.blueMix = options.blueMix;
+        this.baseMix = options.baseMix;
     }
     loadTile(tile, callback) {
         const url = tile.tileID.canonical.url(this.tiles, this.map.getPixelRatio(), this.scheme);
