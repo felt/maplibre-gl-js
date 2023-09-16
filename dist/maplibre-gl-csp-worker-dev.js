@@ -1,4 +1,4 @@
-/* MapLibre GL JS is licensed under the 3-Clause BSD License. Full text of license: https://github.com/maplibre/maplibre-gl-js/blob/v3.0.0-pre.4/LICENSE.txt */
+/* MapLibre GL JS is licensed under the 3-Clause BSD License. Full text of license: https://github.com/maplibre/maplibre-gl-js/blob/v3.3.1/LICENSE.txt */
 var maplibregl = (function () {
 'use strict';
 
@@ -22,10 +22,7 @@ function getAugmentedNamespace(n) {
 	if (typeof f == "function") {
 		var a = function a () {
 			if (this instanceof a) {
-				var args = [null];
-				args.push.apply(args, arguments);
-				var Ctor = Function.bind.apply(f, args);
-				return new Ctor();
+        return Reflect.construct(f, arguments, this.constructor);
 			}
 			return f.apply(this, arguments);
 		};
@@ -357,6 +354,8 @@ Point$2.convert = function (a) {
     return a;
 };
 
+var Point$3 = /*@__PURE__*/getDefaultExportFromCjs(pointGeometry);
+
 'use strict';
 
 var unitbezier = UnitBezier;
@@ -436,16 +435,12 @@ UnitBezier.prototype = {
     }
 };
 
-/**
- * @module util
- * @private
- */
+var UnitBezier$1 = /*@__PURE__*/getDefaultExportFromCjs(unitbezier);
+
 /**
  * Given a value `t` that varies between 0 and 1, return
  * an interpolation function that eases between 0 and 1 in a pleasing
  * cubic in-out fashion.
- *
- * @private
  */
 function easeCubicInOut(t) {
     if (t <= 0)
@@ -459,14 +454,13 @@ function easeCubicInOut(t) {
  * Given given (x, y), (x1, y1) control points for a bezier curve,
  * return a function that interpolates along that curve.
  *
- * @param p1x control point 1 x coordinate
- * @param p1y control point 1 y coordinate
- * @param p2x control point 2 x coordinate
- * @param p2y control point 2 y coordinate
- * @private
+ * @param p1x - control point 1 x coordinate
+ * @param p1y - control point 1 y coordinate
+ * @param p2x - control point 2 x coordinate
+ * @param p2y - control point 2 y coordinate
  */
 function bezier$1(p1x, p1y, p2x, p2y) {
-    const bezier = new unitbezier(p1x, p1y, p2x, p2y);
+    const bezier = new UnitBezier$1(p1x, p1y, p2x, p2y);
     return function (t) {
         return bezier.solve(t);
     };
@@ -474,45 +468,40 @@ function bezier$1(p1x, p1y, p2x, p2y) {
 /**
  * A default bezier-curve powered easing function with
  * control points (0.25, 0.1) and (0.25, 1)
- *
- * @private
  */
-const ease = bezier$1(0.25, 0.1, 0.25, 1);
+const defaultEasing = bezier$1(0.25, 0.1, 0.25, 1);
 /**
  * constrain n to the given range via min + max
  *
- * @param n value
- * @param min the minimum value to be returned
- * @param max the maximum value to be returned
+ * @param n - value
+ * @param min - the minimum value to be returned
+ * @param max - the maximum value to be returned
  * @returns the clamped value
- * @private
  */
-function clamp(n, min, max) {
+function clamp$1(n, min, max) {
     return Math.min(max, Math.max(min, n));
 }
 /**
  * constrain n to the given range, excluding the minimum, via modular arithmetic
  *
- * @param n value
- * @param min the minimum value to be returned, exclusive
- * @param max the maximum value to be returned, inclusive
+ * @param n - value
+ * @param min - the minimum value to be returned, exclusive
+ * @param max - the maximum value to be returned, inclusive
  * @returns constrained number
- * @private
  */
 function wrap$1(n, min, max) {
     const d = max - min;
     const w = ((n - min) % d + d) % d + min;
     return (w === min) ? max : w;
 }
-/*
+/**
  * Call an asynchronous function on an array of arguments,
  * calling `callback` with the completed results of all calls.
  *
- * @param array input to each call of the async function.
- * @param fn an async function with signature (data, callback)
- * @param callback a callback run after all async work is done.
+ * @param array - input to each call of the async function.
+ * @param fn - an async function with signature (data, callback)
+ * @param callback - a callback run after all async work is done.
  * called with an array, containing the results of each async call.
- * @private
  */
 function asyncAll(array, fn, callback) {
     if (!array.length) {
@@ -531,12 +520,11 @@ function asyncAll(array, fn, callback) {
         });
     });
 }
-/*
+/**
  * Compute the difference between the keys in one object and the keys
  * in another object.
  *
  * @returns keys difference
- * @private
  */
 function keysDifference(obj, other) {
     const difference = [];
@@ -553,11 +541,10 @@ function keysDifference(obj, other) {
  * The last source object given overrides properties from previous
  * source objects.
  *
- * @param dest destination object
- * @param sources sources from which properties are pulled
- * @private
+ * @param dest - destination object
+ * @param sources - sources from which properties are pulled
  */
-function extend$2(dest, ...sources) {
+function extend$1(dest, ...sources) {
     for (const src of sources) {
         for (const k in src) {
             dest[k] = src[k];
@@ -569,15 +556,15 @@ function extend$2(dest, ...sources) {
  * Given an object and a number of properties as strings, return version
  * of that object with only those properties.
  *
- * @param src the object
- * @param properties an array of property names chosen
+ * @param src - the object
+ * @param properties - an array of property names chosen
  * to appear on the resulting object.
  * @returns object with limited properties.
  * @example
- * var foo = { name: 'Charlie', age: 10 };
- * var justName = pick(foo, ['name']);
- * // justName = { name: 'Charlie' }
- * @private
+ * ```ts
+ * let foo = { name: 'Charlie', age: 10 };
+ * let justName = pick(foo, ['name']); // justName = { name: 'Charlie' }
+ * ```
  */
 function pick(src, properties) {
     const result = {};
@@ -595,21 +582,18 @@ let id = 1;
  * each call.
  *
  * @returns unique numeric id.
- * @private
  */
 function uniqueId() {
     return id++;
 }
 /**
  * Return whether a given value is a power of two
- * @private
  */
 function isPowerOfTwo(value) {
     return (Math.log(value) / Math.LN2) % 1 === 0;
 }
 /**
  * Return the next power of two, or the input value if already a power of two
- * @private
  */
 function nextPowerOfTwo(value) {
     if (value <= 1)
@@ -617,39 +601,8 @@ function nextPowerOfTwo(value) {
     return Math.pow(2, Math.ceil(Math.log(value) / Math.LN2));
 }
 /**
- * Given an array of member function names as strings, replace all of them
- * with bound versions that will always refer to `context` as `this`. This
- * is useful for classes where otherwise event bindings would reassign
- * `this` to the evented object or some other value: this lets you ensure
- * the `this` value always.
- *
- * @param fns list of member function names
- * @param context the context value
- * @example
- * function MyClass() {
- *   bindAll(['ontimer'], this);
- *   this.name = 'Tom';
- * }
- * MyClass.prototype.ontimer = function() {
- *   alert(this.name);
- * };
- * var myClass = new MyClass();
- * setTimeout(myClass.ontimer, 100);
- * @private
- */
-function bindAll(fns, context) {
-    fns.forEach((fn) => {
-        if (!context[fn]) {
-            return;
-        }
-        context[fn] = context[fn].bind(context);
-    });
-}
-/**
  * Create an object by mapping all the values of an existing object while
  * preserving their keys.
- *
- * @private
  */
 function mapObject(input, iterator, context) {
     const output = {};
@@ -660,8 +613,6 @@ function mapObject(input, iterator, context) {
 }
 /**
  * Create an object by filtering out values of an existing object.
- *
- * @private
  */
 function filterObject(input, iterator, context) {
     const output = {};
@@ -674,8 +625,8 @@ function filterObject(input, iterator, context) {
 }
 /**
  * Deeply compares two object literals.
- * @param a first object literal to be compared
- * @param b second object literal to be compared
+ * @param a - first object literal to be compared
+ * @param b - second object literal to be compared
  * @returns true if the two object literals are deeply equal, false otherwise
  */
 function deepEqual$1(a, b) {
@@ -704,8 +655,6 @@ function deepEqual$1(a, b) {
 }
 /**
  * Deeply clones two objects.
- *
- * @private
  */
 function clone$9(input) {
     if (Array.isArray(input)) {
@@ -720,8 +669,6 @@ function clone$9(input) {
 }
 /**
  * Check if two arrays have at least one common element.
- *
- * @private
  */
 function arraysIntersect(a, b) {
     for (let l = 0; l < a.length; l++) {
@@ -733,8 +680,6 @@ function arraysIntersect(a, b) {
 /**
  * Print a warning message to the console and ensure duplicate warning messages
  * are not printed.
- *
- * @private
  */
 const warnOnceHistory = {};
 function warnOnce(message) {
@@ -748,7 +693,6 @@ function warnOnce(message) {
 /**
  * Indicates if the provided Points are in a counter clockwise (true) or clockwise (false) order
  *
- * @private
  * @returns true for a counter clockwise set of points
  */
 // http://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
@@ -759,10 +703,10 @@ function isCounterClockwise(a, b, c) {
  * For two lines a and b in 2d space, defined by any two points along the lines,
  * find the intersection point, or return null if the lines are parallel
  *
- * @param a1 First point on line a
- * @param a2 Second point on line a
- * @param b1 First point on line b
- * @param b2 Second point on line b
+ * @param a1 - First point on line a
+ * @param a2 - Second point on line a
+ * @param b1 - First point on line b
+ * @param b2 - Second point on line b
  *
  * @returns the intersection point of the two lines or null if they are parallel
  */
@@ -780,15 +724,14 @@ function findLineIntersection(a1, a2, b1, b2) {
     const originDeltaX = a1.x - b1.x;
     const aInterpolation = (bDeltaX * originDeltaY - bDeltaY * originDeltaX) / denominator;
     // Find intersection by projecting out from origin of first segment
-    return new pointGeometry(a1.x + (aInterpolation * aDeltaX), a1.y + (aInterpolation * aDeltaY));
+    return new Point$3(a1.x + (aInterpolation * aDeltaX), a1.y + (aInterpolation * aDeltaY));
 }
 /**
  * Returns the signed area for the polygon ring.  Positive areas are exterior rings and
  * have a clockwise winding.  Negative areas are interior rings and have a counter clockwise
  * ordering.
  *
- * @private
- * @param ring Exterior or interior ring
+ * @param ring - Exterior or interior ring
  */
 function calculateSignedArea(ring) {
     let sum = 0;
@@ -802,9 +745,8 @@ function calculateSignedArea(ring) {
 /**
  * Detects closed polygons, first + last point are equal
  *
- * @private
- * @param points array of points
- * @return true if the points are a closed polygon
+ * @param points - array of points
+ * @returns `true` if the points are a closed polygon
  */
 function isClosedPolygon(points) {
     // If it is 2 points that are the same then it is a point
@@ -823,9 +765,8 @@ function isClosedPolygon(points) {
 /**
  * Converts spherical coordinates to cartesian coordinates.
  *
- * @private
- * @param spherical Spherical coordinates, in [radial, azimuthal, polar]
- * @return cartesian coordinates in [x, y, z]
+ * @param spherical - Spherical coordinates, in [radial, azimuthal, polar]
+ * @returns cartesian coordinates in [x, y, z]
  */
 function sphericalToCartesian([r, azimuthal, polar]) {
     // We abstract "north"/"up" (compass-wise) to be 0° when really this is 90° (π/2):
@@ -843,8 +784,7 @@ function sphericalToCartesian([r, azimuthal, polar]) {
 /**
  *  Returns true if the when run in the web-worker context.
  *
- * @private
- * @returns {boolean}
+ * @returns `true` if the when run in the web-worker context.
  */
 function isWorker() {
     // @ts-ignore
@@ -853,9 +793,8 @@ function isWorker() {
 /**
  * Parses data from 'Cache-Control' headers.
  *
- * @private
- * @param cacheControl Value of 'Cache-Control' header
- * @return object containing parsed header info.
+ * @param cacheControl - Value of 'Cache-Control' header
+ * @returns object containing parsed header info.
  */
 function parseCacheControl(cacheControl) {
     // Taken from [Wreck](https://github.com/hapijs/wreck)
@@ -884,10 +823,9 @@ let _isSafari = null;
  *
  * This should be removed once the underlying Safari issue is fixed.
  *
- * @private
- * @param scope {WindowOrWorkerGlobalScope} Since this function is used both on the main thread and WebWorker context,
+ * @param scope - Since this function is used both on the main thread and WebWorker context,
  *      let the calling scope pass in the global scope object.
- * @returns {boolean}
+ * @returns `true` when run in WebKit derived browsers.
  */
 function isSafari(scope) {
     if (_isSafari == null) {
@@ -931,8 +869,8 @@ function isImageBitmap(image) {
  * perfectly fine with ImageBitmaps. Might also be used for environments (other than testing) not supporting
  * ArrayBuffers.
  *
- * @param data {ArrayBuffer} Data to convert
- * @param callback A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image bitmap (when no error) as the second
+ * @param data - Data to convert
+ * @param callback - A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image bitmap (when no error) as the second
  */
 function arrayBufferToImageBitmap(data, callback) {
     const blob = new Blob([new Uint8Array(data)], { type: 'image/png' });
@@ -950,8 +888,8 @@ const transparentPngUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA
  * perfectly fine with ImageBitmaps. Might also be used for environments (other than testing) not supporting
  * ArrayBuffers.
  *
- * @param data {ArrayBuffer} Data to convert
- * @param callback A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image element (when no error) as the second
+ * @param data - Data to convert
+ * @param callback - A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image element (when no error) as the second
  */
 function arrayBufferToImage(data, callback) {
     const img = new Image();
@@ -1141,211 +1079,6 @@ class TransferableGridIndex {
         return new TransferableGridIndex(serialized.buffer);
     }
 }
-
-var csscolorparser = {};
-
-var parseCSSColor_1;
-// (c) Dean McNamee <dean@gmail.com>, 2012.
-//
-// https://github.com/deanm/css-color-parser-js
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// IN THE SOFTWARE.
-
-// http://www.w3.org/TR/css3-color/
-var kCSSColorTable = {
-  "transparent": [0,0,0,0], "aliceblue": [240,248,255,1],
-  "antiquewhite": [250,235,215,1], "aqua": [0,255,255,1],
-  "aquamarine": [127,255,212,1], "azure": [240,255,255,1],
-  "beige": [245,245,220,1], "bisque": [255,228,196,1],
-  "black": [0,0,0,1], "blanchedalmond": [255,235,205,1],
-  "blue": [0,0,255,1], "blueviolet": [138,43,226,1],
-  "brown": [165,42,42,1], "burlywood": [222,184,135,1],
-  "cadetblue": [95,158,160,1], "chartreuse": [127,255,0,1],
-  "chocolate": [210,105,30,1], "coral": [255,127,80,1],
-  "cornflowerblue": [100,149,237,1], "cornsilk": [255,248,220,1],
-  "crimson": [220,20,60,1], "cyan": [0,255,255,1],
-  "darkblue": [0,0,139,1], "darkcyan": [0,139,139,1],
-  "darkgoldenrod": [184,134,11,1], "darkgray": [169,169,169,1],
-  "darkgreen": [0,100,0,1], "darkgrey": [169,169,169,1],
-  "darkkhaki": [189,183,107,1], "darkmagenta": [139,0,139,1],
-  "darkolivegreen": [85,107,47,1], "darkorange": [255,140,0,1],
-  "darkorchid": [153,50,204,1], "darkred": [139,0,0,1],
-  "darksalmon": [233,150,122,1], "darkseagreen": [143,188,143,1],
-  "darkslateblue": [72,61,139,1], "darkslategray": [47,79,79,1],
-  "darkslategrey": [47,79,79,1], "darkturquoise": [0,206,209,1],
-  "darkviolet": [148,0,211,1], "deeppink": [255,20,147,1],
-  "deepskyblue": [0,191,255,1], "dimgray": [105,105,105,1],
-  "dimgrey": [105,105,105,1], "dodgerblue": [30,144,255,1],
-  "firebrick": [178,34,34,1], "floralwhite": [255,250,240,1],
-  "forestgreen": [34,139,34,1], "fuchsia": [255,0,255,1],
-  "gainsboro": [220,220,220,1], "ghostwhite": [248,248,255,1],
-  "gold": [255,215,0,1], "goldenrod": [218,165,32,1],
-  "gray": [128,128,128,1], "green": [0,128,0,1],
-  "greenyellow": [173,255,47,1], "grey": [128,128,128,1],
-  "honeydew": [240,255,240,1], "hotpink": [255,105,180,1],
-  "indianred": [205,92,92,1], "indigo": [75,0,130,1],
-  "ivory": [255,255,240,1], "khaki": [240,230,140,1],
-  "lavender": [230,230,250,1], "lavenderblush": [255,240,245,1],
-  "lawngreen": [124,252,0,1], "lemonchiffon": [255,250,205,1],
-  "lightblue": [173,216,230,1], "lightcoral": [240,128,128,1],
-  "lightcyan": [224,255,255,1], "lightgoldenrodyellow": [250,250,210,1],
-  "lightgray": [211,211,211,1], "lightgreen": [144,238,144,1],
-  "lightgrey": [211,211,211,1], "lightpink": [255,182,193,1],
-  "lightsalmon": [255,160,122,1], "lightseagreen": [32,178,170,1],
-  "lightskyblue": [135,206,250,1], "lightslategray": [119,136,153,1],
-  "lightslategrey": [119,136,153,1], "lightsteelblue": [176,196,222,1],
-  "lightyellow": [255,255,224,1], "lime": [0,255,0,1],
-  "limegreen": [50,205,50,1], "linen": [250,240,230,1],
-  "magenta": [255,0,255,1], "maroon": [128,0,0,1],
-  "mediumaquamarine": [102,205,170,1], "mediumblue": [0,0,205,1],
-  "mediumorchid": [186,85,211,1], "mediumpurple": [147,112,219,1],
-  "mediumseagreen": [60,179,113,1], "mediumslateblue": [123,104,238,1],
-  "mediumspringgreen": [0,250,154,1], "mediumturquoise": [72,209,204,1],
-  "mediumvioletred": [199,21,133,1], "midnightblue": [25,25,112,1],
-  "mintcream": [245,255,250,1], "mistyrose": [255,228,225,1],
-  "moccasin": [255,228,181,1], "navajowhite": [255,222,173,1],
-  "navy": [0,0,128,1], "oldlace": [253,245,230,1],
-  "olive": [128,128,0,1], "olivedrab": [107,142,35,1],
-  "orange": [255,165,0,1], "orangered": [255,69,0,1],
-  "orchid": [218,112,214,1], "palegoldenrod": [238,232,170,1],
-  "palegreen": [152,251,152,1], "paleturquoise": [175,238,238,1],
-  "palevioletred": [219,112,147,1], "papayawhip": [255,239,213,1],
-  "peachpuff": [255,218,185,1], "peru": [205,133,63,1],
-  "pink": [255,192,203,1], "plum": [221,160,221,1],
-  "powderblue": [176,224,230,1], "purple": [128,0,128,1],
-  "rebeccapurple": [102,51,153,1],
-  "red": [255,0,0,1], "rosybrown": [188,143,143,1],
-  "royalblue": [65,105,225,1], "saddlebrown": [139,69,19,1],
-  "salmon": [250,128,114,1], "sandybrown": [244,164,96,1],
-  "seagreen": [46,139,87,1], "seashell": [255,245,238,1],
-  "sienna": [160,82,45,1], "silver": [192,192,192,1],
-  "skyblue": [135,206,235,1], "slateblue": [106,90,205,1],
-  "slategray": [112,128,144,1], "slategrey": [112,128,144,1],
-  "snow": [255,250,250,1], "springgreen": [0,255,127,1],
-  "steelblue": [70,130,180,1], "tan": [210,180,140,1],
-  "teal": [0,128,128,1], "thistle": [216,191,216,1],
-  "tomato": [255,99,71,1], "turquoise": [64,224,208,1],
-  "violet": [238,130,238,1], "wheat": [245,222,179,1],
-  "white": [255,255,255,1], "whitesmoke": [245,245,245,1],
-  "yellow": [255,255,0,1], "yellowgreen": [154,205,50,1]};
-
-function clamp_css_byte(i) {  // Clamp to integer 0 .. 255.
-  i = Math.round(i);  // Seems to be what Chrome does (vs truncation).
-  return i < 0 ? 0 : i > 255 ? 255 : i;
-}
-
-function clamp_css_float(f) {  // Clamp to float 0.0 .. 1.0.
-  return f < 0 ? 0 : f > 1 ? 1 : f;
-}
-
-function parse_css_int(str) {  // int or percentage.
-  if (str[str.length - 1] === '%')
-    return clamp_css_byte(parseFloat(str) / 100 * 255);
-  return clamp_css_byte(parseInt(str));
-}
-
-function parse_css_float(str) {  // float or percentage.
-  if (str[str.length - 1] === '%')
-    return clamp_css_float(parseFloat(str) / 100);
-  return clamp_css_float(parseFloat(str));
-}
-
-function css_hue_to_rgb(m1, m2, h) {
-  if (h < 0) h += 1;
-  else if (h > 1) h -= 1;
-
-  if (h * 6 < 1) return m1 + (m2 - m1) * h * 6;
-  if (h * 2 < 1) return m2;
-  if (h * 3 < 2) return m1 + (m2 - m1) * (2/3 - h) * 6;
-  return m1;
-}
-
-function parseCSSColor(css_str) {
-  // Remove all whitespace, not compliant, but should just be more accepting.
-  var str = css_str.replace(/ /g, '').toLowerCase();
-
-  // Color keywords (and transparent) lookup.
-  if (str in kCSSColorTable) return kCSSColorTable[str].slice();  // dup.
-
-  // #abc and #abc123 syntax.
-  if (str[0] === '#') {
-    if (str.length === 4) {
-      var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
-      if (!(iv >= 0 && iv <= 0xfff)) return null;  // Covers NaN.
-      return [((iv & 0xf00) >> 4) | ((iv & 0xf00) >> 8),
-              (iv & 0xf0) | ((iv & 0xf0) >> 4),
-              (iv & 0xf) | ((iv & 0xf) << 4),
-              1];
-    } else if (str.length === 7) {
-      var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
-      if (!(iv >= 0 && iv <= 0xffffff)) return null;  // Covers NaN.
-      return [(iv & 0xff0000) >> 16,
-              (iv & 0xff00) >> 8,
-              iv & 0xff,
-              1];
-    }
-
-    return null;
-  }
-
-  var op = str.indexOf('('), ep = str.indexOf(')');
-  if (op !== -1 && ep + 1 === str.length) {
-    var fname = str.substr(0, op);
-    var params = str.substr(op+1, ep-(op+1)).split(',');
-    var alpha = 1;  // To allow case fallthrough.
-    switch (fname) {
-      case 'rgba':
-        if (params.length !== 4) return null;
-        alpha = parse_css_float(params.pop());
-        // Fall through.
-      case 'rgb':
-        if (params.length !== 3) return null;
-        return [parse_css_int(params[0]),
-                parse_css_int(params[1]),
-                parse_css_int(params[2]),
-                alpha];
-      case 'hsla':
-        if (params.length !== 4) return null;
-        alpha = parse_css_float(params.pop());
-        // Fall through.
-      case 'hsl':
-        if (params.length !== 3) return null;
-        var h = (((parseFloat(params[0]) % 360) + 360) % 360) / 360;  // 0 .. 1
-        // NOTE(deanm): According to the CSS spec s/l should only be
-        // percentages, but we don't bother and let float or percentage.
-        var s = parse_css_float(params[1]);
-        var l = parse_css_float(params[2]);
-        var m2 = l <= 0.5 ? l * (s + 1) : l + s - l * s;
-        var m1 = l * 2 - m2;
-        return [clamp_css_byte(css_hue_to_rgb(m1, m2, h+1/3) * 255),
-                clamp_css_byte(css_hue_to_rgb(m1, m2, h) * 255),
-                clamp_css_byte(css_hue_to_rgb(m1, m2, h-1/3) * 255),
-                alpha];
-      default:
-        return null;
-    }
-  }
-
-  return null;
-}
-
-try { parseCSSColor_1 = csscolorparser.parseCSSColor = parseCSSColor; } catch(e) { }
 
 var $version = 8;
 var $root = {
@@ -1587,9 +1320,27 @@ var source_raster_dem = {
 			terrarium: {
 			},
 			mapbox: {
+			},
+			custom: {
 			}
 		},
 		"default": "mapbox"
+	},
+	redMix: {
+		type: "number",
+		"default": 1
+	},
+	blueMix: {
+		type: "number",
+		"default": 1
+	},
+	greenMix: {
+		type: "number",
+		"default": 1
+	},
+	baseMix: {
+		type: "number",
+		"default": 0
 	},
 	volatile: {
 		type: "boolean",
@@ -2558,6 +2309,25 @@ var layout_symbol = {
 			]
 		},
 		"property-type": "data-constant"
+	},
+	"text-variable-anchor-offset": {
+		type: "variableAnchorOffsetCollection",
+		requires: [
+			"text-field",
+			{
+				"symbol-placement": [
+					"point"
+				]
+			}
+		],
+		expression: {
+			interpolated: true,
+			parameters: [
+				"zoom",
+				"feature"
+			]
+		},
+		"property-type": "data-driven"
 	},
 	"text-anchor": {
 		type: "enum",
@@ -4878,6 +4648,7 @@ const CollatorType = { kind: 'collator' };
 const FormattedType = { kind: 'formatted' };
 const PaddingType = { kind: 'padding' };
 const ResolvedImageType = { kind: 'resolvedImage' };
+const VariableAnchorOffsetCollectionType = { kind: 'variableAnchorOffsetCollection' };
 function array$1(itemType, N) {
     return {
         kind: 'array',
@@ -4906,7 +4677,8 @@ const valueMemberTypes = [
     ObjectType,
     array$1(ValueType),
     PaddingType,
-    ResolvedImageType
+    ResolvedImageType,
+    VariableAnchorOffsetCollectionType
 ];
 /**
  * Returns null if `t` is a subtype of `expected`; otherwise returns an
@@ -4956,50 +4728,524 @@ function isValidNativeType(provided, allowedTypes) {
         }
     });
 }
+/**
+ * Verify whether the specified type is of the same type as the specified sample.
+ *
+ * @param provided Type to verify
+ * @param sample Sample type to reference
+ * @returns `true` if both objects are of the same type, `false` otherwise
+ * @example basic types
+ * if (verifyType(outputType, ValueType)) {
+ *     // type narrowed to:
+ *     outputType.kind; // 'value'
+ * }
+ * @example array types
+ * if (verifyType(outputType, array(NumberType))) {
+ *     // type narrowed to:
+ *     outputType.kind; // 'array'
+ *     outputType.itemType; // NumberTypeT
+ *     outputType.itemType.kind; // 'number'
+ * }
+ */
+function verifyType(provided, sample) {
+    if (provided.kind === 'array' && sample.kind === 'array') {
+        return provided.itemType.kind === sample.itemType.kind && typeof provided.N === 'number';
+    }
+    return provided.kind === sample.kind;
+}
+
+// See https://observablehq.com/@mbostock/lab-and-rgb
+const Xn = 0.96422, Yn = 1, Zn = 0.82521, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1, deg2rad = Math.PI / 180, rad2deg = 180 / Math.PI;
+function constrainAngle(angle) {
+    angle = angle % 360;
+    if (angle < 0) {
+        angle += 360;
+    }
+    return angle;
+}
+function rgbToLab([r, g, b, alpha]) {
+    r = rgb2xyz(r);
+    g = rgb2xyz(g);
+    b = rgb2xyz(b);
+    let x, z;
+    const y = xyz2lab((0.2225045 * r + 0.7168786 * g + 0.0606169 * b) / Yn);
+    if (r === g && g === b) {
+        x = z = y;
+    }
+    else {
+        x = xyz2lab((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn);
+        z = xyz2lab((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+    }
+    const l = 116 * y - 16;
+    return [(l < 0) ? 0 : l, 500 * (x - y), 200 * (y - z), alpha];
+}
+function rgb2xyz(x) {
+    return (x <= 0.04045) ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+}
+function xyz2lab(t) {
+    return (t > t3) ? Math.pow(t, 1 / 3) : t / t2 + t0;
+}
+function labToRgb([l, a, b, alpha]) {
+    let y = (l + 16) / 116, x = isNaN(a) ? y : y + a / 500, z = isNaN(b) ? y : y - b / 200;
+    y = Yn * lab2xyz(y);
+    x = Xn * lab2xyz(x);
+    z = Zn * lab2xyz(z);
+    return [
+        xyz2rgb(3.1338561 * x - 1.6168667 * y - 0.4906146 * z),
+        xyz2rgb(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z),
+        xyz2rgb(0.0719453 * x - 0.2289914 * y + 1.4052427 * z),
+        alpha,
+    ];
+}
+function xyz2rgb(x) {
+    x = (x <= 0.00304) ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+    return (x < 0) ? 0 : (x > 1) ? 1 : x; // clip to 0..1 range
+}
+function lab2xyz(t) {
+    return (t > t1) ? t * t * t : t2 * (t - t0);
+}
+function rgbToHcl(rgbColor) {
+    const [l, a, b, alpha] = rgbToLab(rgbColor);
+    const c = Math.sqrt(a * a + b * b);
+    const h = Math.round(c * 10000) ? constrainAngle(Math.atan2(b, a) * rad2deg) : NaN;
+    return [h, c, l, alpha];
+}
+function hclToRgb([h, c, l, alpha]) {
+    h = isNaN(h) ? 0 : h * deg2rad;
+    return labToRgb([l, Math.cos(h) * c, Math.sin(h) * c, alpha]);
+}
+// https://drafts.csswg.org/css-color-4/#hsl-to-rgb
+function hslToRgb([h, s, l, alpha]) {
+    h = constrainAngle(h);
+    s /= 100;
+    l /= 100;
+    function f(n) {
+        const k = (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    }
+    return [f(0), f(8), f(4), alpha];
+}
 
 /**
- * An RGBA color value. Create instances from color strings using the static
- * method `Color.parse`. The constructor accepts RGB channel values in the range
- * `[0, 1]`, premultiplied by A.
+ * CSS color parser compliant with CSS Color 4 Specification.
+ * Supports: named colors, `transparent` keyword, all rgb hex notations,
+ * rgb(), rgba(), hsl() and hsla() functions.
+ * Does not round the parsed values to integers from the range 0..255.
  *
- * @param {number} r The red channel.
- * @param {number} g The green channel.
- * @param {number} b The blue channel.
- * @param {number} a The alpha channel.
+ * Syntax:
+ *
+ * <alpha-value> = <number> | <percentage>
+ *         <hue> = <number> | <angle>
+ *
+ *         rgb() = rgb( <percentage>{3} [ / <alpha-value> ]? ) | rgb( <number>{3} [ / <alpha-value> ]? )
+ *         rgb() = rgb( <percentage>#{3} , <alpha-value>? )    | rgb( <number>#{3} , <alpha-value>? )
+ *
+ *         hsl() = hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
+ *         hsl() = hsl( <hue>, <percentage>, <percentage>, <alpha-value>? )
+ *
+ * Caveats:
+ *   - <angle> - <number> with optional `deg` suffix; `grad`, `rad`, `turn` are not supported
+ *   - `none` keyword is not supported
+ *   - comments inside rgb()/hsl() are not supported
+ *   - legacy color syntax rgba() is supported with an identical grammar and behavior to rgb()
+ *   - legacy color syntax hsla() is supported with an identical grammar and behavior to hsl()
+ *
+ * @param input CSS color string to parse.
+ * @returns Color in sRGB color space, with `red`, `green`, `blue`
+ * and `alpha` channels normalized to the range 0..1,
+ * or `undefined` if the input is not a valid color string.
+ */
+function parseCssColor(input) {
+    input = input.toLowerCase().trim();
+    if (input === 'transparent') {
+        return [0, 0, 0, 0];
+    }
+    // 'white', 'black', 'blue'
+    const namedColorsMatch = namedColors[input];
+    if (namedColorsMatch) {
+        const [r, g, b] = namedColorsMatch;
+        return [r / 255, g / 255, b / 255, 1];
+    }
+    // #f0c, #f0cf, #ff00cc, #ff00ccff
+    if (input.startsWith('#')) {
+        const hexRegexp = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/;
+        if (hexRegexp.test(input)) {
+            const step = input.length < 6 ? 1 : 2;
+            let i = 1;
+            return [
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i + step) || 'ff'),
+            ];
+        }
+    }
+    // rgb(128 0 0), rgb(50% 0% 0%), rgba(255,0,255,0.6), rgb(255 0 255 / 60%), rgb(100% 0% 100% /.6)
+    if (input.startsWith('rgb')) {
+        const rgbRegExp = /^rgba?\(\s*([\de.+-]+)(%)?(?:\s+|\s*(,)\s*)([\de.+-]+)(%)?(?:\s+|\s*(,)\s*)([\de.+-]+)(%)?(?:\s*([,\/])\s*([\de.+-]+)(%)?)?\s*\)$/;
+        const rgbMatch = input.match(rgbRegExp);
+        if (rgbMatch) {
+            const [_, // eslint-disable-line @typescript-eslint/no-unused-vars
+            r, // <numeric>
+            rp, // %         (optional)
+            f1, // ,         (optional)
+            g, // <numeric>
+            gp, // %         (optional)
+            f2, // ,         (optional)
+            b, // <numeric>
+            bp, // %         (optional)
+            f3, // ,|/       (optional)
+            a, // <numeric> (optional)
+            ap, // %         (optional)
+            ] = rgbMatch;
+            const argFormat = [f1 || ' ', f2 || ' ', f3].join('');
+            if (argFormat === '  ' ||
+                argFormat === '  /' ||
+                argFormat === ',,' ||
+                argFormat === ',,,') {
+                const valFormat = [rp, gp, bp].join('');
+                const maxValue = (valFormat === '%%%') ? 100 :
+                    (valFormat === '') ? 255 : 0;
+                if (maxValue) {
+                    const rgba = [
+                        clamp(+r / maxValue, 0, 1),
+                        clamp(+g / maxValue, 0, 1),
+                        clamp(+b / maxValue, 0, 1),
+                        a ? parseAlpha(+a, ap) : 1,
+                    ];
+                    if (validateNumbers(rgba)) {
+                        return rgba;
+                    }
+                    // invalid numbers
+                }
+                // values must be all numbers or all percentages
+            }
+            return; // comma optional syntax requires no commas at all
+        }
+    }
+    // hsl(120 50% 80%), hsla(120deg,50%,80%,.9), hsl(12e1 50% 80% / 90%)
+    const hslRegExp = /^hsla?\(\s*([\de.+-]+)(?:deg)?(?:\s+|\s*(,)\s*)([\de.+-]+)%(?:\s+|\s*(,)\s*)([\de.+-]+)%(?:\s*([,\/])\s*([\de.+-]+)(%)?)?\s*\)$/;
+    const hslMatch = input.match(hslRegExp);
+    if (hslMatch) {
+        const [_, // eslint-disable-line @typescript-eslint/no-unused-vars
+        h, // <numeric>
+        f1, // ,         (optional)
+        s, // <numeric>
+        f2, // ,         (optional)
+        l, // <numeric>
+        f3, // ,|/       (optional)
+        a, // <numeric> (optional)
+        ap, // %         (optional)
+        ] = hslMatch;
+        const argFormat = [f1 || ' ', f2 || ' ', f3].join('');
+        if (argFormat === '  ' ||
+            argFormat === '  /' ||
+            argFormat === ',,' ||
+            argFormat === ',,,') {
+            const hsla = [
+                +h,
+                clamp(+s, 0, 100),
+                clamp(+l, 0, 100),
+                a ? parseAlpha(+a, ap) : 1,
+            ];
+            if (validateNumbers(hsla)) {
+                return hslToRgb(hsla);
+            }
+            // invalid numbers
+        }
+        // comma optional syntax requires no commas at all
+    }
+}
+function parseHex(hex) {
+    return parseInt(hex.padEnd(2, hex), 16) / 255;
+}
+function parseAlpha(a, asPercentage) {
+    return clamp(asPercentage ? (a / 100) : a, 0, 1);
+}
+function clamp(n, min, max) {
+    return Math.min(Math.max(min, n), max);
+}
+/**
+ * The regular expression for numeric values is not super specific, and it may
+ * happen that it will accept a value that is not a valid number. In order to
+ * detect and eliminate such values this function exists.
+ *
+ * @param array Array of uncertain numbers.
+ * @returns `true` if the specified array contains only valid numbers, `false` otherwise.
+ */
+function validateNumbers(array) {
+    return !array.some(Number.isNaN);
+}
+/**
+ * To generate:
+ * - visit {@link https://www.w3.org/TR/css-color-4/#named-colors}
+ * - run in the console:
+ * @example
+ * copy(`{\n${[...document.querySelector('.named-color-table tbody').children].map((tr) => `${tr.cells[2].textContent.trim()}: [${tr.cells[4].textContent.trim().split(/\s+/).join(', ')}],`).join('\n')}\n}`);
+ */
+const namedColors = {
+    aliceblue: [240, 248, 255],
+    antiquewhite: [250, 235, 215],
+    aqua: [0, 255, 255],
+    aquamarine: [127, 255, 212],
+    azure: [240, 255, 255],
+    beige: [245, 245, 220],
+    bisque: [255, 228, 196],
+    black: [0, 0, 0],
+    blanchedalmond: [255, 235, 205],
+    blue: [0, 0, 255],
+    blueviolet: [138, 43, 226],
+    brown: [165, 42, 42],
+    burlywood: [222, 184, 135],
+    cadetblue: [95, 158, 160],
+    chartreuse: [127, 255, 0],
+    chocolate: [210, 105, 30],
+    coral: [255, 127, 80],
+    cornflowerblue: [100, 149, 237],
+    cornsilk: [255, 248, 220],
+    crimson: [220, 20, 60],
+    cyan: [0, 255, 255],
+    darkblue: [0, 0, 139],
+    darkcyan: [0, 139, 139],
+    darkgoldenrod: [184, 134, 11],
+    darkgray: [169, 169, 169],
+    darkgreen: [0, 100, 0],
+    darkgrey: [169, 169, 169],
+    darkkhaki: [189, 183, 107],
+    darkmagenta: [139, 0, 139],
+    darkolivegreen: [85, 107, 47],
+    darkorange: [255, 140, 0],
+    darkorchid: [153, 50, 204],
+    darkred: [139, 0, 0],
+    darksalmon: [233, 150, 122],
+    darkseagreen: [143, 188, 143],
+    darkslateblue: [72, 61, 139],
+    darkslategray: [47, 79, 79],
+    darkslategrey: [47, 79, 79],
+    darkturquoise: [0, 206, 209],
+    darkviolet: [148, 0, 211],
+    deeppink: [255, 20, 147],
+    deepskyblue: [0, 191, 255],
+    dimgray: [105, 105, 105],
+    dimgrey: [105, 105, 105],
+    dodgerblue: [30, 144, 255],
+    firebrick: [178, 34, 34],
+    floralwhite: [255, 250, 240],
+    forestgreen: [34, 139, 34],
+    fuchsia: [255, 0, 255],
+    gainsboro: [220, 220, 220],
+    ghostwhite: [248, 248, 255],
+    gold: [255, 215, 0],
+    goldenrod: [218, 165, 32],
+    gray: [128, 128, 128],
+    green: [0, 128, 0],
+    greenyellow: [173, 255, 47],
+    grey: [128, 128, 128],
+    honeydew: [240, 255, 240],
+    hotpink: [255, 105, 180],
+    indianred: [205, 92, 92],
+    indigo: [75, 0, 130],
+    ivory: [255, 255, 240],
+    khaki: [240, 230, 140],
+    lavender: [230, 230, 250],
+    lavenderblush: [255, 240, 245],
+    lawngreen: [124, 252, 0],
+    lemonchiffon: [255, 250, 205],
+    lightblue: [173, 216, 230],
+    lightcoral: [240, 128, 128],
+    lightcyan: [224, 255, 255],
+    lightgoldenrodyellow: [250, 250, 210],
+    lightgray: [211, 211, 211],
+    lightgreen: [144, 238, 144],
+    lightgrey: [211, 211, 211],
+    lightpink: [255, 182, 193],
+    lightsalmon: [255, 160, 122],
+    lightseagreen: [32, 178, 170],
+    lightskyblue: [135, 206, 250],
+    lightslategray: [119, 136, 153],
+    lightslategrey: [119, 136, 153],
+    lightsteelblue: [176, 196, 222],
+    lightyellow: [255, 255, 224],
+    lime: [0, 255, 0],
+    limegreen: [50, 205, 50],
+    linen: [250, 240, 230],
+    magenta: [255, 0, 255],
+    maroon: [128, 0, 0],
+    mediumaquamarine: [102, 205, 170],
+    mediumblue: [0, 0, 205],
+    mediumorchid: [186, 85, 211],
+    mediumpurple: [147, 112, 219],
+    mediumseagreen: [60, 179, 113],
+    mediumslateblue: [123, 104, 238],
+    mediumspringgreen: [0, 250, 154],
+    mediumturquoise: [72, 209, 204],
+    mediumvioletred: [199, 21, 133],
+    midnightblue: [25, 25, 112],
+    mintcream: [245, 255, 250],
+    mistyrose: [255, 228, 225],
+    moccasin: [255, 228, 181],
+    navajowhite: [255, 222, 173],
+    navy: [0, 0, 128],
+    oldlace: [253, 245, 230],
+    olive: [128, 128, 0],
+    olivedrab: [107, 142, 35],
+    orange: [255, 165, 0],
+    orangered: [255, 69, 0],
+    orchid: [218, 112, 214],
+    palegoldenrod: [238, 232, 170],
+    palegreen: [152, 251, 152],
+    paleturquoise: [175, 238, 238],
+    palevioletred: [219, 112, 147],
+    papayawhip: [255, 239, 213],
+    peachpuff: [255, 218, 185],
+    peru: [205, 133, 63],
+    pink: [255, 192, 203],
+    plum: [221, 160, 221],
+    powderblue: [176, 224, 230],
+    purple: [128, 0, 128],
+    rebeccapurple: [102, 51, 153],
+    red: [255, 0, 0],
+    rosybrown: [188, 143, 143],
+    royalblue: [65, 105, 225],
+    saddlebrown: [139, 69, 19],
+    salmon: [250, 128, 114],
+    sandybrown: [244, 164, 96],
+    seagreen: [46, 139, 87],
+    seashell: [255, 245, 238],
+    sienna: [160, 82, 45],
+    silver: [192, 192, 192],
+    skyblue: [135, 206, 235],
+    slateblue: [106, 90, 205],
+    slategray: [112, 128, 144],
+    slategrey: [112, 128, 144],
+    snow: [255, 250, 250],
+    springgreen: [0, 255, 127],
+    steelblue: [70, 130, 180],
+    tan: [210, 180, 140],
+    teal: [0, 128, 128],
+    thistle: [216, 191, 216],
+    tomato: [255, 99, 71],
+    turquoise: [64, 224, 208],
+    violet: [238, 130, 238],
+    wheat: [245, 222, 179],
+    white: [255, 255, 255],
+    whitesmoke: [245, 245, 245],
+    yellow: [255, 255, 0],
+    yellowgreen: [154, 205, 50],
+};
+
+/**
+ * Color representation used by WebGL.
+ * Defined in sRGB color space and pre-blended with alpha.
  * @private
  */
 class Color {
-    constructor(r, g, b, a = 1) {
+    /**
+     * @param r Red component premultiplied by `alpha` 0..1
+     * @param g Green component premultiplied by `alpha` 0..1
+     * @param b Blue component premultiplied by `alpha` 0..1
+     * @param [alpha=1] Alpha component 0..1
+     * @param [premultiplied=true] Whether the `r`, `g` and `b` values have already
+     * been multiplied by alpha. If `true` nothing happens if `false` then they will
+     * be multiplied automatically.
+     */
+    constructor(r, g, b, alpha = 1, premultiplied = true) {
         this.r = r;
         this.g = g;
         this.b = b;
-        this.a = a;
+        this.a = alpha;
+        if (!premultiplied) {
+            this.r *= alpha;
+            this.g *= alpha;
+            this.b *= alpha;
+            if (!alpha) {
+                // alpha = 0 erases completely rgb channels. This behavior is not desirable
+                // if this particular color is later used in color interpolation.
+                // Because of that, a reference to original color is saved.
+                this.overwriteGetter('rgb', [r, g, b, alpha]);
+            }
+        }
     }
     /**
-     * Parses valid CSS color strings and returns a `Color` instance.
-     * @param input A valid CSS color string.
+     * Parses CSS color strings and converts colors to sRGB color space if needed.
+     * Officially supported color formats:
+     * - keyword, e.g. 'aquamarine' or 'steelblue'
+     * - hex (with 3, 4, 6 or 8 digits), e.g. '#f0f' or '#e9bebea9'
+     * - rgb and rgba, e.g. 'rgb(0,240,120)' or 'rgba(0%,94%,47%,0.1)' or 'rgb(0 240 120 / .3)'
+     * - hsl and hsla, e.g. 'hsl(0,0%,83%)' or 'hsla(0,0%,83%,.5)' or 'hsl(0 0% 83% / 20%)'
+     *
+     * @param input CSS color string to parse.
      * @returns A `Color` instance, or `undefined` if the input is not a valid color string.
      */
     static parse(input) {
-        if (!input) {
-            return undefined;
-        }
+        // in zoom-and-property function input could be an instance of Color class
         if (input instanceof Color) {
             return input;
         }
         if (typeof input !== 'string') {
-            return undefined;
+            return;
         }
-        const rgba = parseCSSColor_1(input);
-        if (!rgba) {
-            return undefined;
+        const rgba = parseCssColor(input);
+        if (rgba) {
+            return new Color(...rgba, false);
         }
-        return new Color(rgba[0] / 255 * rgba[3], rgba[1] / 255 * rgba[3], rgba[2] / 255 * rgba[3], rgba[3]);
     }
     /**
-     * Returns an RGBA string representing the color value.
+     * Used in color interpolation and by 'to-rgba' expression.
      *
-     * @returns An RGBA string.
+     * @returns Gien color, with reversed alpha blending, in sRGB color space.
+     */
+    get rgb() {
+        const { r, g, b, a } = this;
+        const f = a || Infinity; // reverse alpha blending factor
+        return this.overwriteGetter('rgb', [r / f, g / f, b / f, a]);
+    }
+    /**
+     * Used in color interpolation.
+     *
+     * @returns Gien color, with reversed alpha blending, in HCL color space.
+     */
+    get hcl() {
+        return this.overwriteGetter('hcl', rgbToHcl(this.rgb));
+    }
+    /**
+     * Used in color interpolation.
+     *
+     * @returns Gien color, with reversed alpha blending, in LAB color space.
+     */
+    get lab() {
+        return this.overwriteGetter('lab', rgbToLab(this.rgb));
+    }
+    /**
+     * Lazy getter pattern. When getter is called for the first time lazy value
+     * is calculated and then overwrites getter function in given object instance.
+     *
+     * @example:
+     * const redColor = Color.parse('red');
+     * let x = redColor.hcl; // this will invoke `get hcl()`, which will calculate
+     * // the value of red in HCL space and invoke this `overwriteGetter` function
+     * // which in turn will set a field with a key 'hcl' in the `redColor` object.
+     * // In other words it will override `get hcl()` from its `Color` prototype
+     * // with its own property: hcl = [calculated red value in hcl].
+     * let y = redColor.hcl; // next call will no longer invoke getter but simply
+     * // return the previously calculated value
+     * x === y; // true - `x` is exactly the same object as `y`
+     *
+     * @param getterKey Getter key
+     * @param lazyValue Lazily calculated value to be memoized by current instance
+     * @private
+     */
+    overwriteGetter(getterKey, lazyValue) {
+        Object.defineProperty(this, getterKey, { value: lazyValue });
+        return lazyValue;
+    }
+    /**
+     * Used by 'to-string' expression.
+     *
+     * @returns Serialized color in format `rgba(r,g,b,a)`
+     * where r,g,b are numbers within 0..255 and alpha is number within 1..0
+     *
      * @example
      * var purple = new Color.parse('purple');
      * purple.toString; // = "rgba(128,0,128,1)"
@@ -5007,17 +5253,8 @@ class Color {
      * translucentGreen.toString(); // = "rgba(26,207,26,0.73)"
      */
     toString() {
-        const [r, g, b, a] = this.toArray();
-        return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;
-    }
-    toArray() {
-        const { r, g, b, a } = this;
-        return a === 0 ? [0, 0, 0, 0] : [
-            r * 255 / a,
-            g * 255 / a,
-            b * 255 / a,
-            a
-        ];
+        const [r, g, b, a] = this.rgb;
+        return `rgba(${[r, g, b].map(n => Math.round(n * 255)).join(',')},${a})`;
     }
 }
 Color.black = new Color(0, 0, 0, 1);
@@ -5137,6 +5374,44 @@ class Padding {
     }
 }
 
+/** Set of valid anchor positions, as a set for validation */
+const anchors = new Set(['center', 'left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right']);
+/**
+ * Utility class to assist managing values for text-variable-anchor-offset property. Create instances from
+ * bare arrays using the static method `VariableAnchorOffsetCollection.parse`.
+ * @private
+ */
+class VariableAnchorOffsetCollection {
+    constructor(values) {
+        this.values = values.slice();
+    }
+    static parse(input) {
+        if (input instanceof VariableAnchorOffsetCollection) {
+            return input;
+        }
+        if (!Array.isArray(input) ||
+            input.length < 1 ||
+            input.length % 2 !== 0) {
+            return undefined;
+        }
+        for (let i = 0; i < input.length; i += 2) {
+            // Elements in even positions should be anchor positions; Elements in odd positions should be offset values
+            const anchorValue = input[i];
+            const offsetValue = input[i + 1];
+            if (typeof anchorValue !== 'string' || !anchors.has(anchorValue)) {
+                return undefined;
+            }
+            if (!Array.isArray(offsetValue) || offsetValue.length !== 2 || typeof offsetValue[0] !== 'number' || typeof offsetValue[1] !== 'number') {
+                return undefined;
+            }
+        }
+        return new VariableAnchorOffsetCollection(input);
+    }
+    toString() {
+        return JSON.stringify(this.values);
+    }
+}
+
 class ResolvedImage {
     constructor(options) {
         this.name = options.name;
@@ -5165,31 +5440,16 @@ function validateRGBA(r, g, b, a) {
     return null;
 }
 function isValue(mixed) {
-    if (mixed === null) {
-        return true;
-    }
-    else if (typeof mixed === 'string') {
-        return true;
-    }
-    else if (typeof mixed === 'boolean') {
-        return true;
-    }
-    else if (typeof mixed === 'number') {
-        return true;
-    }
-    else if (mixed instanceof Color) {
-        return true;
-    }
-    else if (mixed instanceof Collator) {
-        return true;
-    }
-    else if (mixed instanceof Formatted) {
-        return true;
-    }
-    else if (mixed instanceof Padding) {
-        return true;
-    }
-    else if (mixed instanceof ResolvedImage) {
+    if (mixed === null ||
+        typeof mixed === 'string' ||
+        typeof mixed === 'boolean' ||
+        typeof mixed === 'number' ||
+        mixed instanceof Color ||
+        mixed instanceof Collator ||
+        mixed instanceof Formatted ||
+        mixed instanceof Padding ||
+        mixed instanceof VariableAnchorOffsetCollection ||
+        mixed instanceof ResolvedImage) {
         return true;
     }
     else if (Array.isArray(mixed)) {
@@ -5237,6 +5497,9 @@ function typeOf(value) {
     else if (value instanceof Padding) {
         return PaddingType;
     }
+    else if (value instanceof VariableAnchorOffsetCollection) {
+        return VariableAnchorOffsetCollectionType;
+    }
     else if (value instanceof ResolvedImage) {
         return ResolvedImageType;
     }
@@ -5270,7 +5533,7 @@ function toString(value) {
     else if (type === 'string' || type === 'number' || type === 'boolean') {
         return String(value);
     }
-    else if (value instanceof Color || value instanceof Formatted || value instanceof Padding || value instanceof ResolvedImage) {
+    else if (value instanceof Color || value instanceof Formatted || value instanceof Padding || value instanceof VariableAnchorOffsetCollection || value instanceof ResolvedImage) {
         return value.toString();
     }
     else {
@@ -5434,71 +5697,80 @@ class Coercion {
         return new Coercion(type, parsed);
     }
     evaluate(ctx) {
-        if (this.type.kind === 'boolean') {
-            return Boolean(this.args[0].evaluate(ctx));
-        }
-        else if (this.type.kind === 'color') {
-            let input;
-            let error;
-            for (const arg of this.args) {
-                input = arg.evaluate(ctx);
-                error = null;
-                if (input instanceof Color) {
-                    return input;
-                }
-                else if (typeof input === 'string') {
-                    const c = ctx.parseColor(input);
-                    if (c)
-                        return c;
-                }
-                else if (Array.isArray(input)) {
-                    if (input.length < 3 || input.length > 4) {
-                        error = `Invalid rbga value ${JSON.stringify(input)}: expected an array containing either three or four numeric values.`;
+        switch (this.type.kind) {
+            case 'boolean':
+                return Boolean(this.args[0].evaluate(ctx));
+            case 'color': {
+                let input;
+                let error;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    error = null;
+                    if (input instanceof Color) {
+                        return input;
                     }
-                    else {
-                        error = validateRGBA(input[0], input[1], input[2], input[3]);
+                    else if (typeof input === 'string') {
+                        const c = ctx.parseColor(input);
+                        if (c)
+                            return c;
                     }
-                    if (!error) {
-                        return new Color(input[0] / 255, input[1] / 255, input[2] / 255, input[3]);
+                    else if (Array.isArray(input)) {
+                        if (input.length < 3 || input.length > 4) {
+                            error = `Invalid rbga value ${JSON.stringify(input)}: expected an array containing either three or four numeric values.`;
+                        }
+                        else {
+                            error = validateRGBA(input[0], input[1], input[2], input[3]);
+                        }
+                        if (!error) {
+                            return new Color(input[0] / 255, input[1] / 255, input[2] / 255, input[3]);
+                        }
                     }
                 }
+                throw new RuntimeError(error || `Could not parse color from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(error || `Could not parse color from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
-        }
-        else if (this.type.kind === 'padding') {
-            let input;
-            for (const arg of this.args) {
-                input = arg.evaluate(ctx);
-                const pad = Padding.parse(input);
-                if (pad) {
-                    return pad;
+            case 'padding': {
+                let input;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    const pad = Padding.parse(input);
+                    if (pad) {
+                        return pad;
+                    }
                 }
+                throw new RuntimeError(`Could not parse padding from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(`Could not parse padding from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
-        }
-        else if (this.type.kind === 'number') {
-            let value = null;
-            for (const arg of this.args) {
-                value = arg.evaluate(ctx);
-                if (value === null)
-                    return 0;
-                const num = Number(value);
-                if (isNaN(num))
-                    continue;
-                return num;
+            case 'variableAnchorOffsetCollection': {
+                let input;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    const coll = VariableAnchorOffsetCollection.parse(input);
+                    if (coll) {
+                        return coll;
+                    }
+                }
+                throw new RuntimeError(`Could not parse variableAnchorOffsetCollection from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(`Could not convert ${JSON.stringify(value)} to number.`);
-        }
-        else if (this.type.kind === 'formatted') {
-            // There is no explicit 'to-formatted' but this coercion can be implicitly
-            // created by properties that expect the 'formatted' type.
-            return Formatted.fromString(toString(this.args[0].evaluate(ctx)));
-        }
-        else if (this.type.kind === 'resolvedImage') {
-            return ResolvedImage.fromString(toString(this.args[0].evaluate(ctx)));
-        }
-        else {
-            return toString(this.args[0].evaluate(ctx));
+            case 'number': {
+                let value = null;
+                for (const arg of this.args) {
+                    value = arg.evaluate(ctx);
+                    if (value === null)
+                        return 0;
+                    const num = Number(value);
+                    if (isNaN(num))
+                        continue;
+                    return num;
+                }
+                throw new RuntimeError(`Could not convert ${JSON.stringify(value)} to number.`);
+            }
+            case 'formatted':
+                // There is no explicit 'to-formatted' but this coercion can be implicitly
+                // created by properties that expect the 'formatted' type.
+                return Formatted.fromString(toString(this.args[0].evaluate(ctx)));
+            case 'resolvedImage':
+                return ResolvedImage.fromString(toString(this.args[0].evaluate(ctx)));
+            default:
+                return toString(this.args[0].evaluate(ctx));
         }
     }
     eachChild(fn) {
@@ -5618,6 +5890,9 @@ class ParsingContext {
                         parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
                     }
                     else if (expected.kind === 'padding' && (actual.kind === 'value' || actual.kind === 'number' || actual.kind === 'array')) {
+                        parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
+                    }
+                    else if (expected.kind === 'variableAnchorOffsetCollection' && (actual.kind === 'value' || actual.kind === 'array')) {
                         parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
                     }
                     else if (this.checkSubtype(expected, actual)) {
@@ -6369,19 +6644,80 @@ class Step {
     }
 }
 
+/**
+ * Checks whether the specified color space is one of the supported interpolation color spaces.
+ *
+ * @param colorSpace Color space key to verify.
+ * @returns `true` if the specified color space is one of the supported
+ * interpolation color spaces, `false` otherwise
+ */
+function isSupportedInterpolationColorSpace(colorSpace) {
+    return colorSpace === 'rgb' || colorSpace === 'hcl' || colorSpace === 'lab';
+}
+/**
+ * @param interpolationType Interpolation type
+ * @returns interpolation fn
+ * @deprecated use `interpolate[type]` instead
+ */
 const interpolateFactory = (interpolationType) => {
     switch (interpolationType) {
         case 'number': return number;
         case 'color': return color;
         case 'array': return array;
         case 'padding': return padding$1;
+        case 'variableAnchorOffsetCollection': return variableAnchorOffsetCollection;
     }
 };
-function number(a, b, t) {
-    return (a * (1 - t)) + (b * t);
+function number(from, to, t) {
+    return from + t * (to - from);
 }
-function color(from, to, t) {
-    return new Color(number(from.r, to.r, t), number(from.g, to.g, t), number(from.b, to.b, t), number(from.a, to.a, t));
+function color(from, to, t, spaceKey = 'rgb') {
+    switch (spaceKey) {
+        case 'rgb': {
+            const [r, g, b, alpha] = array(from.rgb, to.rgb, t);
+            return new Color(r, g, b, alpha, false);
+        }
+        case 'hcl': {
+            const [hue0, chroma0, light0, alphaF] = from.hcl;
+            const [hue1, chroma1, light1, alphaT] = to.hcl;
+            // https://github.com/gka/chroma.js/blob/cd1b3c0926c7a85cbdc3b1453b3a94006de91a92/src/interpolator/_hsx.js
+            let hue, chroma;
+            if (!isNaN(hue0) && !isNaN(hue1)) {
+                let dh = hue1 - hue0;
+                if (hue1 > hue0 && dh > 180) {
+                    dh -= 360;
+                }
+                else if (hue1 < hue0 && hue0 - hue1 > 180) {
+                    dh += 360;
+                }
+                hue = hue0 + t * dh;
+            }
+            else if (!isNaN(hue0)) {
+                hue = hue0;
+                if (light1 === 1 || light1 === 0)
+                    chroma = chroma0;
+            }
+            else if (!isNaN(hue1)) {
+                hue = hue1;
+                if (light0 === 1 || light0 === 0)
+                    chroma = chroma1;
+            }
+            else {
+                hue = NaN;
+            }
+            const [r, g, b, alpha] = hclToRgb([
+                hue,
+                chroma !== null && chroma !== void 0 ? chroma : number(chroma0, chroma1, t),
+                number(light0, light1, t),
+                number(alphaF, alphaT, t),
+            ]);
+            return new Color(r, g, b, alpha, false);
+        }
+        case 'lab': {
+            const [r, g, b, alpha] = labToRgb(array(from.lab, to.lab, t));
+            return new Color(r, g, b, alpha, false);
+        }
+    }
 }
 function array(from, to, t) {
     return from.map((d, i) => {
@@ -6389,123 +6725,35 @@ function array(from, to, t) {
     });
 }
 function padding$1(from, to, t) {
-    const fromVal = from.values;
-    const toVal = to.values;
-    return new Padding([
-        number(fromVal[0], toVal[0], t),
-        number(fromVal[1], toVal[1], t),
-        number(fromVal[2], toVal[2], t),
-        number(fromVal[3], toVal[3], t)
-    ]);
+    return new Padding(array(from.values, to.values, t));
 }
-const interpolates = {
+function variableAnchorOffsetCollection(from, to, t) {
+    const fromValues = from.values;
+    const toValues = to.values;
+    if (fromValues.length !== toValues.length) {
+        throw new RuntimeError(`Cannot interpolate values of different length. from: ${from.toString()}, to: ${to.toString()}`);
+    }
+    const output = [];
+    for (let i = 0; i < fromValues.length; i += 2) {
+        // Anchor entries must match
+        if (fromValues[i] !== toValues[i]) {
+            throw new RuntimeError(`Cannot interpolate values containing mismatched anchors. from[${i}]: ${fromValues[i]}, to[${i}]: ${toValues[i]}`);
+        }
+        output.push(fromValues[i]);
+        // Interpolate the offset values for each anchor
+        const [fx, fy] = fromValues[i + 1];
+        const [tx, ty] = toValues[i + 1];
+        output.push([number(fx, tx, t), number(fy, ty, t)]);
+    }
+    return new VariableAnchorOffsetCollection(output);
+}
+const interpolate = {
     number,
     color,
     array,
-    padding: padding$1
+    padding: padding$1,
+    variableAnchorOffsetCollection
 };
-
-var interpolate = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  array: array,
-  color: color,
-  default: interpolates,
-  interpolateFactory: interpolateFactory,
-  number: number,
-  padding: padding$1
-});
-
-// Constants
-const Xn = 0.950470, // D65 standard referent
-Yn = 1, Zn = 1.088830, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1, deg2rad = Math.PI / 180, rad2deg = 180 / Math.PI;
-// Utilities
-function xyz2lab(t) {
-    return t > t3 ? Math.pow(t, 1 / 3) : t / t2 + t0;
-}
-function lab2xyz(t) {
-    return t > t1 ? t * t * t : t2 * (t - t0);
-}
-function xyz2rgb(x) {
-    return 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
-}
-function rgb2xyz(x) {
-    x /= 255;
-    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-}
-// LAB
-function rgbToLab(rgbColor) {
-    const b = rgb2xyz(rgbColor.r), a = rgb2xyz(rgbColor.g), l = rgb2xyz(rgbColor.b), x = xyz2lab((0.4124564 * b + 0.3575761 * a + 0.1804375 * l) / Xn), y = xyz2lab((0.2126729 * b + 0.7151522 * a + 0.0721750 * l) / Yn), z = xyz2lab((0.0193339 * b + 0.1191920 * a + 0.9503041 * l) / Zn);
-    return {
-        l: 116 * y - 16,
-        a: 500 * (x - y),
-        b: 200 * (y - z),
-        alpha: rgbColor.a
-    };
-}
-function labToRgb(labColor) {
-    let y = (labColor.l + 16) / 116, x = isNaN(labColor.a) ? y : y + labColor.a / 500, z = isNaN(labColor.b) ? y : y - labColor.b / 200;
-    y = Yn * lab2xyz(y);
-    x = Xn * lab2xyz(x);
-    z = Zn * lab2xyz(z);
-    return new Color(xyz2rgb(3.2404542 * x - 1.5371385 * y - 0.4985314 * z), // D65 -> sRGB
-    xyz2rgb(-0.9692660 * x + 1.8760108 * y + 0.0415560 * z), xyz2rgb(0.0556434 * x - 0.2040259 * y + 1.0572252 * z), labColor.alpha);
-}
-function interpolateLab(from, to, t) {
-    return {
-        l: number(from.l, to.l, t),
-        a: number(from.a, to.a, t),
-        b: number(from.b, to.b, t),
-        alpha: number(from.alpha, to.alpha, t)
-    };
-}
-// HCL
-function rgbToHcl(rgbColor) {
-    const { l, a, b } = rgbToLab(rgbColor);
-    const h = Math.atan2(b, a) * rad2deg;
-    return {
-        h: h < 0 ? h + 360 : h,
-        c: Math.sqrt(a * a + b * b),
-        l,
-        alpha: rgbColor.a
-    };
-}
-function hclToRgb(hclColor) {
-    const h = hclColor.h * deg2rad, c = hclColor.c, l = hclColor.l;
-    return labToRgb({
-        l,
-        a: Math.cos(h) * c,
-        b: Math.sin(h) * c,
-        alpha: hclColor.alpha
-    });
-}
-function interpolateHue(a, b, t) {
-    const d = b - a;
-    return a + t * (d > 180 || d < -180 ? d - 360 * Math.round(d / 360) : d);
-}
-function interpolateHcl(from, to, t) {
-    return {
-        h: interpolateHue(from.h, to.h, t),
-        c: number(from.c, to.c, t),
-        l: number(from.l, to.l, t),
-        alpha: number(from.alpha, to.alpha, t)
-    };
-}
-const lab = {
-    forward: rgbToLab,
-    reverse: labToRgb,
-    interpolate: interpolateLab
-};
-const hcl = {
-    forward: rgbToHcl,
-    reverse: hclToRgb,
-    interpolate: interpolateHcl
-};
-
-var colorSpaces = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  hcl: hcl,
-  lab: lab
-});
 
 class Interpolate {
     constructor(type, operator, interpolation, input, stops) {
@@ -6530,7 +6778,7 @@ class Interpolate {
         }
         else if (interpolation.name === 'cubic-bezier') {
             const c = interpolation.controlPoints;
-            const ub = new unitbezier(c[0], c[1], c[2], c[3]);
+            const ub = new UnitBezier$1(c[0], c[1], c[2], c[3]);
             t = ub.solve(exponentialInterpolation(input, 1, lower, upper));
         }
         return t;
@@ -6600,12 +6848,11 @@ class Interpolate {
             outputType = outputType || parsed.type;
             stops.push([label, parsed]);
         }
-        if (outputType.kind !== 'number' &&
-            outputType.kind !== 'color' &&
-            outputType.kind !== 'padding' &&
-            !(outputType.kind === 'array' &&
-                outputType.itemType.kind === 'number' &&
-                typeof outputType.N === 'number')) {
+        if (!verifyType(outputType, NumberType) &&
+            !verifyType(outputType, ColorType) &&
+            !verifyType(outputType, PaddingType) &&
+            !verifyType(outputType, VariableAnchorOffsetCollectionType) &&
+            !verifyType(outputType, array$1(NumberType))) {
             return context.error(`Type ${toString$1(outputType)} is not interpolatable.`);
         }
         return new Interpolate(outputType, operator, interpolation, input, stops);
@@ -6630,14 +6877,13 @@ class Interpolate {
         const t = Interpolate.interpolationFactor(this.interpolation, value, lower, upper);
         const outputLower = outputs[index].evaluate(ctx);
         const outputUpper = outputs[index + 1].evaluate(ctx);
-        if (this.operator === 'interpolate') {
-            return interpolate[this.type.kind.toLowerCase()](outputLower, outputUpper, t); // eslint-disable-line import/namespace
-        }
-        else if (this.operator === 'interpolate-hcl') {
-            return hcl.reverse(hcl.interpolate(hcl.forward(outputLower), hcl.forward(outputUpper), t));
-        }
-        else {
-            return lab.reverse(lab.interpolate(lab.forward(outputLower), lab.forward(outputUpper), t));
+        switch (this.operator) {
+            case 'interpolate':
+                return interpolate[this.type.kind](outputLower, outputUpper, t);
+            case 'interpolate-hcl':
+                return interpolate.color(outputLower, outputUpper, t, 'hcl');
+            case 'interpolate-lab':
+                return interpolate.color(outputLower, outputUpper, t, 'lab');
         }
     }
     eachChild(fn) {
@@ -7542,7 +7788,7 @@ function rgba(ctx, [r, g, b, a]) {
     const error = validateRGBA(r, g, b, alpha);
     if (error)
         throw new RuntimeError(error);
-    return new Color(r / 255 * alpha, g / 255 * alpha, b / 255 * alpha, alpha);
+    return new Color(r / 255, g / 255, b / 255, alpha, false);
 }
 function has(key, obj) {
     return key in obj;
@@ -7581,8 +7827,9 @@ CompoundExpression.register(expressions, {
         array$1(NumberType, 4),
         [ColorType],
         (ctx, [v]) => {
-            return v.evaluate(ctx).toArray();
-        }
+            const [r, g, b, a] = v.evaluate(ctx).rgb;
+            return [r * 255, g * 255, b * 255, a];
+        },
     ],
     'rgb': [
         ColorType,
@@ -8069,8 +8316,8 @@ function createFunction(parameters, propertySpec) {
             parameters.default = parseFn(propertySpec.default);
         }
     }
-    if (parameters.colorSpace && parameters.colorSpace !== 'rgb' && !colorSpaces[parameters.colorSpace]) { // eslint-disable-line import/namespace
-        throw new Error(`Unknown color space: ${parameters.colorSpace}`);
+    if (parameters.colorSpace && !isSupportedInterpolationColorSpace(parameters.colorSpace)) {
+        throw new Error(`Unknown color space: "${parameters.colorSpace}"`);
     }
     let innerFun;
     let hashedStops;
@@ -8199,11 +8446,7 @@ function evaluateExponentialFunction(parameters, propertySpec, input) {
     const t = interpolationFactor(input, base, parameters.stops[index][0], parameters.stops[index + 1][0]);
     const outputLower = parameters.stops[index][1];
     const outputUpper = parameters.stops[index + 1][1];
-    let interp = interpolate[propertySpec.type] || identityFunction; // eslint-disable-line import/namespace
-    if (parameters.colorSpace && parameters.colorSpace !== 'rgb') {
-        const colorspace = colorSpaces[parameters.colorSpace]; // eslint-disable-line import/namespace
-        interp = (a, b) => colorspace.reverse(colorspace.interpolate(colorspace.forward(a), colorspace.forward(b), t));
-    }
+    const interp = interpolate[propertySpec.type] || identityFunction;
     if (typeof outputLower.evaluate === 'function') {
         return {
             evaluate(...args) {
@@ -8213,11 +8456,11 @@ function evaluateExponentialFunction(parameters, propertySpec, input) {
                 if (evaluatedLower === undefined || evaluatedUpper === undefined) {
                     return undefined;
                 }
-                return interp(evaluatedLower, evaluatedUpper, t);
+                return interp(evaluatedLower, evaluatedUpper, t, parameters.colorSpace);
             }
         };
     }
-    return interp(outputLower, outputUpper, t);
+    return interp(outputLower, outputUpper, t, parameters.colorSpace);
 }
 function evaluateIdentityFunction(parameters, propertySpec, input) {
     switch (propertySpec.type) {
@@ -8396,6 +8639,9 @@ class ZoomDependentExpression {
         }
     }
 }
+function isZoomExpression(expression) {
+    return expression._styleExpression !== undefined;
+}
 function createPropertyExpression(expressionInput, propertySpec) {
     const expression = createExpression(expressionInput, propertySpec);
     if (expression.result === 'error') {
@@ -8468,6 +8714,9 @@ function normalizePropertyExpression(value, specification) {
         else if (specification.type === 'padding' && (typeof value === 'number' || Array.isArray(value))) {
             constant = Padding.parse(value);
         }
+        else if (specification.type === 'variableAnchorOffsetCollection' && Array.isArray(value)) {
+            constant = VariableAnchorOffsetCollection.parse(value);
+        }
         return {
             kind: 'constant',
             evaluate: () => constant
@@ -8521,7 +8770,8 @@ function getExpectedType(spec) {
         boolean: BooleanType,
         formatted: FormattedType,
         padding: PaddingType,
-        resolvedImage: ResolvedImageType
+        resolvedImage: ResolvedImageType,
+        variableAnchorOffsetCollection: VariableAnchorOffsetCollectionType
     };
     if (spec.type === 'array') {
         return array$1(types[spec.value] || ValueType, spec.length);
@@ -8540,6 +8790,9 @@ function getDefaultValue(spec) {
     }
     else if (spec.type === 'padding') {
         return Padding.parse(spec.default) || null;
+    }
+    else if (spec.type === 'variableAnchorOffsetCollection') {
+        return VariableAnchorOffsetCollection.parse(spec.default) || null;
     }
     else if (spec.default === undefined) {
         return null;
@@ -8600,7 +8853,7 @@ const filterSpec = {
  * passes its test.
  *
  * @private
- * @param {Array} filter maplibre gl filter
+ * @param {Array} filter MapLibre filter
  * @returns {Function} filter-evaluating function
  */
 function createFilter(filter) {
@@ -9663,7 +9916,7 @@ function validateColor(options) {
     if (type !== 'string') {
         return [new ValidationError(key, value, `color expected, ${type} found`)];
     }
-    if (parseCSSColor_1(value) === null) {
+    if (!Color.parse(String(value))) { // cast String object to string primitive
         return [new ValidationError(key, value, `color expected, "${value}" found`)];
     }
     return [];
@@ -10210,6 +10463,38 @@ function validatePadding(options) {
     }
 }
 
+function validateVariableAnchorOffsetCollection(options) {
+    const key = options.key;
+    const value = options.value;
+    const type = getType(value);
+    const styleSpec = options.styleSpec;
+    if (type !== 'array' || value.length < 1 || value.length % 2 !== 0) {
+        return [new ValidationError(key, value, 'variableAnchorOffsetCollection requires a non-empty array of even length')];
+    }
+    let errors = [];
+    for (let i = 0; i < value.length; i += 2) {
+        // Elements in even positions should be values from text-anchor enum
+        errors = errors.concat(validateEnum({
+            key: `${key}[${i}]`,
+            value: value[i],
+            valueSpec: styleSpec['layout_symbol']['text-anchor']
+        }));
+        // Elements in odd positions should be points (2-element numeric arrays)
+        errors = errors.concat(validateArray({
+            key: `${key}[${i + 1}]`,
+            value: value[i + 1],
+            valueSpec: {
+                length: 2,
+                value: 'number'
+            },
+            validateSpec: options.validateSpec,
+            style: options.style,
+            styleSpec
+        }));
+    }
+    return errors;
+}
+
 function validateSprite(options) {
     let errors = [];
     const sprite = options.value;
@@ -10272,6 +10557,7 @@ const VALIDATORS = {
     'formatted': validateFormatted,
     'resolvedImage': validateImage,
     'padding': validatePadding,
+    'variableAnchorOffsetCollection': validateVariableAnchorOffsetCollection,
     'sprite': validateSprite,
 };
 // Main recursive validation function. Tracks:
@@ -10321,7 +10607,7 @@ function validateGlyphsUrl(options) {
 }
 
 /**
- * Validate a MapLibre GL style against the style specification. This entrypoint,
+ * Validate a MapLibre style against the style specification. This entrypoint,
  * `maplibre-gl-style-spec/lib/validate_style.min`, is designed to produce as
  * small a browserify bundle as possible by omitting unnecessary functionality
  * and legacy style specifications.
@@ -10400,6 +10686,7 @@ const expression = {
     createPropertyExpression,
     isExpression,
     isExpressionFilter,
+    isZoomExpression,
     normalizePropertyExpression,
 };
 const styleFunction = {
@@ -10412,19 +10699,21 @@ const visit = { eachLayer, eachProperty, eachSource };
 const config = {
     MAX_PARALLEL_IMAGE_REQUESTS: 16,
     MAX_PARALLEL_IMAGE_REQUESTS_PER_FRAME: 8,
+    MAX_TILE_CACHE_ZOOM_LEVELS: 5,
     REGISTERED_PROTOCOLS: {},
     WORKER_URL: ''
 };
 
 /**
  * An error thrown when a HTTP request results in an error response.
- * @extends Error
- * @param {number} status The response's HTTP status code.
- * @param {string} statusText The response's HTTP status text.
- * @param {string} url The request's URL.
- * @param {Blob} body The response's body.
  */
 class AJAXError extends Error {
+    /**
+     * @param status - The response's HTTP status code.
+     * @param statusText - The response's HTTP status text.
+     * @param url - The request's URL.
+     * @param body - The response's body.
+     */
     constructor(status, statusText, url, body) {
         super(`AJAXError: ${statusText} (${status}): ${url}`);
         this.status = status;
@@ -10441,6 +10730,7 @@ class AJAXError extends Error {
 const getReferrer = isWorker() ?
     () => self.worker && self.worker.referrer :
     () => (window.location.protocol === 'blob:' ? window.parent : window).location.href;
+const getProtocolAction = url => config.REGISTERED_PROTOCOLS[url.substring(0, url.indexOf('://'))];
 // Determines whether a URL is a file:// URL. This is obviously the case if it begins
 // with file://. Relative URLs are also file:// URLs iff the original document was loaded
 // via a file:// URL.
@@ -10452,6 +10742,7 @@ function makeFetchRequest(requestParameters, callback) {
         body: requestParameters.body,
         credentials: requestParameters.credentials,
         headers: requestParameters.headers,
+        cache: requestParameters.cache,
         referrer: getReferrer(),
         signal: controller.signal
     });
@@ -10493,7 +10784,7 @@ function makeFetchRequest(requestParameters, callback) {
         });
     };
     const finishRequest = (response) => {
-        (requestParameters.type === 'arrayBuffer' ? response.arrayBuffer() :
+        ((requestParameters.type === 'arrayBuffer' || requestParameters.type === 'image') ? response.arrayBuffer() :
             requestParameters.type === 'json' ? response.json() :
                 response.text()).then(result => {
             if (aborted)
@@ -10515,7 +10806,7 @@ function makeFetchRequest(requestParameters, callback) {
 function makeXMLHttpRequest(requestParameters, callback) {
     const xhr = new XMLHttpRequest();
     xhr.open(requestParameters.method || 'GET', requestParameters.url, true);
-    if (requestParameters.type === 'arrayBuffer') {
+    if (requestParameters.type === 'arrayBuffer' || requestParameters.type === 'image') {
         xhr.responseType = 'arraybuffer';
     }
     for (const k in requestParameters.headers) {
@@ -10564,8 +10855,7 @@ const makeRequest = function (requestParameters, callback) {
             return self.worker.actor.send('getResource', requestParameters, callback);
         }
         if (!isWorker()) {
-            const protocol = requestParameters.url.substring(0, requestParameters.url.indexOf('://'));
-            const action = config.REGISTERED_PROTOCOLS[protocol] || makeFetchRequest;
+            const action = getProtocolAction(requestParameters.url) || makeFetchRequest;
             return action(requestParameters, callback);
         }
     }
@@ -10581,18 +10871,29 @@ const makeRequest = function (requestParameters, callback) {
     return makeXMLHttpRequest(requestParameters, callback);
 };
 const getJSON = function (requestParameters, callback) {
-    return makeRequest(extend$2(requestParameters, { type: 'json' }), callback);
+    return makeRequest(extend$1(requestParameters, { type: 'json' }), callback);
 };
 const getArrayBuffer = function (requestParameters, callback) {
-    return makeRequest(extend$2(requestParameters, { type: 'arrayBuffer' }), callback);
+    return makeRequest(extend$1(requestParameters, { type: 'arrayBuffer' }), callback);
 };
 const postData = function (requestParameters, callback) {
-    return makeRequest(extend$2(requestParameters, { method: 'POST' }), callback);
+    return makeRequest(extend$1(requestParameters, { method: 'POST' }), callback);
 };
-function sameOrigin(url) {
-    const a = window.document.createElement('a');
-    a.href = url;
-    return a.protocol === window.document.location.protocol && a.host === window.document.location.host;
+function sameOrigin(inComingUrl) {
+    // URL class should be available everywhere
+    // https://developer.mozilla.org/en-US/docs/Web/API/URL
+    // In addtion, a relative URL "/foo" or "./foo" will throw exception in its ctor,
+    // try-catch is expansive so just use a heuristic check to avoid it
+    // also check data URL
+    if (!inComingUrl ||
+        inComingUrl.indexOf('://') <= 0 || // relative URL
+        inComingUrl.indexOf('data:image/') === 0 || // data image URL
+        inComingUrl.indexOf('blob:') === 0) { // blob
+        return true;
+    }
+    const urlObj = new URL(inComingUrl);
+    const locationObj = window.location;
+    return urlObj.protocol === locationObj.protocol && urlObj.host === locationObj.host;
 }
 const getVideo = function (urls, callback) {
     const video = window.document.createElement('video');
@@ -10615,11 +10916,7 @@ const registry = {};
 /**
  * Register the given class as serializable.
  *
- * @param options
- * @param options.omit List of properties to omit from serialization (e.g., cached/computed properties)
- * @param options.shallow List of properties that should be serialized by a simple shallow copy, rather than by a recursive call to serialize().
- *
- * @private
+ * @param options - the registration options
  */
 function register(name, klass, options = {}) {
     if (registry[name])
@@ -10665,8 +10962,6 @@ function isArrayBuffer(value) {
  * If a `transferables` array is provided, add any transferable objects (i.e.,
  * any ArrayBuffers or ArrayBuffer views) to the list. (If a copy is needed,
  * this should happen in the client code, before using serialize().)
- *
- * @private
  */
 function serialize(input, transferables) {
     if (input === null ||
@@ -10810,8 +11105,6 @@ function deserialize(input) {
 /**
  * Invokes the wrapped function in a non-blocking way when trigger() is called. Invocation requests
  * are ignored until the function was actually invoked.
- *
- * @private
  */
 class ThrottledInvoker {
     constructor(callback) {
@@ -10850,14 +11143,72 @@ class ThrottledInvoker {
  * that maintains the relationship between asynchronous tasks and the objects
  * that spin them off - in this case, tasks like parsing parts of styles,
  * owned by the styles
- *
- * @param {WebWorker} target
- * @param {WebWorker} parent
- * @param {string|number} mapId A unique identifier for the Map instance using this Actor.
- * @private
  */
 class Actor {
+    /**
+     * @param target - The target
+     * @param parent - The parent
+     * @param mapId - A unique identifier for the Map instance using this Actor.
+     */
     constructor(target, parent, mapId) {
+        this.receive = (message) => {
+            const data = message.data;
+            const id = data.id;
+            if (!id) {
+                return;
+            }
+            if (data.targetMapId && this.mapId !== data.targetMapId) {
+                return;
+            }
+            if (data.type === '<cancel>') {
+                // Remove the original request from the queue. This is only possible if it
+                // hasn't been kicked off yet. The id will remain in the queue, but because
+                // there is no associated task, it will be dropped once it's time to execute it.
+                delete this.tasks[id];
+                const cancel = this.cancelCallbacks[id];
+                delete this.cancelCallbacks[id];
+                if (cancel) {
+                    cancel();
+                }
+            }
+            else {
+                if (isWorker() || data.mustQueue) {
+                    // In workers, store the tasks that we need to process before actually processing them. This
+                    // is necessary because we want to keep receiving messages, and in particular,
+                    // <cancel> messages. Some tasks may take a while in the worker thread, so before
+                    // executing the next task in our queue, postMessage preempts this and <cancel>
+                    // messages can be processed. We're using a MessageChannel object to get throttle the
+                    // process() flow to one at a time.
+                    this.tasks[id] = data;
+                    this.taskQueue.push(id);
+                    this.invoker.trigger();
+                }
+                else {
+                    // In the main thread, process messages immediately so that other work does not slip in
+                    // between getting partial data back from workers.
+                    this.processTask(id, data);
+                }
+            }
+        };
+        this.process = () => {
+            if (!this.taskQueue.length) {
+                return;
+            }
+            const id = this.taskQueue.shift();
+            const task = this.tasks[id];
+            delete this.tasks[id];
+            // Schedule another process call if we know there's more to process _before_ invoking the
+            // current task. This is necessary so that processing continues even if the current task
+            // doesn't execute successfully.
+            if (this.taskQueue.length) {
+                this.invoker.trigger();
+            }
+            if (!task) {
+                // If the task ID doesn't have associated task data anymore, it was canceled.
+                return;
+            }
+            this.processTask(id, task);
+        };
         this.target = target;
         this.parent = parent;
         this.mapId = mapId;
@@ -10865,7 +11216,6 @@ class Actor {
         this.tasks = {};
         this.taskQueue = [];
         this.cancelCallbacks = {};
-        bindAll(['receive', 'process'], this);
         this.invoker = new ThrottledInvoker(this.process);
         this.target.addEventListener('message', this.receive, false);
         this.globalScope = isWorker() ? target : window;
@@ -10874,9 +11224,8 @@ class Actor {
      * Sends a message from a main-thread map to a Worker or from a Worker back to
      * a main-thread map instance.
      *
-     * @param type The name of the target method to invoke or '[source-type].[source-name].name' for a method on a WorkerSource.
-     * @param targetMapId A particular mapId to which to send this message.
-     * @private
+     * @param type - The name of the target method to invoke or '[source-type].[source-name].name' for a method on a WorkerSource.
+     * @param targetMapId - A particular mapId to which to send this message.
      */
     send(type, data, callback, targetMapId, mustQueue = false) {
         // We're using a string ID instead of numbers because they are being used as object keys
@@ -10911,63 +11260,6 @@ class Actor {
                 });
             }
         };
-    }
-    receive(message) {
-        const data = message.data, id = data.id;
-        if (!id) {
-            return;
-        }
-        if (data.targetMapId && this.mapId !== data.targetMapId) {
-            return;
-        }
-        if (data.type === '<cancel>') {
-            // Remove the original request from the queue. This is only possible if it
-            // hasn't been kicked off yet. The id will remain in the queue, but because
-            // there is no associated task, it will be dropped once it's time to execute it.
-            delete this.tasks[id];
-            const cancel = this.cancelCallbacks[id];
-            delete this.cancelCallbacks[id];
-            if (cancel) {
-                cancel();
-            }
-        }
-        else {
-            if (isWorker() || data.mustQueue) {
-                // In workers, store the tasks that we need to process before actually processing them. This
-                // is necessary because we want to keep receiving messages, and in particular,
-                // <cancel> messages. Some tasks may take a while in the worker thread, so before
-                // executing the next task in our queue, postMessage preempts this and <cancel>
-                // messages can be processed. We're using a MessageChannel object to get throttle the
-                // process() flow to one at a time.
-                this.tasks[id] = data;
-                this.taskQueue.push(id);
-                this.invoker.trigger();
-            }
-            else {
-                // In the main thread, process messages immediately so that other work does not slip in
-                // between getting partial data back from workers.
-                this.processTask(id, data);
-            }
-        }
-    }
-    process() {
-        if (!this.taskQueue.length) {
-            return;
-        }
-        const id = this.taskQueue.shift();
-        const task = this.tasks[id];
-        delete this.tasks[id];
-        // Schedule another process call if we know there's more to process _before_ invoking the
-        // current task. This is necessary so that processing continues even if the current task
-        // doesn't execute successfully.
-        if (this.taskQueue.length) {
-            this.invoker.trigger();
-        }
-        if (!task) {
-            // If the task ID doesn't have associated task data anymore, it was canceled.
-            return;
-        }
-        this.processTask(id, task);
     }
     processTask(id, task) {
         if (task.type === '<response>') {
@@ -11044,31 +11336,37 @@ function _removeEventListener(type, listener, listenerList) {
         }
     }
 }
+/**
+ * The event class
+ */
 class Event {
     constructor(type, data = {}) {
-        extend$2(this, data);
+        extend$1(this, data);
         this.type = type;
     }
 }
+/**
+ * An error event
+ */
 class ErrorEvent extends Event {
     constructor(error, data = {}) {
-        super('error', extend$2({ error }, data));
+        super('error', extend$1({ error }, data));
     }
 }
 /**
  * Methods mixed in to other classes for event capabilities.
  *
- * @mixin Evented
+ * @group Event Related
  */
 class Evented {
     /**
      * Adds a listener to a specified event type.
      *
-     * @param {string} type The event type to add a listen for.
-     * @param {Function} listener The function to be called when the event is fired.
-     *   The listener function is called with the data object passed to `fire`,
-     *   extended with `target` and `type` properties.
-     * @returns {Object} `this`
+     * @param type - The event type to add a listen for.
+     * @param listener - The function to be called when the event is fired.
+     * The listener function is called with the data object passed to `fire`,
+     * extended with `target` and `type` properties.
+     * @returns `this`
      */
     on(type, listener) {
         this._listeners = this._listeners || {};
@@ -11078,9 +11376,9 @@ class Evented {
     /**
      * Removes a previously registered event listener.
      *
-     * @param {string} type The event type to remove listeners for.
-     * @param {Function} listener The listener function to remove.
-     * @returns {Object} `this`
+     * @param type - The event type to remove listeners for.
+     * @param listener - The listener function to remove.
+     * @returns `this`
      */
     off(type, listener) {
         _removeEventListener(type, listener, this._listeners);
@@ -11092,9 +11390,9 @@ class Evented {
      *
      * The listener will be called first time the event fires after the listener is registered.
      *
-     * @param {string} type The event type to listen for.
-     * @param {Function} listener The function to be called when the event is fired the first time.
-     * @returns {Object} `this` or a promise if a listener is not provided
+     * @param type - The event type to listen for.
+     * @param listener - The function to be called when the event is fired the first time.
+     * @returns `this` or a promise if a listener is not provided
      */
     once(type, listener) {
         if (!listener) {
@@ -11126,7 +11424,7 @@ class Evented {
             }
             const parent = this._eventedParent;
             if (parent) {
-                extend$2(event, typeof this._eventedParentData === 'function' ? this._eventedParentData() : this._eventedParentData);
+                extend$1(event, typeof this._eventedParentData === 'function' ? this._eventedParentData() : this._eventedParentData);
                 parent.fire(event);
             }
             // To ensure that no error events are dropped, print them to the
@@ -11140,9 +11438,8 @@ class Evented {
     /**
      * Returns a true if this instance of Evented or any forwardeed instances of Evented have a listener for the specified type.
      *
-     * @param {string} type The event type
-     * @returns {boolean} `true` if there is at least one registered listener for specified event type, `false` otherwise
-     * @private
+     * @param type - The event type
+     * @returns `true` if there is at least one registered listener for specified event type, `false` otherwise
      */
     listens(type) {
         return ((this._listeners && this._listeners[type] && this._listeners[type].length > 0) ||
@@ -11151,10 +11448,7 @@ class Evented {
     }
     /**
      * Bubble all events fired by this instance of Evented to this parent instance of Evented.
-     *
-     * @private
-     * @returns {Object} `this`
-     * @private
+     * @returns `this`
      */
     setEventedParent(parent, data) {
         this._eventedParent = parent;
@@ -11616,7 +11910,6 @@ function charAllowsIdeographicBreaking(char) {
  * adjacent characters can be rotated. For example, a Chinese character is
  * always drawn upright. An uprightly oriented character causes an adjacent
  * “neutral” character to be drawn upright as well.
- * @private
  */
 function charHasUprightVerticalOrientation(char) {
     if (char === 0x02EA /* modifier letter yin departing tone mark */ ||
@@ -11726,7 +12019,6 @@ function charHasUprightVerticalOrientation(char) {
  * fraction ½ is drawn upright among Chinese characters but rotated among Latin
  * letters. A neutrally oriented character does not influence whether an
  * adjacent character is drawn upright or rotated.
- * @private
  */
 function charHasNeutralVerticalOrientation(char) {
     if (unicodeBlockLookup['Latin-1 Supplement'](char)) {
@@ -11826,7 +12118,6 @@ function charHasNeutralVerticalOrientation(char) {
  * oriented vertically, even if both adjacent characters are upright. For
  * example, a Latin letter is drawn rotated along a vertical line. A rotated
  * character causes an adjacent “neutral” character to be drawn rotated as well.
- * @private
  */
 function charHasRotatedVerticalOrientation(char) {
     return !(charHasUprightVerticalOrientation(char) ||
@@ -11890,10 +12181,8 @@ const now = typeof performance !== 'undefined' && performance && performance.now
     Date.now.bind(Date);
 let linkEl;
 let reducedMotionQuery;
-/**
- * @private
- */
-const exported = {
+/** */
+const browser = {
     /**
      * Provides a function that outputs milliseconds: either performance.now()
      * or a fallback to Date.now()
@@ -11974,12 +12263,13 @@ const registerForPluginStateChange = function (callback) {
 const clearRTLTextPlugin = function () {
     pluginStatus = status.unavailable;
     pluginURL = null;
+    _completionCallback = null;
 };
 const setRTLTextPlugin = function (url, callback, deferred = false) {
     if (pluginStatus === status.deferred || pluginStatus === status.loading || pluginStatus === status.loaded) {
         throw new Error('setRTLTextPlugin cannot be called multiple times.');
     }
-    pluginURL = exported.resolveURL(url);
+    pluginURL = browser.resolveURL(url);
     pluginStatus = status.deferred;
     _completionCallback = callback;
     sendPluginStateToWorker();
@@ -12044,6 +12334,10 @@ const lazyLoadRTLTextPlugin = function () {
     }
 };
 
+/**
+ * @internal
+ * A parameter that can be evaluated to a value
+ */
 class EvaluationParameters {
     // "options" may also be another EvaluationParameters to copy, see CrossFadedProperty.possiblyEvaluate
     constructor(zoom, options) {
@@ -12083,6 +12377,7 @@ class EvaluationParameters {
 }
 
 /**
+ * @internal
  *  `PropertyValue` represents the value part of a property key-value unit. It's used to represent both
  *  paint and layout property values, and regardless of whether or not their property supports data-driven
  *  expressions.
@@ -12098,8 +12393,6 @@ class EvaluationParameters {
  *  In addition to storing the original input value, `PropertyValue` also stores a normalized representation,
  *  effectively treating functions as if they are expressions, and constant or default values as if they are
  *  (constant) expressions.
- *
- *  @private
  */
 class PropertyValue {
     constructor(property, value) {
@@ -12115,6 +12408,7 @@ class PropertyValue {
     }
 }
 /**
+ * @internal
  * Paint properties are _transitionable_: they can change in a fluid manner, interpolating or cross-fading between
  * old and new value. The duration of the transition, and the delay before it begins, is configurable.
  *
@@ -12123,8 +12417,6 @@ class PropertyValue {
  *
  * A `TransitionablePropertyValue` can calculate the next step in the evaluation chain for paint property values:
  * `TransitioningPropertyValue`.
- *
- * @private
  */
 class TransitionablePropertyValue {
     constructor(property) {
@@ -12132,18 +12424,17 @@ class TransitionablePropertyValue {
         this.value = new PropertyValue(property, undefined);
     }
     transitioned(parameters, prior) {
-        return new TransitioningPropertyValue(this.property, this.value, prior, extend$2({}, parameters.transition, this.transition), parameters.now);
+        return new TransitioningPropertyValue(this.property, this.value, prior, extend$1({}, parameters.transition, this.transition), parameters.now);
     }
     untransitioned() {
         return new TransitioningPropertyValue(this.property, this.value, null, {}, 0);
     }
 }
 /**
+ * @internal
  * `Transitionable` stores a map of all (property name, `TransitionablePropertyValue`) pairs for paint properties of a
  * given layer type. It can calculate the `TransitioningPropertyValue`s for all of them at once, producing a
  * `Transitioning` instance for the same set of properties.
- *
- * @private
  */
 class Transitionable {
     constructor(properties) {
@@ -12199,15 +12490,13 @@ class Transitionable {
         return result;
     }
 }
-// ------- Transitioning -------
 /**
+ * @internal
  * `TransitioningPropertyValue` implements the first of two intermediate steps in the evaluation chain of a paint
  * property value. In this step, transitions between old and new values are handled: as long as the transition is in
  * progress, `TransitioningPropertyValue` maintains a reference to the prior value, and interpolates between it and
  * the new value based on the current time and the configured transition duration and delay. The product is the next
  * step in the evaluation chain: the "possibly evaluated" result type `R`. See below for more on this concept.
- *
- * @private
  */
 class TransitioningPropertyValue {
     constructor(property, value, prior, transition, now) {
@@ -12251,11 +12540,10 @@ class TransitioningPropertyValue {
     }
 }
 /**
+ * @internal
  * `Transitioning` stores a map of all (property name, `TransitioningPropertyValue`) pairs for paint properties of a
  * given layer type. It can calculate the possibly-evaluated values for all of them at once, producing a
  * `PossiblyEvaluated` instance for the same set of properties.
- *
- * @private
  */
 class Transitioning {
     constructor(properties) {
@@ -12287,13 +12575,14 @@ class Transitioning {
  * `Layout` stores a map of all (property name, `PropertyValue`) pairs for layout properties of a
  * given layer type. It can calculate the possibly-evaluated values for all of them at once, producing a
  * `PossiblyEvaluated` instance for the same set of properties.
- *
- * @private
  */
 class Layout {
     constructor(properties) {
         this._properties = properties;
         this._values = Object.create(properties.defaultPropertyValues);
+    }
+    hasValue(name) {
+        return this._values[name].value !== undefined;
     }
     getValue(name) {
         return clone$9(this._values[name].value);
@@ -12320,12 +12609,11 @@ class Layout {
     }
 }
 /**
+ * @internal
  * `PossiblyEvaluatedPropertyValue` is used for data-driven paint and layout property values. It holds a
  * `PossiblyEvaluatedValue` and the `GlobalProperties` that were used to generate it. You're not allowed to supply
  * a different set of `GlobalProperties` when performing the final evaluation because they would be ignored in the
  * case where the input value was a constant or camera function.
- *
- * @private
  */
 class PossiblyEvaluatedPropertyValue {
     constructor(property, value, parameters) {
@@ -12349,9 +12637,9 @@ class PossiblyEvaluatedPropertyValue {
     }
 }
 /**
+ * @internal
  * `PossiblyEvaluated` stores a map of all (property name, `R`) pairs for paint or layout properties of a
  * given layer type.
- * @private
  */
 class PossiblyEvaluated {
     constructor(properties) {
@@ -12363,11 +12651,10 @@ class PossiblyEvaluated {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for properties that do not permit data-driven (source or composite) expressions.
  * This restriction allows us to declare statically that the result of possibly evaluating this kind of property
  * is in fact always the scalar type `T`, and can be used without further evaluating the value on a per-feature basis.
- *
- * @private
  */
 class DataConstantProperty {
     constructor(specification) {
@@ -12379,9 +12666,10 @@ class DataConstantProperty {
         return value.expression.evaluate(parameters);
     }
     interpolate(a, b, t) {
-        const interp = interpolateFactory(this.specification.type);
-        if (interp) {
-            return interp(a, b, t);
+        const interpolationType = this.specification.type;
+        const interpolationFn = interpolate[interpolationType];
+        if (interpolationFn) {
+            return interpolationFn(a, b, t);
         }
         else {
             return a;
@@ -12389,11 +12677,10 @@ class DataConstantProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for properties that permit data-driven (source or composite) expressions.
  * The result of possibly evaluating this kind of property is `PossiblyEvaluatedPropertyValue<T>`; obtaining
  * a scalar value `T` requires further evaluation on a per-feature basis.
- *
- * @private
  */
 class DataDrivenProperty {
     constructor(specification, overrides) {
@@ -12423,9 +12710,11 @@ class DataDrivenProperty {
         if (a.value.value === undefined || b.value.value === undefined) {
             return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: undefined }, a.parameters);
         }
-        const interp = interpolateFactory(this.specification.type);
-        if (interp) {
-            return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: interp(a.value.value, b.value.value, t) }, a.parameters);
+        const interpolationType = this.specification.type;
+        const interpolationFn = interpolate[interpolationType];
+        if (interpolationFn) {
+            const interpolatedValue = interpolationFn(a.value.value, b.value.value, t);
+            return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: interpolatedValue }, a.parameters);
         }
         else {
             return a;
@@ -12441,10 +12730,9 @@ class DataDrivenProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for  data driven `line-pattern` which are transitioned by cross-fading
  * rather than interpolation.
- *
- * @private
  */
 class CrossFadedDataDrivenProperty extends DataDrivenProperty {
     possiblyEvaluate(value, parameters, canonical, availableImages) {
@@ -12488,10 +12776,9 @@ class CrossFadedDataDrivenProperty extends DataDrivenProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for `*-pattern` and `line-dasharray`, which are transitioned by cross-fading
  * rather than interpolation.
- *
- * @private
  */
 class CrossFadedProperty {
     constructor(specification) {
@@ -12518,11 +12805,10 @@ class CrossFadedProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for `heatmap-color` and `line-gradient`. Interpolation is a no-op, and
  * evaluation returns a boolean value in order to indicate its presence, but the real
  * evaluation happens in StyleLayer classes.
- *
- * @private
  */
 class ColorRampProperty {
     constructor(specification) {
@@ -12534,6 +12820,7 @@ class ColorRampProperty {
     interpolate() { return false; }
 }
 /**
+ * @internal
  * `Properties` holds objects containing default values for the layout or paint property set of a given
  * layer type. These objects are immutable, and they are used as the prototypes for the `_values` members of
  * `Transitionable`, `Transitioning`, `Layout`, and `PossiblyEvaluated`. This allows these classes to avoid
@@ -12541,8 +12828,6 @@ class ColorRampProperty {
  * on the default value: using `for (const property of Object.keys(this._values))`, they can iterate over
  * only the _own_ properties of `_values`, skipping repeated calculation of transitions and possible/final
  * evaluations for defaults, the result of which will always be the same.
- *
- * @private
  */
 class Properties {
     constructor(properties) {
@@ -12575,6 +12860,9 @@ register('CrossFadedProperty', CrossFadedProperty);
 register('ColorRampProperty', ColorRampProperty);
 
 const TRANSITION_SUFFIX = '-transition';
+/**
+ * A base class for style layers
+ */
 class StyleLayer extends Evented {
     constructor(layer, properties) {
         super();
@@ -12759,6 +13047,10 @@ class StyleLayer extends Evented {
 }
 
 // Note: all "sizes" are measured in bytes
+/**
+ * @internal
+ * A view type size
+ */
 const viewTypes = {
     'Int8': Int8Array,
     'Uint8': Uint8Array,
@@ -12768,14 +13060,11 @@ const viewTypes = {
     'Uint32': Uint32Array,
     'Float32': Float32Array
 };
-/**
- * @private
- */
+/** @internal */
 class Struct {
     /**
-     * @param {StructArray} structArray The StructArray the struct is stored in
-     * @param {number} index The index of the struct in the StructArray.
-     * @private
+     * @param structArray - The StructArray the struct is stored in
+     * @param index - The index of the struct in the StructArray.
      */
     constructor(structArray, index) {
         this._structArray = structArray;
@@ -12788,6 +13077,7 @@ class Struct {
 const DEFAULT_CAPACITY = 128;
 const RESIZE_MULTIPLIER = 5;
 /**
+ * @internal
  * `StructArray` provides an abstraction over `ArrayBuffer` and `TypedArray`
  * making it behave like an array of typed structs.
  *
@@ -12795,7 +13085,7 @@ const RESIZE_MULTIPLIER = 5;
  * associated struct type. Each particular struct type, together with an
  * alignment size, determines the memory layout of a StructArray whose elements
  * are of that type.  Thus, for each such layout that we need, we have
- * a corrseponding StructArrayLayout class, inheriting from StructArray and
+ * a corresponding StructArrayLayout class, inheriting from StructArray and
  * implementing `emplaceBack()` and `_refreshViews()`.
  *
  * In some cases, where we need to access particular elements of a StructArray,
@@ -12805,8 +13095,6 @@ const RESIZE_MULTIPLIER = 5;
  * i-th element.  This affords the convience of working with (seemingly) plain
  * Javascript objects without the overhead of serializing/deserializing them
  * into ArrayBuffers for efficient web worker transfer.
- *
- * @private
  */
 class StructArray {
     constructor() {
@@ -12818,7 +13106,6 @@ class StructArray {
      * Serialize a StructArray instance.  Serializes both the raw data and the
      * metadata needed to reconstruct the StructArray base class during
      * deserialization.
-     * @private
      */
     static serialize(array, transferables) {
         array._trim();
@@ -12850,7 +13137,7 @@ class StructArray {
         }
     }
     /**
-     * Resets the the length of the array to 0 without de-allocating capcacity.
+     * Resets the length of the array to 0 without de-allocating capcacity.
      */
     clear() {
         this.length = 0;
@@ -12859,7 +13146,7 @@ class StructArray {
      * Resize the array.
      * If `n` is greater than the current length then additional elements with undefined values are added.
      * If `n` is less than the current length then the array will be reduced to the first `n` elements.
-     * @param {number} n The new size of the array.
+     * @param n - The new size of the array.
      */
     resize(n) {
         this.reserve(n);
@@ -12868,7 +13155,7 @@ class StructArray {
     /**
      * Indicate a planned increase in size, so that any necessary allocation may
      * be done once, ahead of time.
-     * @param {number} n The expected size of the array.
+     * @param n - The expected size of the array.
      */
     reserve(n) {
         if (n > this.capacity) {
@@ -12892,8 +13179,6 @@ class StructArray {
  * particular calculating the correct byte offset for each field.  This data
  * is used at build time to generate StructArrayLayout_*#emplaceBack() and
  * other accessors, and at runtime for binding vertex buffer attributes.
- *
- * @private
  */
 function createLayout(members, alignment = 1) {
     let offset = 0;
@@ -12927,10 +13212,10 @@ function align$1(offset, size) {
 
 // This file is generated. Edit build/generate-struct-arrays.ts, then run `npm run codegen`.
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2i4 extends StructArray {
     _refreshViews() {
@@ -12952,10 +13237,10 @@ class StructArrayLayout2i4 extends StructArray {
 StructArrayLayout2i4.prototype.bytesPerElement = 4;
 register('StructArrayLayout2i4', StructArrayLayout2i4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[3]
  *
- * @private
  */
 class StructArrayLayout3i6 extends StructArray {
     _refreshViews() {
@@ -12978,10 +13263,10 @@ class StructArrayLayout3i6 extends StructArray {
 StructArrayLayout3i6.prototype.bytesPerElement = 6;
 register('StructArrayLayout3i6', StructArrayLayout3i6);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout4i8 extends StructArray {
     _refreshViews() {
@@ -13005,11 +13290,11 @@ class StructArrayLayout4i8 extends StructArray {
 StructArrayLayout4i8.prototype.bytesPerElement = 8;
 register('StructArrayLayout4i8', StructArrayLayout4i8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout2i4i12 extends StructArray {
     _refreshViews() {
@@ -13035,11 +13320,11 @@ class StructArrayLayout2i4i12 extends StructArray {
 StructArrayLayout2i4i12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2i4i12', StructArrayLayout2i4i12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Uint8[4]
  *
- * @private
  */
 class StructArrayLayout2i4ub8 extends StructArray {
     _refreshViews() {
@@ -13066,10 +13351,10 @@ class StructArrayLayout2i4ub8 extends StructArray {
 StructArrayLayout2i4ub8.prototype.bytesPerElement = 8;
 register('StructArrayLayout2i4ub8', StructArrayLayout2i4ub8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[2]
  *
- * @private
  */
 class StructArrayLayout2f8 extends StructArray {
     _refreshViews() {
@@ -13091,10 +13376,10 @@ class StructArrayLayout2f8 extends StructArray {
 StructArrayLayout2f8.prototype.bytesPerElement = 8;
 register('StructArrayLayout2f8', StructArrayLayout2f8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[10]
  *
- * @private
  */
 class StructArrayLayout10ui20 extends StructArray {
     _refreshViews() {
@@ -13124,12 +13409,12 @@ class StructArrayLayout10ui20 extends StructArray {
 StructArrayLayout10ui20.prototype.bytesPerElement = 20;
 register('StructArrayLayout10ui20', StructArrayLayout10ui20);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[4]
  * [8]: Uint16[4]
  * [16]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout4i4ui4i24 extends StructArray {
     _refreshViews() {
@@ -13162,10 +13447,10 @@ class StructArrayLayout4i4ui4i24 extends StructArray {
 StructArrayLayout4i4ui4i24.prototype.bytesPerElement = 24;
 register('StructArrayLayout4i4ui4i24', StructArrayLayout4i4ui4i24);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[3]
  *
- * @private
  */
 class StructArrayLayout3f12 extends StructArray {
     _refreshViews() {
@@ -13188,10 +13473,10 @@ class StructArrayLayout3f12 extends StructArray {
 StructArrayLayout3f12.prototype.bytesPerElement = 12;
 register('StructArrayLayout3f12', StructArrayLayout3f12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint32[1]
  *
- * @private
  */
 class StructArrayLayout1ul4 extends StructArray {
     _refreshViews() {
@@ -13212,12 +13497,12 @@ class StructArrayLayout1ul4 extends StructArray {
 StructArrayLayout1ul4.prototype.bytesPerElement = 4;
 register('StructArrayLayout1ul4', StructArrayLayout1ul4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[6]
  * [12]: Uint32[1]
  * [16]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout6i1ul2ui20 extends StructArray {
     _refreshViews() {
@@ -13249,12 +13534,12 @@ class StructArrayLayout6i1ul2ui20 extends StructArray {
 StructArrayLayout6i1ul2ui20.prototype.bytesPerElement = 20;
 register('StructArrayLayout6i1ul2ui20', StructArrayLayout6i1ul2ui20);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Int16[2]
  * [8]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2i2i2i12 extends StructArray {
     _refreshViews() {
@@ -13280,12 +13565,12 @@ class StructArrayLayout2i2i2i12 extends StructArray {
 StructArrayLayout2i2i2i12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2i2i2i12', StructArrayLayout2i2i2i12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[2]
  * [8]: Float32[1]
  * [12]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2f1f2i16 extends StructArray {
     _refreshViews() {
@@ -13312,11 +13597,11 @@ class StructArrayLayout2f1f2i16 extends StructArray {
 StructArrayLayout2f1f2i16.prototype.bytesPerElement = 16;
 register('StructArrayLayout2f1f2i16', StructArrayLayout2f1f2i16);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint8[2]
  * [4]: Float32[2]
  *
- * @private
  */
 class StructArrayLayout2ub2f12 extends StructArray {
     _refreshViews() {
@@ -13341,10 +13626,10 @@ class StructArrayLayout2ub2f12 extends StructArray {
 StructArrayLayout2ub2f12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2ub2f12', StructArrayLayout2ub2f12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[3]
  *
- * @private
  */
 class StructArrayLayout3ui6 extends StructArray {
     _refreshViews() {
@@ -13367,6 +13652,7 @@ class StructArrayLayout3ui6 extends StructArray {
 StructArrayLayout3ui6.prototype.bytesPerElement = 6;
 register('StructArrayLayout3ui6', StructArrayLayout3ui6);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Uint16[2]
@@ -13377,7 +13663,6 @@ register('StructArrayLayout3ui6', StructArrayLayout3ui6);
  * [40]: Uint32[1]
  * [44]: Int16[1]
  *
- * @private
  */
 class StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 extends StructArray {
     _refreshViews() {
@@ -13419,15 +13704,16 @@ class StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 extends StructArray {
 StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48.prototype.bytesPerElement = 48;
 register('StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48', StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[8]
  * [16]: Uint16[15]
  * [48]: Uint32[1]
- * [52]: Float32[4]
+ * [52]: Float32[2]
+ * [60]: Uint16[2]
  *
- * @private
  */
-class StructArrayLayout8i15ui1ul4f68 extends StructArray {
+class StructArrayLayout8i15ui1ul2f2ui64 extends StructArray {
     _refreshViews() {
         this.uint8 = new Uint8Array(this.arrayBuffer);
         this.int16 = new Int16Array(this.arrayBuffer);
@@ -13441,8 +13727,8 @@ class StructArrayLayout8i15ui1ul4f68 extends StructArray {
         return this.emplace(i, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27);
     }
     emplace(i, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27) {
-        const o2 = i * 34;
-        const o4 = i * 17;
+        const o2 = i * 32;
+        const o4 = i * 16;
         this.int16[o2 + 0] = v0;
         this.int16[o2 + 1] = v1;
         this.int16[o2 + 2] = v2;
@@ -13469,18 +13755,18 @@ class StructArrayLayout8i15ui1ul4f68 extends StructArray {
         this.uint32[o4 + 12] = v23;
         this.float32[o4 + 13] = v24;
         this.float32[o4 + 14] = v25;
-        this.float32[o4 + 15] = v26;
-        this.float32[o4 + 16] = v27;
+        this.uint16[o2 + 30] = v26;
+        this.uint16[o2 + 31] = v27;
         return i;
     }
 }
-StructArrayLayout8i15ui1ul4f68.prototype.bytesPerElement = 68;
-register('StructArrayLayout8i15ui1ul4f68', StructArrayLayout8i15ui1ul4f68);
+StructArrayLayout8i15ui1ul2f2ui64.prototype.bytesPerElement = 64;
+register('StructArrayLayout8i15ui1ul2f2ui64', StructArrayLayout8i15ui1ul2f2ui64);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[1]
  *
- * @private
  */
 class StructArrayLayout1f4 extends StructArray {
     _refreshViews() {
@@ -13501,11 +13787,40 @@ class StructArrayLayout1f4 extends StructArray {
 StructArrayLayout1f4.prototype.bytesPerElement = 4;
 register('StructArrayLayout1f4', StructArrayLayout1f4);
 /**
+ * @internal
+ * Implementation of the StructArray layout:
+ * [0]: Uint16[1]
+ * [4]: Float32[2]
+ *
+ */
+class StructArrayLayout1ui2f12 extends StructArray {
+    _refreshViews() {
+        this.uint8 = new Uint8Array(this.arrayBuffer);
+        this.uint16 = new Uint16Array(this.arrayBuffer);
+        this.float32 = new Float32Array(this.arrayBuffer);
+    }
+    emplaceBack(v0, v1, v2) {
+        const i = this.length;
+        this.resize(i + 1);
+        return this.emplace(i, v0, v1, v2);
+    }
+    emplace(i, v0, v1, v2) {
+        const o2 = i * 6;
+        const o4 = i * 3;
+        this.uint16[o2 + 0] = v0;
+        this.float32[o4 + 1] = v1;
+        this.float32[o4 + 2] = v2;
+        return i;
+    }
+}
+StructArrayLayout1ui2f12.prototype.bytesPerElement = 12;
+register('StructArrayLayout1ui2f12', StructArrayLayout1ui2f12);
+/**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint32[1]
  * [4]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout1ul2ui8 extends StructArray {
     _refreshViews() {
@@ -13530,10 +13845,10 @@ class StructArrayLayout1ul2ui8 extends StructArray {
 StructArrayLayout1ul2ui8.prototype.bytesPerElement = 8;
 register('StructArrayLayout1ul2ui8', StructArrayLayout1ul2ui8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout2ui4 extends StructArray {
     _refreshViews() {
@@ -13555,10 +13870,10 @@ class StructArrayLayout2ui4 extends StructArray {
 StructArrayLayout2ui4.prototype.bytesPerElement = 4;
 register('StructArrayLayout2ui4', StructArrayLayout2ui4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[1]
  *
- * @private
  */
 class StructArrayLayout1ui2 extends StructArray {
     _refreshViews() {
@@ -13579,10 +13894,10 @@ class StructArrayLayout1ui2 extends StructArray {
 StructArrayLayout1ui2.prototype.bytesPerElement = 2;
 register('StructArrayLayout1ui2', StructArrayLayout1ui2);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[4]
  *
- * @private
  */
 class StructArrayLayout4f16 extends StructArray {
     _refreshViews() {
@@ -13605,6 +13920,7 @@ class StructArrayLayout4f16 extends StructArray {
 }
 StructArrayLayout4f16.prototype.bytesPerElement = 16;
 register('StructArrayLayout4f16', StructArrayLayout4f16);
+/** @internal */
 class CollisionBoxStruct extends Struct {
     get anchorPointX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorPointY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13615,23 +13931,21 @@ class CollisionBoxStruct extends Struct {
     get featureIndex() { return this._structArray.uint32[this._pos4 + 3]; }
     get sourceLayerIndex() { return this._structArray.uint16[this._pos2 + 8]; }
     get bucketIndex() { return this._structArray.uint16[this._pos2 + 9]; }
-    get anchorPoint() { return new pointGeometry(this.anchorPointX, this.anchorPointY); }
+    get anchorPoint() { return new Point$3(this.anchorPointX, this.anchorPointY); }
 }
 CollisionBoxStruct.prototype.size = 20;
-/**
- * @private
- */
+/** @internal */
 class CollisionBoxArray extends StructArrayLayout6i1ul2ui20 {
     /**
      * Return the CollisionBoxStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new CollisionBoxStruct(this, index);
     }
 }
 register('CollisionBoxArray', CollisionBoxArray);
+/** @internal */
 class PlacedSymbolStruct extends Struct {
     get anchorX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13655,20 +13969,18 @@ class PlacedSymbolStruct extends Struct {
     get associatedIconIndex() { return this._structArray.int16[this._pos2 + 22]; }
 }
 PlacedSymbolStruct.prototype.size = 48;
-/**
- * @private
- */
+/** @internal */
 class PlacedSymbolArray extends StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 {
     /**
      * Return the PlacedSymbolStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new PlacedSymbolStruct(this, index);
     }
 }
 register('PlacedSymbolArray', PlacedSymbolArray);
+/** @internal */
 class SymbolInstanceStruct extends Struct {
     get anchorX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13696,55 +14008,64 @@ class SymbolInstanceStruct extends Struct {
     get crossTileID() { return this._structArray.uint32[this._pos4 + 12]; }
     set crossTileID(x) { this._structArray.uint32[this._pos4 + 12] = x; }
     get textBoxScale() { return this._structArray.float32[this._pos4 + 13]; }
-    get textOffset0() { return this._structArray.float32[this._pos4 + 14]; }
-    get textOffset1() { return this._structArray.float32[this._pos4 + 15]; }
-    get collisionCircleDiameter() { return this._structArray.float32[this._pos4 + 16]; }
+    get collisionCircleDiameter() { return this._structArray.float32[this._pos4 + 14]; }
+    get textAnchorOffsetStartIndex() { return this._structArray.uint16[this._pos2 + 30]; }
+    get textAnchorOffsetEndIndex() { return this._structArray.uint16[this._pos2 + 31]; }
 }
-SymbolInstanceStruct.prototype.size = 68;
-/**
- * @private
- */
-class SymbolInstanceArray extends StructArrayLayout8i15ui1ul4f68 {
+SymbolInstanceStruct.prototype.size = 64;
+/** @internal */
+class SymbolInstanceArray extends StructArrayLayout8i15ui1ul2f2ui64 {
     /**
      * Return the SymbolInstanceStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new SymbolInstanceStruct(this, index);
     }
 }
 register('SymbolInstanceArray', SymbolInstanceArray);
-/**
- * @private
- */
+/** @internal */
 class GlyphOffsetArray extends StructArrayLayout1f4 {
     getoffsetX(index) { return this.float32[index * 1 + 0]; }
 }
 register('GlyphOffsetArray', GlyphOffsetArray);
-/**
- * @private
- */
+/** @internal */
 class SymbolLineVertexArray extends StructArrayLayout3i6 {
     getx(index) { return this.int16[index * 3 + 0]; }
     gety(index) { return this.int16[index * 3 + 1]; }
     gettileUnitDistanceFromAnchor(index) { return this.int16[index * 3 + 2]; }
 }
 register('SymbolLineVertexArray', SymbolLineVertexArray);
+/** @internal */
+class TextAnchorOffsetStruct extends Struct {
+    get textAnchor() { return this._structArray.uint16[this._pos2 + 0]; }
+    get textOffset0() { return this._structArray.float32[this._pos4 + 1]; }
+    get textOffset1() { return this._structArray.float32[this._pos4 + 2]; }
+}
+TextAnchorOffsetStruct.prototype.size = 12;
+/** @internal */
+class TextAnchorOffsetArray extends StructArrayLayout1ui2f12 {
+    /**
+     * Return the TextAnchorOffsetStruct at the given location in the array.
+     * @param index The index of the element.
+     */
+    get(index) {
+        return new TextAnchorOffsetStruct(this, index);
+    }
+}
+register('TextAnchorOffsetArray', TextAnchorOffsetArray);
+/** @internal */
 class FeatureIndexStruct extends Struct {
     get featureIndex() { return this._structArray.uint32[this._pos4 + 0]; }
     get sourceLayerIndex() { return this._structArray.uint16[this._pos2 + 2]; }
     get bucketIndex() { return this._structArray.uint16[this._pos2 + 3]; }
 }
 FeatureIndexStruct.prototype.size = 8;
-/**
- * @private
- */
+/** @internal */
 class FeatureIndexArray extends StructArrayLayout1ul2ui8 {
     /**
      * Return the FeatureIndexStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new FeatureIndexStruct(this, index);
@@ -13797,6 +14118,10 @@ const layout$6 = createLayout([
 ], 4);
 const { members: members$4, size: size$4, alignment: alignment$4 } = layout$6;
 
+/**
+ * @internal
+ * Used for calculations on vector segments
+ */
 class SegmentVector {
     constructor(segments = []) {
         this.segments = segments;
@@ -13839,11 +14164,9 @@ class SegmentVector {
             }]);
     }
 }
-/*
+/**
  * The maximum size of a vertex array. This limit is imposed by WebGL's 16 bit
  * addressing of vertex buffers.
- * @private
- * @readonly
  */
 SegmentVector.MAX_VERTEX_ARRAY_LENGTH = Math.pow(2, 16) - 1;
 register('SegmentVector', SegmentVector);
@@ -13852,13 +14175,11 @@ register('SegmentVector', SegmentVector);
  * Packs two numbers, interpreted as 8-bit unsigned integers, into a single
  * float.  Unpack them in the shader using the `unpack_float()` function,
  * defined in _prelude.vertex.glsl
- *
- * @private
  */
 function packUint8ToFloat(a, b) {
     // coerce a and b to 8-bit ints
-    a = clamp(Math.floor(a), 0, 255);
-    b = clamp(Math.floor(b), 0, 255);
+    a = clamp$1(Math.floor(a), 0, 255);
+    b = clamp$1(Math.floor(b), 0, 255);
     return 256 * a + b;
 }
 
@@ -13870,17 +14191,9 @@ const patternAttributes = createLayout([
     { name: 'a_pixel_ratio_to', components: 1, type: 'Uint16' },
 ]);
 
-var murmurhashJsExports = {};
-var murmurhashJs = {
-  get exports(){ return murmurhashJsExports; },
-  set exports(v){ murmurhashJsExports = v; },
-};
+var murmurhashJs$1 = {exports: {}};
 
-var murmurhash3_gcExports = {};
-var murmurhash3_gc$1 = {
-  get exports(){ return murmurhash3_gcExports; },
-  set exports(v){ murmurhash3_gcExports = v; },
-};
+var murmurhash3_gc$2 = {exports: {}};
 
 /**
  * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
@@ -13894,6 +14207,7 @@ var murmurhash3_gc$1 = {
  * @param {number} seed Positive integer only
  * @return {number} 32-bit positive integer hash 
  */
+var murmurhash3_gc = murmurhash3_gc$2.exports;
 
 (function (module) {
 	function murmurhash3_32_gc(key, seed) {
@@ -13950,16 +14264,13 @@ var murmurhash3_gc$1 = {
 
 	if('object' !== "undefined") {
 	  module.exports = murmurhash3_32_gc;
-	}
-} (murmurhash3_gc$1));
+	} 
+} (murmurhash3_gc$2));
 
-var murmurhash3_gc = murmurhash3_gcExports;
+var murmurhash3_gcExports = murmurhash3_gc$2.exports;
+var murmurhash3_gc$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhash3_gcExports);
 
-var murmurhash2_gcExports = {};
-var murmurhash2_gc$1 = {
-  get exports(){ return murmurhash2_gcExports; },
-  set exports(v){ murmurhash2_gcExports = v; },
-};
+var murmurhash2_gc$2 = {exports: {}};
 
 /**
  * JS Implementation of MurmurHash2
@@ -13973,6 +14284,7 @@ var murmurhash2_gc$1 = {
  * @param {number} seed Positive integer only
  * @return {number} 32-bit positive integer hash
  */
+var murmurhash2_gc = murmurhash2_gc$2.exports;
 
 (function (module) {
 	function murmurhash2_32_gc(str, seed) {
@@ -14015,17 +14327,23 @@ var murmurhash2_gc$1 = {
 
 	if('object' !== undefined) {
 	  module.exports = murmurhash2_32_gc;
-	}
-} (murmurhash2_gc$1));
+	} 
+} (murmurhash2_gc$2));
 
-var murmurhash2_gc = murmurhash2_gcExports;
+var murmurhash2_gcExports = murmurhash2_gc$2.exports;
+var murmurhash2_gc$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhash2_gcExports);
+
+var murmurhashJs = murmurhashJs$1.exports;
 
 var murmur3 = murmurhash3_gcExports;
 var murmur2 = murmurhash2_gcExports;
 
-murmurhashJs.exports = murmur3;
-var murmur3_1 = murmurhashJsExports.murmur3 = murmur3;
-var murmur2_1 = murmurhashJsExports.murmur2 = murmur2;
+murmurhashJs$1.exports = murmur3;
+var murmur3_1 = murmurhashJs$1.exports.murmur3 = murmur3;
+var murmur2_1 = murmurhashJs$1.exports.murmur2 = murmur2;
+
+var murmurhashJsExports = murmurhashJs$1.exports;
+var murmur3$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhashJsExports);
 
 // A transferable data structure that maps feature ids to their indices and buffer offsets
 class FeaturePositionMap {
@@ -14068,7 +14386,7 @@ class FeaturePositionMap {
     static serialize(map, transferables) {
         const ids = new Float64Array(map.ids);
         const positions = new Uint32Array(map.positions);
-        sort(ids, positions, 0, ids.length - 1);
+        sort$1(ids, positions, 0, ids.length - 1);
         if (transferables) {
             transferables.push(ids.buffer, positions.buffer);
         }
@@ -14089,11 +14407,11 @@ function getNumericId(value) {
     if (!isNaN(numValue) && numValue <= Number.MAX_SAFE_INTEGER) {
         return numValue;
     }
-    return murmurhashJsExports(String(value));
+    return murmur3$1(String(value));
 }
 // custom quicksort that sorts ids, indices and offsets together (by ids)
 // uses Hoare partitioning & manual tail call optimization to avoid worst case scenarios
-function sort(ids, positions, left, right) {
+function sort$1(ids, positions, left, right) {
     while (left < right) {
         const pivot = ids[(left + right) >> 1];
         let i = left - 1;
@@ -14113,11 +14431,11 @@ function sort(ids, positions, left, right) {
             swap$2(positions, 3 * i + 2, 3 * j + 2);
         }
         if (j - left < right - j) {
-            sort(ids, positions, left, j);
+            sort$1(ids, positions, left, j);
             left = j + 1;
         }
         else {
-            sort(ids, positions, j + 1, right);
+            sort$1(ids, positions, j + 1, right);
             right = j;
         }
     }
@@ -14129,6 +14447,10 @@ function swap$2(arr, i, j) {
 }
 register('FeaturePositionMap', FeaturePositionMap);
 
+/**
+ * @internal
+ * A base uniform abstract class
+ */
 class Uniform {
     constructor(context, location) {
         this.gl = context.gl;
@@ -14396,7 +14718,7 @@ class CompositeExpressionBinder {
     }
     setUniform(uniform, globals) {
         const currentZoom = this.useIntegerZoom ? Math.floor(globals.zoom) : globals.zoom;
-        const factor = clamp(this.expression.interpolationFactor(currentZoom, this.zoom, this.zoom + 1), 0, 1);
+        const factor = clamp$1(this.expression.interpolationFactor(currentZoom, this.zoom, this.zoom + 1), 0, 1);
         uniform.set(factor);
     }
     getBinding(context, location, _) {
@@ -14453,6 +14775,7 @@ class CrossFadedCompositeBinder {
     }
 }
 /**
+ * @internal
  * ProgramConfiguration contains the logic for binding style layer properties and tile
  * layer feature data into GL program uniforms and vertex attributes.
  *
@@ -14469,8 +14792,6 @@ class CrossFadedCompositeBinder {
  * When a vector tile is parsed, this same configuration information is used to
  * populate the attribute buffers needed for data-driven styling using the zoom
  * level and feature property data.
- *
- * @private
  */
 class ProgramConfiguration {
     constructor(layer, zoom, filterProperties) {
@@ -14755,15 +15076,12 @@ register('ProgramConfigurationSet', ProgramConfigurationSet);
  * * One bit is lost because the line vertex buffer used to pack 1 bit of other data into the int.
  * * One bit is lost to support features extending past the extent on the right edge of the tile.
  * * This leaves us with 2^13 = 8192
- *
- * @private
- * @readonly
  */
-var EXTENT = 8192;
+const EXTENT = 8192;
 
 // These bounds define the minimum and maximum supported coordinate values.
 // While visible coordinates are within [0, EXTENT], tiles may theoretically
-// contain cordinates within [-Infinity, Infinity]. Our range is limited by the
+// contain coordinates within [-Infinity, Infinity]. Our range is limited by the
 // number of bits used to represent the coordinate.
 const BITS = 15;
 const MAX = Math.pow(2, BITS - 1) - 1;
@@ -14771,8 +15089,7 @@ const MIN = -MAX - 1;
 /**
  * Loads a geometry from a VectorTileFeature and scales it to the common extent
  * used internally.
- * @param {VectorTileFeature} feature
- * @private
+ * @param feature - the vector tile feature to load
  */
 function loadGeometry(feature) {
     const scale = EXTENT / feature.extent;
@@ -14785,8 +15102,8 @@ function loadGeometry(feature) {
             // points and we need to do the same to avoid renering differences.
             const x = Math.round(point.x * scale);
             const y = Math.round(point.y * scale);
-            point.x = clamp(x, MIN, MAX);
-            point.y = clamp(y, MIN, MAX);
+            point.x = clamp$1(x, MIN, MAX);
+            point.y = clamp$1(y, MIN, MAX);
             if (x < point.x || x > point.x + 1 || y < point.y || y > point.y + 1) {
                 // warn when exceeding allowed extent except for the 1-px-off case
                 // https://github.com/mapbox/mapbox-gl-js/issues/8992
@@ -14800,9 +15117,8 @@ function loadGeometry(feature) {
 /**
  * Construct a new feature based on a VectorTileFeature for expression evaluation, the geometry of which
  * will be loaded based on necessity.
- * @param {VectorTileFeature} feature
- * @param {boolean} needGeometry
- * @private
+ * @param feature - the feature to evaluate
+ * @param needGeometry - if set to true this will load the geometry
  */
 function toEvaluationFeature(feature, needGeometry) {
     return { type: feature.type,
@@ -14815,11 +15131,11 @@ function addCircleVertex(layoutVertexArray, x, y, extrudeX, extrudeY) {
     layoutVertexArray.emplaceBack((x * 2) + ((extrudeX + 1) / 2), (y * 2) + ((extrudeY + 1) / 2));
 }
 /**
+ * @internal
  * Circles are represented by two triangles.
  *
  * Each corner has a pos that is the center of the circle and an extrusion
  * vector that is where it points.
- * @private
  */
 class CircleBucket {
     constructor(options) {
@@ -15085,10 +15401,10 @@ function polygonIntersectsBox(ring, boxX1, boxY1, boxX2, boxY2) {
             return true;
     }
     const corners = [
-        new pointGeometry(boxX1, boxY1),
-        new pointGeometry(boxX1, boxY2),
-        new pointGeometry(boxX2, boxY2),
-        new pointGeometry(boxX2, boxY1)
+        new Point$3(boxX1, boxY1),
+        new Point$3(boxX1, boxY2),
+        new Point$3(boxX2, boxY2),
+        new Point$3(boxX2, boxY1)
     ];
     if (ring.length > 2) {
         for (const corner of corners) {
@@ -15136,7 +15452,7 @@ function translate$4(queryGeometry, translate, translateAnchor, bearing, pixelsT
     if (!translate[0] && !translate[1]) {
         return queryGeometry;
     }
-    const pt = pointGeometry.convert(translate)._mult(pixelsToTileUnits);
+    const pt = Point$3.convert(translate)._mult(pixelsToTileUnits);
     if (translateAnchor === 'viewport') {
         pt._rotate(-bearing);
     }
@@ -15156,8 +15472,8 @@ function offsetLine(rings, offset) {
             const a = ring[index - 1];
             const b = ring[index];
             const c = ring[index + 1];
-            const aToB = index === 0 ? new pointGeometry(0, 0) : b.sub(a)._unit()._perp();
-            const bToC = index === ring.length - 1 ? new pointGeometry(0, 0) : c.sub(b)._unit()._perp();
+            const aToB = index === 0 ? new Point$3(0, 0) : b.sub(a)._unit()._perp();
+            const bToC = index === ring.length - 1 ? new Point$3(0, 0) : c.sub(b)._unit()._perp();
             const extrude = aToB._add(bToC)._unit();
             const cosHalfAngle = extrude.x * bToC.x + extrude.y * bToC.y;
             if (cosHalfAngle !== 0) {
@@ -15171,10 +15487,13 @@ function offsetLine(rings, offset) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$5 = new Properties({
+/* eslint-disable */
+let layout$5;
+const getLayout$3 = () => layout$5 = layout$5 || new Properties({
     "circle-sort-key": new DataDrivenProperty(v8Spec["layout_circle"]["circle-sort-key"]),
 });
-const paint$8 = new Properties({
+let paint$8;
+const getPaint$8 = () => paint$8 = paint$8 || new Properties({
     "circle-radius": new DataDrivenProperty(v8Spec["paint_circle"]["circle-radius"]),
     "circle-color": new DataDrivenProperty(v8Spec["paint_circle"]["circle-color"]),
     "circle-blur": new DataDrivenProperty(v8Spec["paint_circle"]["circle-blur"]),
@@ -15187,7 +15506,7 @@ const paint$8 = new Properties({
     "circle-stroke-color": new DataDrivenProperty(v8Spec["paint_circle"]["circle-stroke-color"]),
     "circle-stroke-opacity": new DataDrivenProperty(v8Spec["paint_circle"]["circle-stroke-opacity"]),
 });
-var properties$8 = { paint: paint$8, layout: layout$5 };
+var properties$8 = ({ get paint() { return getPaint$8(); }, get layout() { return getLayout$3(); } });
 
 /**
  * Common utilities
@@ -22852,6 +23171,9 @@ transformMat4: transformMat4,
 zero: zero
 });
 
+/**
+ * A style layer that defines a circle
+ */
 class CircleStyleLayer extends StyleLayer {
     constructor(layer) {
         super(layer, properties$8);
@@ -22897,7 +23219,7 @@ class CircleStyleLayer extends StyleLayer {
 }
 function projectPoint(p, pixelPosMatrix) {
     const point = transformMat4$1([], [p.x, p.y, 0, 1], pixelPosMatrix);
-    return new pointGeometry(point[0] / point[3], point[1] / point[3]);
+    return new Point$3(point[0] / point[3], point[1] / point[3]);
 }
 function projectQueryGeometry$1(queryGeometry, pixelPosMatrix) {
     return queryGeometry.map((p) => {
@@ -22910,14 +23232,16 @@ class HeatmapBucket extends CircleBucket {
 register('HeatmapBucket', HeatmapBucket, { omit: ['layers'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$7 = new Properties({
+/* eslint-disable */
+let paint$7;
+const getPaint$7 = () => paint$7 = paint$7 || new Properties({
     "heatmap-radius": new DataDrivenProperty(v8Spec["paint_heatmap"]["heatmap-radius"]),
     "heatmap-weight": new DataDrivenProperty(v8Spec["paint_heatmap"]["heatmap-weight"]),
     "heatmap-intensity": new DataConstantProperty(v8Spec["paint_heatmap"]["heatmap-intensity"]),
     "heatmap-color": new ColorRampProperty(v8Spec["paint_heatmap"]["heatmap-color"]),
     "heatmap-opacity": new DataConstantProperty(v8Spec["paint_heatmap"]["heatmap-opacity"]),
 });
-var properties$7 = { paint: paint$7 };
+var properties$7 = ({ get paint() { return getPaint$7(); } });
 
 function createImage(image, { width, height }, channels, data) {
     if (!data) {
@@ -22976,6 +23300,10 @@ function copyImage(srcImg, dstImg, srcPt, dstPt, size, channels) {
     }
     return dstImg;
 }
+/**
+ * @internal
+ * An image with alpha color value
+ */
 class AlphaImage {
     constructor(size, data) {
         createImage(this, size, 1, data);
@@ -22990,8 +23318,10 @@ class AlphaImage {
         copyImage(srcImg, dstImg, srcPt, dstPt, size, 1);
     }
 }
-// Not premultiplied, because ImageData is not premultiplied.
-// UNPACK_PREMULTIPLY_ALPHA_WEBGL must be used when uploading to a texture.
+/**
+ * An object to store image data not premultiplied, because ImageData is not premultiplied.
+ * UNPACK_PREMULTIPLY_ALPHA_WEBGL must be used when uploading to a texture.
+ */
 class RGBAImage {
     constructor(size, data) {
         createImage(this, size, 4, data);
@@ -23023,8 +23353,6 @@ register('RGBAImage', RGBAImage);
 /**
  * Given an expression that should evaluate to a color ramp,
  * return a RGBA image representing that ramp expression.
- *
- * @private
  */
 function renderColorRamp(params) {
     const evaluationGlobals = {};
@@ -23063,6 +23391,9 @@ function renderColorRamp(params) {
     return image;
 }
 
+/**
+ * A style layer that defines a heatmap
+ */
 class HeatmapStyleLayer extends StyleLayer {
     createBucket(options) {
         return new HeatmapBucket(options);
@@ -23104,7 +23435,9 @@ class HeatmapStyleLayer extends StyleLayer {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$6 = new Properties({
+/* eslint-disable */
+let paint$6;
+const getPaint$6 = () => paint$6 = paint$6 || new Properties({
     "hillshade-illumination-direction": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-illumination-direction"]),
     "hillshade-illumination-anchor": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-illumination-anchor"]),
     "hillshade-exaggeration": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-exaggeration"]),
@@ -23112,7 +23445,7 @@ const paint$6 = new Properties({
     "hillshade-highlight-color": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-highlight-color"]),
     "hillshade-accent-color": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-accent-color"]),
 });
-var properties$6 = { paint: paint$6 };
+var properties$6 = ({ get paint() { return getPaint$6(); } });
 
 class HillshadeStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -23128,16 +23461,14 @@ const layout$4 = createLayout([
 ], 4);
 const { members: members$3, size: size$3, alignment: alignment$3 } = layout$4;
 
-var earcutExports = {};
-var earcut$1 = {
-  get exports(){ return earcutExports; },
-  set exports(v){ earcutExports = v; },
-};
+var earcut$2 = {exports: {}};
+
+var earcut_1 = earcut$2.exports;
 
 'use strict';
 
-earcut$1.exports = earcut;
-var _default = earcutExports.default = earcut;
+earcut$2.exports = earcut;
+var _default = earcut$2.exports.default = earcut;
 
 function earcut(data, holeIndices, dim) {
 
@@ -23816,6 +24147,9 @@ earcut.flatten = function (data) {
     return result;
 };
 
+var earcutExports = earcut$2.exports;
+var earcut$1 = /*@__PURE__*/getDefaultExportFromCjs(earcutExports);
+
 function quickselect(arr, k, left, right, compare) {
     quickselectStep(arr, k, left || 0, right || (arr.length - 1), compare || defaultCompare$1);
 }
@@ -24079,7 +24413,7 @@ class FillBucket {
                 lineSegment.vertexLength += ring.length;
                 lineSegment.primitiveLength += ring.length;
             }
-            const indices = earcutExports(flattened, holeIndices);
+            const indices = earcut$1(flattened, holeIndices);
             for (let i = 0; i < indices.length; i += 3) {
                 this.indexArray.emplaceBack(triangleIndex + indices[i], triangleIndex + indices[i + 1], triangleIndex + indices[i + 2]);
             }
@@ -24092,10 +24426,13 @@ class FillBucket {
 register('FillBucket', FillBucket, { omit: ['layers', 'patternFeatures'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$3 = new Properties({
+/* eslint-disable */
+let layout$3;
+const getLayout$2 = () => layout$3 = layout$3 || new Properties({
     "fill-sort-key": new DataDrivenProperty(v8Spec["layout_fill"]["fill-sort-key"]),
 });
-const paint$5 = new Properties({
+let paint$5;
+const getPaint$5 = () => paint$5 = paint$5 || new Properties({
     "fill-antialias": new DataConstantProperty(v8Spec["paint_fill"]["fill-antialias"]),
     "fill-opacity": new DataDrivenProperty(v8Spec["paint_fill"]["fill-opacity"]),
     "fill-color": new DataDrivenProperty(v8Spec["paint_fill"]["fill-color"]),
@@ -24104,7 +24441,7 @@ const paint$5 = new Properties({
     "fill-translate-anchor": new DataConstantProperty(v8Spec["paint_fill"]["fill-translate-anchor"]),
     "fill-pattern": new CrossFadedDataDrivenProperty(v8Spec["paint_fill"]["fill-pattern"]),
 });
-var properties$5 = { paint: paint$5, layout: layout$3 };
+var properties$5 = ({ get paint() { return getPaint$5(); }, get layout() { return getLayout$2(); } });
 
 class FillStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -24377,6 +24714,8 @@ function signedArea(ring) {
     return sum;
 }
 
+var vectortilefeature$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortilefeature);
+
 'use strict';
 
 var VectorTileFeature$2 = vectortilefeature;
@@ -24439,6 +24778,8 @@ VectorTileLayer$2.prototype.feature = function(i) {
     return new VectorTileFeature$2(this._pbf, end, this.extent, this._keys, this._values);
 };
 
+var vectortilelayer$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortilelayer);
+
 'use strict';
 
 var VectorTileLayer$1 = vectortilelayer;
@@ -24455,6 +24796,8 @@ function readTile(tag, layers, pbf) {
         if (layer.length) layers[layer.name] = layer;
     }
 }
+
+var vectortile$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortile);
 
 var VectorTile = vectorTile.VectorTile = vectortile;
 var VectorTileFeature$1 = vectorTile.VectorTileFeature = vectortilefeature;
@@ -24628,7 +24971,7 @@ class FillExtrusionBucket {
                     flattened.push(p.y);
                 }
             }
-            const indices = earcutExports(flattened, holeIndices);
+            const indices = earcut$1(flattened, holeIndices);
             for (let j = 0; j < indices.length; j += 3) {
                 // Counter-clockwise winding order.
                 this.indexArray.emplaceBack(triangleIndex + indices[j], triangleIndex + indices[j + 2], triangleIndex + indices[j + 1]);
@@ -24656,7 +24999,9 @@ function isEntirelyOutside(ring) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$4 = new Properties({
+/* eslint-disable */
+let paint$4;
+const getPaint$4 = () => paint$4 = paint$4 || new Properties({
     "fill-extrusion-opacity": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-opacity"]),
     "fill-extrusion-color": new DataDrivenProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-color"]),
     "fill-extrusion-translate": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-translate"]),
@@ -24666,9 +25011,9 @@ const paint$4 = new Properties({
     "fill-extrusion-base": new DataDrivenProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-base"]),
     "fill-extrusion-vertical-gradient": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-vertical-gradient"]),
 });
-var properties$4 = { paint: paint$4 };
+var properties$4 = ({ get paint() { return getPaint$4(); } });
 
-class Point3D extends pointGeometry {
+class Point3D extends Point$3 {
 }
 class FillExtrusionStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -24808,10 +25153,10 @@ function projectExtrusion(geometry, zBase, zTop, m) {
             const topY = sY + topYZ;
             const topZ = sZ + topZZ;
             const topW = sW + topWZ;
-            const b = new pointGeometry(baseX / baseW, baseY / baseW);
+            const b = new Point$3(baseX / baseW, baseY / baseW);
             b.z = baseZ / baseW;
             ringBase.push(b);
-            const t = new pointGeometry(topX / topW, topY / topW);
+            const t = new Point$3(topX / topW, topY / topW);
             t.z = topZ / topW;
             ringTop.push(t);
         }
@@ -24825,7 +25170,7 @@ function projectQueryGeometry(queryGeometry, pixelPosMatrix, transform, z) {
     for (const p of queryGeometry) {
         const v = [p.x, p.y, z, 1];
         transformMat4$1(v, v, pixelPosMatrix);
-        projectedQueryGeometry.push(new pointGeometry(v[0] / v[3], v[1] / v[3]));
+        projectedQueryGeometry.push(new Point$3(v[0] / v[3], v[1] / v[3]));
     }
     return projectedQueryGeometry;
 }
@@ -24874,7 +25219,8 @@ const LINE_DISTANCE_SCALE = 1 / 2;
 // The maximum line distance, in tile units, that fits in the buffer.
 const MAX_LINE_DISTANCE = Math.pow(2, LINE_DISTANCE_BUFFER_BITS - 1) / LINE_DISTANCE_SCALE;
 /**
- * @private
+ * @internal
+ * Line bucket class
  */
 class LineBucket {
     constructor(options) {
@@ -25210,13 +25556,12 @@ class LineBucket {
     /**
      * Add two vertices to the buffers.
      *
-     * @param p the line vertex to add buffer vertices for
-     * @param normal vertex normal
-     * @param endLeft extrude to shift the left vertex along the line
-     * @param endRight extrude to shift the left vertex along the line
-     * @param segment the segment object to add the vertex to
-     * @param round whether this is a round cap
-     * @private
+     * @param p - the line vertex to add buffer vertices for
+     * @param normal - vertex normal
+     * @param endLeft - extrude to shift the left vertex along the line
+     * @param endRight - extrude to shift the left vertex along the line
+     * @param segment - the segment object to add the vertex to
+     * @param round - whether this is a round cap
      */
     addCurrentVertex(p, normal, endLeft, endRight, segment, round = false) {
         // left and right extrude vectors, perpendicularly shifted by endLeft/endRight
@@ -25232,6 +25577,7 @@ class LineBucket {
         // to `linesofar`.
         if (this.distance > MAX_LINE_DISTANCE / 2 && this.totalDistance === 0) {
             this.distance = 0;
+            this.updateScaledDistance();
             this.addCurrentVertex(p, normal, endLeft, endRight, segment, round);
         }
     }
@@ -25287,14 +25633,17 @@ class LineBucket {
 register('LineBucket', LineBucket, { omit: ['layers', 'patternFeatures'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$1 = new Properties({
+/* eslint-disable */
+let layout$1;
+const getLayout$1 = () => layout$1 = layout$1 || new Properties({
     "line-cap": new DataConstantProperty(v8Spec["layout_line"]["line-cap"]),
     "line-join": new DataDrivenProperty(v8Spec["layout_line"]["line-join"]),
     "line-miter-limit": new DataConstantProperty(v8Spec["layout_line"]["line-miter-limit"]),
     "line-round-limit": new DataConstantProperty(v8Spec["layout_line"]["line-round-limit"]),
     "line-sort-key": new DataDrivenProperty(v8Spec["layout_line"]["line-sort-key"]),
 });
-const paint$3 = new Properties({
+let paint$3;
+const getPaint$3 = () => paint$3 = paint$3 || new Properties({
     "line-opacity": new DataDrivenProperty(v8Spec["paint_line"]["line-opacity"]),
     "line-color": new DataDrivenProperty(v8Spec["paint_line"]["line-color"]),
     "line-translate": new DataConstantProperty(v8Spec["paint_line"]["line-translate"]),
@@ -25307,7 +25656,7 @@ const paint$3 = new Properties({
     "line-pattern": new CrossFadedDataDrivenProperty(v8Spec["paint_line"]["line-pattern"]),
     "line-gradient": new ColorRampProperty(v8Spec["paint_line"]["line-gradient"]),
 });
-var properties$3 = { paint: paint$3, layout: layout$1 };
+var properties$3 = ({ get paint() { return getPaint$3(); }, get layout() { return getLayout$1(); } });
 
 class LineFloorwidthProperty extends DataDrivenProperty {
     possiblyEvaluate(value, parameters) {
@@ -25320,21 +25669,30 @@ class LineFloorwidthProperty extends DataDrivenProperty {
         return super.possiblyEvaluate(value, parameters);
     }
     evaluate(value, globals, feature, featureState) {
-        globals = extend$2({}, globals, { zoom: Math.floor(globals.zoom) });
+        globals = extend$1({}, globals, { zoom: Math.floor(globals.zoom) });
         return super.evaluate(value, globals, feature, featureState);
     }
 }
-const lineFloorwidthProperty = new LineFloorwidthProperty(properties$3.paint.properties['line-width'].specification);
-lineFloorwidthProperty.useIntegerZoom = true;
+let lineFloorwidthProperty;
 class LineStyleLayer extends StyleLayer {
     constructor(layer) {
         super(layer, properties$3);
         this.gradientVersion = 0;
+        if (!lineFloorwidthProperty) {
+            lineFloorwidthProperty =
+                new LineFloorwidthProperty(properties$3.paint.properties['line-width'].specification);
+            lineFloorwidthProperty.useIntegerZoom = true;
+        }
     }
     _handleSpecialPaintPropertyUpdate(name) {
         if (name === 'line-gradient') {
-            const expression = this._transitionablePaint._values['line-gradient'].value.expression;
-            this.stepInterpolant = expression._styleExpression.expression instanceof Step;
+            const expression = this.gradientExpression();
+            if (isZoomExpression(expression)) {
+                this.stepInterpolant = expression._styleExpression.expression instanceof Step;
+            }
+            else {
+                this.stepInterpolant = false;
+            }
             this.gradientVersion = (this.gradientVersion + 1) % Number.MAX_SAFE_INTEGER;
         }
     }
@@ -25466,8 +25824,9 @@ const symbolInstance = createLayout([
     { type: 'Uint16', name: 'useRuntimeCollisionCircles' },
     { type: 'Uint32', name: 'crossTileID' },
     { type: 'Float32', name: 'textBoxScale' },
-    { type: 'Float32', components: 2, name: 'textOffset' },
     { type: 'Float32', name: 'collisionCircleDiameter' },
+    { type: 'Uint16', name: 'textAnchorOffsetStartIndex' },
+    { type: 'Uint16', name: 'textAnchorOffsetEndIndex' }
 ]);
 const glyphOffset = createLayout([
     { type: 'Float32', name: 'offsetX' }
@@ -25476,6 +25835,10 @@ const lineVertex = createLayout([
     { type: 'Int16', name: 'x' },
     { type: 'Int16', name: 'y' },
     { type: 'Int16', name: 'tileUnitDistanceFromAnchor' }
+]);
+const textAnchorOffset = createLayout([
+    { type: 'Uint16', name: 'textAnchor' },
+    { type: 'Float32', components: 2, name: 'textOffset' }
 ]);
 
 function transformTextInternal(text, layer, feature) {
@@ -26400,6 +26763,8 @@ function writeUtf8(buf, str, pos) {
     return pos;
 }
 
+var Protobuf = /*@__PURE__*/getDefaultExportFromCjs(pbf);
+
 const border$1 = 3;
 function readFontstacks(tag, glyphs, pbf) {
     if (tag === 1) {
@@ -26436,7 +26801,7 @@ function readGlyph(tag, glyph, pbf) {
         glyph.advance = pbf.readVarint();
 }
 function parseGlyphPbf(data) {
-    return new pbf(data).readFields(readFontstacks, []);
+    return new Protobuf(data).readFields(readFontstacks, []);
 }
 const GLYPH_PBF_BORDER = border$1;
 
@@ -26567,6 +26932,10 @@ class ImagePosition {
         ];
     }
 }
+/**
+ * @internal
+ * A class holding all the images
+ */
 class ImageAtlas {
     constructor(icons, patterns) {
         const iconPositions = {}, patternPositions = {};
@@ -27242,7 +27611,7 @@ function evaluateSizeForFeature(sizeData, { uSize, uSizeT }, { lowerSize, upperS
         return lowerSize / SIZE_PACK_FACTOR;
     }
     else if (sizeData.kind === 'composite') {
-        return interpolates.number(lowerSize / SIZE_PACK_FACTOR, upperSize / SIZE_PACK_FACTOR, uSizeT);
+        return interpolate.number(lowerSize / SIZE_PACK_FACTOR, upperSize / SIZE_PACK_FACTOR, uSizeT);
     }
     return uSize;
 }
@@ -27259,9 +27628,9 @@ function evaluateSizeForZoom(sizeData, zoom) {
         // between the camera function values at a pair of zoom stops covering
         // [tileZoom, tileZoom + 1] in order to be consistent with this
         // restriction on composite functions
-        const t = !interpolationType ? 0 : clamp(Interpolate.interpolationFactor(interpolationType, zoom, minZoom, maxZoom), 0, 1);
+        const t = !interpolationType ? 0 : clamp$1(Interpolate.interpolationFactor(interpolationType, zoom, minZoom, maxZoom), 0, 1);
         if (sizeData.kind === 'camera') {
-            uSize = interpolates.number(sizeData.minSize, sizeData.maxSize, t);
+            uSize = interpolate.number(sizeData.minSize, sizeData.maxSize, t);
         }
         else {
             uSizeT = t;
@@ -27390,6 +27759,7 @@ class CollisionBuffers {
 }
 register('CollisionBuffers', CollisionBuffers);
 /**
+ * @internal
  * Unlike other buckets, which simply implement #addFeature with type-specific
  * logic for (essentially) triangulating feature geometries, SymbolBucket
  * requires specialized behavior:
@@ -27418,8 +27788,6 @@ register('CollisionBuffers', CollisionBuffers);
  *    and uses the CollisionIndex along with current camera settings to determine
  *    which symbols can actually show on the map. Collided symbols are hidden
  *    using a dynamic "OpacityVertexArray".
- *
- * @private
  */
 class SymbolBucket {
     constructor(options) {
@@ -27464,6 +27832,7 @@ class SymbolBucket {
         this.glyphOffsetArray = new GlyphOffsetArray();
         this.lineVertexArray = new SymbolLineVertexArray();
         this.symbolInstances = new SymbolInstanceArray();
+        this.textAnchorOffsets = new TextAnchorOffsetArray();
     }
     calculateGlyphDependencies(text, stack, textAlongLine, allowVerticalPlacement, doesAllowVerticalWritingMode) {
         for (let i = 0; i < text.length; i++) {
@@ -27700,10 +28069,10 @@ class SymbolBucket {
         const collisionVertexArray = arrays.collisionVertexArray;
         const anchorX = symbolInstance.anchorX;
         const anchorY = symbolInstance.anchorY;
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x1, y1));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x2, y1));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x2, y2));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x1, y2));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$3(x1, y1));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$3(x2, y1));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$3(x2, y2));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$3(x1, y2));
         segment.vertexLength += 4;
         const indexArray = arrays.indexArray;
         indexArray.emplaceBack(index, index + 1);
@@ -27896,10 +28265,9 @@ SymbolBucket.addDynamicAttributes = addDynamicAttributes;
 /**
  * Replace tokens in a string template with values in an object
  *
- * @param properties a key/value relationship between tokens and replacements
- * @param text the template string
+ * @param properties - a key/value relationship between tokens and replacements
+ * @param text - the template string
  * @returns the template with tokens replaced
- * @private
  */
 function resolveTokens(properties, text) {
     return text.replace(/{([^{}]+)}/g, (match, key) => {
@@ -27908,7 +28276,9 @@ function resolveTokens(properties, text) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout = new Properties({
+/* eslint-disable */
+let layout;
+const getLayout = () => layout = layout || new Properties({
     "symbol-placement": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-placement"]),
     "symbol-spacing": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-spacing"]),
     "symbol-avoid-edges": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-avoid-edges"]),
@@ -27940,6 +28310,7 @@ const layout = new Properties({
     "text-justify": new DataDrivenProperty(v8Spec["layout_symbol"]["text-justify"]),
     "text-radial-offset": new DataDrivenProperty(v8Spec["layout_symbol"]["text-radial-offset"]),
     "text-variable-anchor": new DataConstantProperty(v8Spec["layout_symbol"]["text-variable-anchor"]),
+    "text-variable-anchor-offset": new DataDrivenProperty(v8Spec["layout_symbol"]["text-variable-anchor-offset"]),
     "text-anchor": new DataDrivenProperty(v8Spec["layout_symbol"]["text-anchor"]),
     "text-max-angle": new DataConstantProperty(v8Spec["layout_symbol"]["text-max-angle"]),
     "text-writing-mode": new DataConstantProperty(v8Spec["layout_symbol"]["text-writing-mode"]),
@@ -27953,7 +28324,8 @@ const layout = new Properties({
     "text-ignore-placement": new DataConstantProperty(v8Spec["layout_symbol"]["text-ignore-placement"]),
     "text-optional": new DataConstantProperty(v8Spec["layout_symbol"]["text-optional"]),
 });
-const paint$2 = new Properties({
+let paint$2;
+const getPaint$2 = () => paint$2 = paint$2 || new Properties({
     "icon-opacity": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-opacity"]),
     "icon-color": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-color"]),
     "icon-halo-color": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-halo-color"]),
@@ -27969,7 +28341,7 @@ const paint$2 = new Properties({
     "text-translate": new DataConstantProperty(v8Spec["paint_symbol"]["text-translate"]),
     "text-translate-anchor": new DataConstantProperty(v8Spec["paint_symbol"]["text-translate-anchor"]),
 });
-var properties$2 = { paint: paint$2, layout };
+var properties$2 = ({ get paint() { return getPaint$2(); }, get layout() { return getLayout(); } });
 
 // This is an internal expression class. It is only used in GL JS and
 // has GL JS dependencies which can break the standalone style-spec module
@@ -28146,12 +28518,14 @@ function getIconPadding(layout, feature, canonical, pixelRatio = 1) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$1 = new Properties({
+/* eslint-disable */
+let paint$1;
+const getPaint$1 = () => paint$1 = paint$1 || new Properties({
     "background-color": new DataConstantProperty(v8Spec["paint_background"]["background-color"]),
     "background-pattern": new CrossFadedProperty(v8Spec["paint_background"]["background-pattern"]),
     "background-opacity": new DataConstantProperty(v8Spec["paint_background"]["background-opacity"]),
 });
-var properties$1 = { paint: paint$1 };
+var properties$1 = ({ get paint() { return getPaint$1(); } });
 
 class BackgroundStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -28160,7 +28534,9 @@ class BackgroundStyleLayer extends StyleLayer {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint = new Properties({
+/* eslint-disable */
+let paint;
+const getPaint = () => paint = paint || new Properties({
     "raster-opacity": new DataConstantProperty(v8Spec["paint_raster"]["raster-opacity"]),
     "raster-hue-rotate": new DataConstantProperty(v8Spec["paint_raster"]["raster-hue-rotate"]),
     "raster-brightness-min": new DataConstantProperty(v8Spec["paint_raster"]["raster-brightness-min"]),
@@ -28170,7 +28546,7 @@ const paint = new Properties({
     "raster-resampling": new DataConstantProperty(v8Spec["paint_raster"]["raster-resampling"]),
     "raster-fade-duration": new DataConstantProperty(v8Spec["paint_raster"]["raster-fade-duration"]),
 });
-var properties = { paint };
+var properties = ({ get paint() { return getPaint(); } });
 
 class RasterStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -28229,23 +28605,29 @@ class CustomStyleLayer extends StyleLayer {
     }
 }
 
-const subclasses = {
-    circle: CircleStyleLayer,
-    heatmap: HeatmapStyleLayer,
-    hillshade: HillshadeStyleLayer,
-    fill: FillStyleLayer,
-    'fill-extrusion': FillExtrusionStyleLayer,
-    line: LineStyleLayer,
-    symbol: SymbolStyleLayer,
-    background: BackgroundStyleLayer,
-    raster: RasterStyleLayer
-};
 function createStyleLayer(layer) {
     if (layer.type === 'custom') {
         return new CustomStyleLayer(layer);
     }
-    else {
-        return new subclasses[layer.type](layer);
+    switch (layer.type) {
+        case 'background':
+            return new BackgroundStyleLayer(layer);
+        case 'circle':
+            return new CircleStyleLayer(layer);
+        case 'fill':
+            return new FillStyleLayer(layer);
+        case 'fill-extrusion':
+            return new FillExtrusionStyleLayer(layer);
+        case 'heatmap':
+            return new HeatmapStyleLayer(layer);
+        case 'hillshade':
+            return new HillshadeStyleLayer(layer);
+        case 'line':
+            return new LineStyleLayer(layer);
+        case 'raster':
+            return new RasterStyleLayer(layer);
+        case 'symbol':
+            return new SymbolStyleLayer(layer);
     }
 }
 
@@ -28317,6 +28699,9 @@ class DictionaryCoder {
     }
 }
 
+/**
+ * A geojson feature
+ */
 class GeoJSONFeature {
     constructor(vectorTileFeature, z, x, y, id) {
         this.type = 'Feature';
@@ -28349,6 +28734,10 @@ class GeoJSONFeature {
     }
 }
 
+/**
+ * @internal
+ * An in memory index class to allow fast interaction with features
+ */
 class FeatureIndex {
     constructor(tileID, promoteId) {
         this.tileID = tileID;
@@ -28384,7 +28773,7 @@ class FeatureIndex {
     }
     loadVTLayers() {
         if (!this.vtLayers) {
-            this.vtLayers = new vectorTile.VectorTile(new pbf(this.rawTileData)).layers;
+            this.vtLayers = new vectorTile.VectorTile(new Protobuf(this.rawTileData)).layers;
             this.sourceLayerCoder = new DictionaryCoder(this.vtLayers ? Object.keys(this.vtLayers).sort() : ['_geojsonTileLayer']);
         }
         return this.vtLayers;
@@ -28454,7 +28843,7 @@ class FeatureIndex {
                 // `feature-state` expression evaluation requires feature state to be available
                 featureState = sourceFeatureState.getState(styleLayer.sourceLayer || '_geojsonTileLayer', id);
             }
-            const serializedLayer = extend$2({}, serializedLayers[layerID]);
+            const serializedLayer = extend$1({}, serializedLayers[layerID]);
             serializedLayer.paint = evaluateProperties(serializedLayer.paint, styleLayer.paint, feature, featureState, availableImages);
             serializedLayer.layout = evaluateProperties(serializedLayer.layout, styleLayer.layout, feature, featureState, availableImages);
             const intersectionZ = !intersectionTest || intersectionTest(feature, styleLayer, featureState);
@@ -28526,7 +28915,7 @@ function topDownFeatureComparator(a, b) {
     return b - a;
 }
 
-class Anchor extends pointGeometry {
+class Anchor extends Point$3 {
     constructor(x, y, angle, segment) {
         super(x, y);
         this.angle = angle;
@@ -28544,18 +28933,17 @@ register('Anchor', Anchor);
  * Labels placed around really sharp angles aren't readable. Check if any
  * part of the potential label has a combined angle that is too big.
  *
- * @param line
- * @param anchor The point on the line around which the label is anchored.
- * @param labelLength The length of the label in geometry units.
- * @param windowSize The check fails if the combined angles within a part of the line that is `windowSize` long is too big.
- * @param maxAngle The maximum combined angle that any window along the label is allowed to have.
+ * @param line - The line to check
+ * @param anchor - The point on the line around which the label is anchored.
+ * @param labelLength - The length of the label in geometry units.
+ * @param windowSize - The check fails if the combined angles within a part of the line that is `windowSize` long is too big.
+ * @param maxAngle - The maximum combined angle that any window along the label is allowed to have.
  *
- * @returns {boolean} whether the label should be placed
- * @private
+ * @returns whether the label should be placed
  */
 function checkMaxAngle(line, anchor, labelLength, windowSize, maxAngle) {
-    // horizontal labels always pass
-    if (anchor.segment === undefined)
+    // horizontal labels and labels with length 0 always pass
+    if (anchor.segment === undefined || labelLength === 0)
         return true;
     let p = anchor;
     let index = anchor.segment + 1;
@@ -28629,7 +29017,7 @@ function getCenterAnchor(line, maxAngle, shapedText, shapedIcon, glyphSize, boxS
         const segmentDistance = a.dist(b);
         if (prevDistance + segmentDistance > centerDistance) {
             // The center is on this segment
-            const t = (centerDistance - prevDistance) / segmentDistance, x = interpolates.number(a.x, b.x, t), y = interpolates.number(a.y, b.y, t);
+            const t = (centerDistance - prevDistance) / segmentDistance, x = interpolate.number(a.x, b.x, t), y = interpolate.number(a.y, b.y, t);
             const anchor = new Anchor(x, y, b.angleTo(a), i);
             anchor._round();
             if (!angleWindowSize || checkMaxAngle(line, anchor, labelLength, angleWindowSize, maxAngle)) {
@@ -28676,7 +29064,7 @@ function resample(line, offset, spacing, angleWindowSize, maxAngle, labelLength,
         const segmentDist = a.dist(b), angle = b.angleTo(a);
         while (markedDistance + spacing < distance + segmentDist) {
             markedDistance += spacing;
-            const t = (markedDistance - distance) / segmentDist, x = interpolates.number(a.x, b.x, t), y = interpolates.number(a.y, b.y, t);
+            const t = (markedDistance - distance) / segmentDist, x = interpolate.number(a.x, b.x, t), y = interpolate.number(a.y, b.y, t);
             // Check that the point is within the tile boundaries and that
             // the label would fit before the beginning and end of the line
             // if placed at this point.
@@ -28706,13 +29094,12 @@ function resample(line, offset, spacing, angleWindowSize, maxAngle, labelLength,
 /**
  * Returns the part of a multiline that intersects with the provided rectangular box.
  *
- * @param lines
- * @param x1 the left edge of the box
- * @param y1 the top edge of the box
- * @param x2 the right edge of the box
- * @param y2 the bottom edge of the box
+ * @param lines - the lines to check
+ * @param x1 - the left edge of the box
+ * @param y1 - the top edge of the box
+ * @param x2 - the right edge of the box
+ * @param y2 - the bottom edge of the box
  * @returns lines
- * @private
  */
 function clipLine$1(lines, x1, y1, x2, y2) {
     const clippedLines = [];
@@ -28726,37 +29113,37 @@ function clipLine$1(lines, x1, y1, x2, y2) {
                 continue;
             }
             else if (p0.x < x1) {
-                p0 = new pointGeometry(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
+                p0 = new Point$3(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
             }
             else if (p1.x < x1) {
-                p1 = new pointGeometry(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
+                p1 = new Point$3(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
             }
             if (p0.y < y1 && p1.y < y1) {
                 continue;
             }
             else if (p0.y < y1) {
-                p0 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
+                p0 = new Point$3(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
             }
             else if (p1.y < y1) {
-                p1 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
+                p1 = new Point$3(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
             }
             if (p0.x >= x2 && p1.x >= x2) {
                 continue;
             }
             else if (p0.x >= x2) {
-                p0 = new pointGeometry(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
+                p0 = new Point$3(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
             }
             else if (p1.x >= x2) {
-                p1 = new pointGeometry(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
+                p1 = new Point$3(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
             }
             if (p0.y >= y2 && p1.y >= y2) {
                 continue;
             }
             else if (p0.y >= y2) {
-                p0 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
+                p0 = new Point$3(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
             }
             else if (p1.y >= y2) {
-                p1 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
+                p1 = new Point$3(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
             }
             if (!clippedLine || !p0.equals(clippedLine[clippedLine.length - 1])) {
                 clippedLine = [p0];
@@ -28774,7 +29161,6 @@ function clipLine$1(lines, x1, y1, x2, y2) {
 const border = IMAGE_PADDING;
 /**
  * Create the quads used for rendering an icon.
- * @private
  */
 function getIconQuads(shapedIcon, iconRotate, isSDFIcon, hasIconTextFit) {
     const quads = [];
@@ -28819,12 +29205,12 @@ function getIconQuads(shapedIcon, iconRotate, isSDFIcon, hasIconTextFit) {
         const rightPx = getPxOffset(right.fixed - fixedOffsetX, fixedContentWidth, right.stretch, stretchWidth);
         const bottomEm = getEmOffset(bottom.stretch - stretchOffsetY, stretchContentHeight, iconHeight, shapedIcon.top);
         const bottomPx = getPxOffset(bottom.fixed - fixedOffsetY, fixedContentHeight, bottom.stretch, stretchHeight);
-        const tl = new pointGeometry(leftEm, topEm);
-        const tr = new pointGeometry(rightEm, topEm);
-        const br = new pointGeometry(rightEm, bottomEm);
-        const bl = new pointGeometry(leftEm, bottomEm);
-        const pixelOffsetTL = new pointGeometry(leftPx / pixelRatio, topPx / pixelRatio);
-        const pixelOffsetBR = new pointGeometry(rightPx / pixelRatio, bottomPx / pixelRatio);
+        const tl = new Point$3(leftEm, topEm);
+        const tr = new Point$3(rightEm, topEm);
+        const br = new Point$3(rightEm, bottomEm);
+        const bl = new Point$3(leftEm, bottomEm);
+        const pixelOffsetTL = new Point$3(leftPx / pixelRatio, topPx / pixelRatio);
+        const pixelOffsetBR = new Point$3(rightPx / pixelRatio, bottomPx / pixelRatio);
         const angle = iconRotate * Math.PI / 180;
         if (angle) {
             const sin = Math.sin(angle), cos = Math.cos(angle), matrix = [cos, -sin, sin, cos];
@@ -28900,7 +29286,6 @@ function getPxOffset(fixedOffset, fixedSize, stretchOffset, stretchSize) {
 }
 /**
  * Create the quads used for rendering a text label.
- * @private
  */
 function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, imageMap, allowVerticalPlacement) {
     const textRotate = layer.layout.get('text-rotate').evaluate(feature, {}) * Math.PI / 180;
@@ -28947,10 +29332,10 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
             const y1 = (-positionedGlyph.metrics.top - rectBuffer) * positionedGlyph.scale + builtInOffset[1];
             const x2 = x1 + textureRect.w * positionedGlyph.scale / pixelRatio;
             const y2 = y1 + textureRect.h * positionedGlyph.scale / pixelRatio;
-            const tl = new pointGeometry(x1, y1);
-            const tr = new pointGeometry(x2, y1);
-            const bl = new pointGeometry(x1, y2);
-            const br = new pointGeometry(x2, y2);
+            const tl = new Point$3(x1, y1);
+            const tr = new Point$3(x2, y1);
+            const bl = new Point$3(x1, y2);
+            const br = new Point$3(x2, y2);
             if (rotateVerticalGlyph) {
                 // Vertical-supporting glyphs are laid out in 24x24 point boxes (1 square em)
                 // In horizontal orientation, the y values for glyphs are below the midline
@@ -28961,14 +29346,14 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
                 // necessary, but we also pull the glyph to the left along the x axis.
                 // The y coordinate includes baseline yOffset, thus needs to be accounted
                 // for when glyph is rotated and translated.
-                const center = new pointGeometry(-halfAdvance, halfAdvance - SHAPING_DEFAULT_OFFSET);
+                const center = new Point$3(-halfAdvance, halfAdvance - SHAPING_DEFAULT_OFFSET);
                 const verticalRotation = -Math.PI / 2;
                 // xHalfWidthOffsetCorrection is a difference between full-width and half-width
                 // advance, should be 0 for full-width glyphs and will pull up half-width glyphs.
                 const xHalfWidthOffsetCorrection = ONE_EM / 2 - halfAdvance;
                 const yImageOffsetCorrection = positionedGlyph.imageName ? xHalfWidthOffsetCorrection : 0.0;
-                const halfWidthOffsetCorrection = new pointGeometry(5 - SHAPING_DEFAULT_OFFSET - xHalfWidthOffsetCorrection, -yImageOffsetCorrection);
-                const verticalOffsetCorrection = new pointGeometry(...verticalizedLabelOffset);
+                const halfWidthOffsetCorrection = new Point$3(5 - SHAPING_DEFAULT_OFFSET - xHalfWidthOffsetCorrection, -yImageOffsetCorrection);
+                const verticalOffsetCorrection = new Point$3(...verticalizedLabelOffset);
                 tl._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
                 tr._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
                 bl._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
@@ -28981,8 +29366,8 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
                 bl._matMult(matrix);
                 br._matMult(matrix);
             }
-            const pixelOffsetTL = new pointGeometry(0, 0);
-            const pixelOffsetBR = new pointGeometry(0, 0);
+            const pixelOffsetTL = new Point$3(0, 0);
+            const pixelOffsetBR = new Point$3(0, 0);
             const minFontScaleX = 0;
             const minFontScaleY = 0;
             quads.push({ tl, tr, bl, br, tex: textureRect, writingMode: shaping.writingMode, glyphOffset, sectionIndex: positionedGlyph.sectionIndex, isSDF, pixelOffsetTL, pixelOffsetBR, minFontScaleX, minFontScaleY });
@@ -28996,20 +29381,17 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
  * It is used with CollisionIndex to check if the label overlaps with any
  * previous labels. A CollisionFeature is mostly just a set of CollisionBox
  * objects.
- *
- * @private
  */
 class CollisionFeature {
     /**
      * Create a CollisionFeature, adding its collision box data to the given collisionBoxArray in the process.
      * For line aligned labels a collision circle diameter is computed instead.
      *
-     * @param anchor The point along the line around which the label is anchored.
-     * @param shaped The text or icon shaping results.
-     * @param boxScale A magic number used to convert from glyph metrics units to geometry units.
-     * @param padding The amount of padding to add around the label edges.
-     * @param alignLine Whether the label is aligned with the line or the viewport.
-     * @private
+     * @param anchor - The point along the line around which the label is anchored.
+     * @param shaped - The text or icon shaping results.
+     * @param boxScale - A magic number used to convert from glyph metrics units to geometry units.
+     * @param padding - The amount of padding to add around the label edges.
+     * @param alignLine - Whether the label is aligned with the line or the viewport.
      */
     constructor(collisionBoxArray, anchor, featureIndex, sourceLayerIndex, bucketIndex, shaped, boxScale, padding, alignLine, rotate) {
         this.boxStartIndex = collisionBoxArray.length;
@@ -29047,10 +29429,10 @@ class CollisionFeature {
                 // Account for *-rotate in point collision boxes
                 // See https://github.com/mapbox/mapbox-gl-js/issues/6075
                 // Doesn't account for icon-text-fit
-                const tl = new pointGeometry(x1, y1);
-                const tr = new pointGeometry(x2, y1);
-                const bl = new pointGeometry(x1, y2);
-                const br = new pointGeometry(x2, y2);
+                const tl = new Point$3(x1, y1);
+                const tr = new Point$3(x2, y1);
+                const bl = new Point$3(x1, y2);
+                const br = new Point$3(x2, y2);
                 const rotateRadians = rotate * Math.PI / 180;
                 tl._rotate(rotateRadians);
                 tr._rotate(rotateRadians);
@@ -29153,11 +29535,10 @@ function defaultCompare(a, b) {
  * Finds an approximation of a polygon's Pole Of Inaccessibiliy https://en.wikipedia.org/wiki/Pole_of_inaccessibility
  * This is a copy of http://github.com/mapbox/polylabel adapted to use Points
  *
- * @param polygonRings first item in array is the outer ring followed optionally by the list of holes, should be an element of the result of util/classify_rings
- * @param precision Specified in input coordinate units. If 0 returns after first run, if > 0 repeatedly narrows the search space until the radius of the area searched for the best pole is less than precision
- * @param debug Print some statistics to the console during execution
+ * @param polygonRings - first item in array is the outer ring followed optionally by the list of holes, should be an element of the result of util/classify_rings
+ * @param precision - Specified in input coordinate units. If 0 returns after first run, if `> 0` repeatedly narrows the search space until the radius of the area searched for the best pole is less than precision
+ * @param debug - Print some statistics to the console during execution
  * @returns Pole of Inaccessibiliy.
- * @private
  */
 function findPoleOfInaccessibility(polygonRings, precision = 1, debug = false) {
     // find the bounding box of the outer ring
@@ -29181,7 +29562,7 @@ function findPoleOfInaccessibility(polygonRings, precision = 1, debug = false) {
     // a priority queue of cells in order of their "potential" (max distance to polygon)
     const cellQueue = new TinyQueue([], compareMax);
     if (cellSize === 0)
-        return new pointGeometry(minX, minY);
+        return new Point$3(minX, minY);
     // cover polygon with initial cells
     for (let x = minX; x < maxX; x += cellSize) {
         for (let y = minY; y < maxY; y += cellSize) {
@@ -29221,7 +29602,7 @@ function compareMax(a, b) {
     return b.max - a.max;
 }
 function Cell(x, y, h, polygon) {
-    this.p = new pointGeometry(x, y);
+    this.p = new Point$3(x, y);
     this.h = h; // half the cell size
     this.d = pointToPolygonDist(this.p, polygon); // distance from cell center to polygon
     this.max = this.d + this.h * Math.SQRT2; // max distance to polygon within a cell
@@ -29260,6 +29641,18 @@ function getCentroidCell(polygon) {
     return new Cell(x / area, y / area, 0, polygon);
 }
 
+var TextAnchorEnum;
+(function (TextAnchorEnum) {
+    TextAnchorEnum[TextAnchorEnum["center"] = 1] = "center";
+    TextAnchorEnum[TextAnchorEnum["left"] = 2] = "left";
+    TextAnchorEnum[TextAnchorEnum["right"] = 3] = "right";
+    TextAnchorEnum[TextAnchorEnum["top"] = 4] = "top";
+    TextAnchorEnum[TextAnchorEnum["bottom"] = 5] = "bottom";
+    TextAnchorEnum[TextAnchorEnum["top-left"] = 6] = "top-left";
+    TextAnchorEnum[TextAnchorEnum["top-right"] = 7] = "top-right";
+    TextAnchorEnum[TextAnchorEnum["bottom-left"] = 8] = "bottom-left";
+    TextAnchorEnum[TextAnchorEnum["bottom-right"] = 9] = "bottom-right";
+})(TextAnchorEnum || (TextAnchorEnum = {}));
 // The radial offset is to the edge of the text box
 // In the horizontal direction, the edge of the text box is where glyphs start
 // But in the vertical direction, the glyphs appear to "start" at the baseline
@@ -29273,7 +29666,7 @@ function evaluateVariableOffset(anchor, offset) {
         if (radialOffset < 0)
             radialOffset = 0; // Ignore negative offset.
         // solve for r where r^2 + r^2 = radialOffset^2
-        const hypotenuse = radialOffset / Math.sqrt(2);
+        const hypotenuse = radialOffset / Math.SQRT2;
         switch (anchor) {
             case 'top-right':
             case 'top-left':
@@ -29341,14 +29734,60 @@ function evaluateVariableOffset(anchor, offset) {
     }
     return (offset[1] !== INVALID_TEXT_OFFSET) ? fromTextOffset(anchor, offset[0], offset[1]) : fromRadialOffset(anchor, offset[0]);
 }
+// Helper to support both text-variable-anchor and text-variable-anchor-offset. Offset values converted from EMs to PXs
+function getTextVariableAnchorOffset(layer, feature, canonical) {
+    var _a;
+    const layout = layer.layout;
+    // If style specifies text-variable-anchor-offset, just return it
+    const variableAnchorOffset = (_a = layout.get('text-variable-anchor-offset')) === null || _a === void 0 ? void 0 : _a.evaluate(feature, {}, canonical);
+    if (variableAnchorOffset) {
+        const sourceValues = variableAnchorOffset.values;
+        const destValues = [];
+        // Convert offsets from EM to PX, and apply baseline shift
+        for (let i = 0; i < sourceValues.length; i += 2) {
+            const anchor = destValues[i] = sourceValues[i];
+            const offset = sourceValues[i + 1].map(t => t * ONE_EM);
+            if (anchor.startsWith('top')) {
+                offset[1] -= baselineOffset;
+            }
+            else if (anchor.startsWith('bottom')) {
+                offset[1] += baselineOffset;
+            }
+            destValues[i + 1] = offset;
+        }
+        return new VariableAnchorOffsetCollection(destValues);
+    }
+    // If style specifies text-variable-anchor, convert to the new format
+    const variableAnchor = layout.get('text-variable-anchor');
+    if (variableAnchor) {
+        let textOffset;
+        const unevaluatedLayout = layer._unevaluatedLayout;
+        // The style spec says don't use `text-offset` and `text-radial-offset` together
+        // but doesn't actually specify what happens if you use both. We go with the radial offset.
+        if (unevaluatedLayout.getValue('text-radial-offset') !== undefined) {
+            textOffset = [layout.get('text-radial-offset').evaluate(feature, {}, canonical) * ONE_EM, INVALID_TEXT_OFFSET];
+        }
+        else {
+            textOffset = layout.get('text-offset').evaluate(feature, {}, canonical).map(t => t * ONE_EM);
+        }
+        const anchorOffsets = [];
+        for (const anchor of variableAnchor) {
+            anchorOffsets.push(anchor, evaluateVariableOffset(anchor, textOffset));
+        }
+        return new VariableAnchorOffsetCollection(anchorOffsets);
+    }
+    return null;
+}
+
 function performSymbolLayout(args) {
     args.bucket.createArrays();
     const tileSize = 512 * args.bucket.overscaling;
     args.bucket.tilePixelRatio = EXTENT / tileSize;
     args.bucket.compareText = {};
     args.bucket.iconsNeedLinear = false;
-    const layout = args.bucket.layers[0].layout;
-    const unevaluatedLayoutValues = args.bucket.layers[0]._unevaluatedLayout._values;
+    const layer = args.bucket.layers[0];
+    const layout = layer.layout;
+    const unevaluatedLayoutValues = layer._unevaluatedLayout._values;
     const sizes = {
         // Filled in below, if *SizeData.kind is 'composite'
         // compositeIconSizes: undefined,
@@ -29391,8 +29830,8 @@ function performSymbolLayout(args) {
             const spacing = layout.get('text-letter-spacing').evaluate(feature, {}, args.canonical) * ONE_EM;
             const spacingIfAllowed = allowsLetterSpacing(unformattedText) ? spacing : 0;
             const textAnchor = layout.get('text-anchor').evaluate(feature, {}, args.canonical);
-            const variableTextAnchor = layout.get('text-variable-anchor');
-            if (!variableTextAnchor) {
+            const variableAnchorOffset = getTextVariableAnchorOffset(layer, feature, args.canonical);
+            if (!variableAnchorOffset) {
                 const radialOffset = layout.get('text-radial-offset').evaluate(feature, {}, args.canonical);
                 // Layers with variable anchors use the `text-radial-offset` property and the [x, y] offset vector
                 // is calculated at placement time instead of layout time
@@ -29421,13 +29860,18 @@ function performSymbolLayout(args) {
                 }
             };
             // If this layer uses text-variable-anchor, generate shapings for all justification possibilities.
-            if (!textAlongLine && variableTextAnchor) {
-                const justifications = textJustify === 'auto' ?
-                    variableTextAnchor.map(a => getAnchorJustification(a)) :
-                    [textJustify];
+            if (!textAlongLine && variableAnchorOffset) {
+                const justifications = new Set();
+                if (textJustify === 'auto') {
+                    for (let i = 0; i < variableAnchorOffset.values.length; i += 2) {
+                        justifications.add(getAnchorJustification(variableAnchorOffset.values[i]));
+                    }
+                }
+                else {
+                    justifications.add(textJustify);
+                }
                 let singleLine = false;
-                for (let i = 0; i < justifications.length; i++) {
-                    const justification = justifications[i];
+                for (const justification of justifications) {
                     if (shapedTextOrientations.horizontal[justification])
                         continue;
                     if (singleLine) {
@@ -29514,7 +29958,6 @@ function getAnchorJustification(anchor) {
  * instance' for each _possible_ placement of the symbol feature.
  * (At render timePlaceSymbols#place() selects which of these instances to
  * show or hide based on collisions with symbols in other layers.)
- * @private
  */
 function addFeature$1(bucket, feature, shapedTextOrientations, shapedIcon, imageMap, sizes, layoutTextSize, layoutIconSize, textOffset, isSDFIcon, canonical) {
     // To reduce the number of labels that jump around when zooming we need
@@ -29593,6 +30036,18 @@ function addFeature$1(bucket, feature, shapedTextOrientations, shapedIcon, image
         }
     }
 }
+function addTextVariableAnchorOffsets(textAnchorOffsets, variableAnchorOffset) {
+    const startIndex = textAnchorOffsets.length;
+    const values = variableAnchorOffset === null || variableAnchorOffset === void 0 ? void 0 : variableAnchorOffset.values;
+    if ((values === null || values === void 0 ? void 0 : values.length) > 0) {
+        for (let i = 0; i < values.length; i += 2) {
+            const anchor = TextAnchorEnum[values[i]];
+            const offset = values[i + 1];
+            textAnchorOffsets.emplaceBack(anchor, offset[0], offset[1]);
+        }
+    }
+    return [startIndex, textAnchorOffsets.length];
+}
 function addTextVertices(bucket, anchor, shapedText, imageMap, layer, textAlongLine, feature, textOffset, lineArray, writingMode, placementTypes, placedTextSymbolIndices, placedIconIndex, sizes, canonical) {
     const glyphQuads = getGlyphQuads(anchor, shapedText, textOffset, layer, textAlongLine, feature, imageMap, bucket.allowVerticalPlacement);
     const sizeData = bucket.textSizeData;
@@ -29632,8 +30087,6 @@ function getDefaultHorizontalShaping(horizontalShaping) {
 }
 /**
  * Add a single label & icon placement.
- *
- * @private
  */
 function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, imageMap, verticallyShapedIcon, layer, collisionBoxArray, featureIndex, sourceLayerIndex, bucketIndex, textBoxScale, textPadding, textAlongLine, textOffset, iconBoxScale, iconPadding, iconAlongLine, iconOffset, feature, sizes, isSDFIcon, canonical, layoutTextSize) {
     const lineArray = bucket.addToLineVertexArray(anchor, line);
@@ -29645,16 +30098,7 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     let placedIconSymbolIndex = -1;
     let verticalPlacedIconSymbolIndex = -1;
     const placedTextSymbolIndices = {};
-    let key = murmurhashJsExports('');
-    let textOffset0 = 0;
-    let textOffset1 = 0;
-    if (layer._unevaluatedLayout.getValue('text-radial-offset') === undefined) {
-        [textOffset0, textOffset1] = layer.layout.get('text-offset').evaluate(feature, {}, canonical).map(t => t * ONE_EM);
-    }
-    else {
-        textOffset0 = layer.layout.get('text-radial-offset').evaluate(feature, {}, canonical) * ONE_EM;
-        textOffset1 = INVALID_TEXT_OFFSET;
-    }
+    let key = murmur3$1('');
     if (bucket.allowVerticalPlacement && shapedTextOrientations.vertical) {
         const textRotation = layer.layout.get('text-rotate').evaluate(feature, {}, canonical);
         const verticalTextRotation = textRotation + 90.0;
@@ -29710,7 +30154,7 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     for (const justification of justifications) {
         const shaping = shapedTextOrientations.horizontal[justification];
         if (!textCollisionFeature) {
-            key = murmurhashJsExports(shaping.text);
+            key = murmur3$1(shaping.text);
             const textRotate = layer.layout.get('text-rotate').evaluate(feature, {}, canonical);
             // As a collision approximation, we can use either the vertical or any of the horizontal versions of the feature
             // We're counting on all versions having similar dimensions
@@ -29755,7 +30199,9 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     if (feature.sortKey !== undefined) {
         bucket.addToSortKeyRanges(bucket.symbolInstances.length, feature.sortKey);
     }
-    bucket.symbolInstances.emplaceBack(anchor.x, anchor.y, placedTextSymbolIndices.right >= 0 ? placedTextSymbolIndices.right : -1, placedTextSymbolIndices.center >= 0 ? placedTextSymbolIndices.center : -1, placedTextSymbolIndices.left >= 0 ? placedTextSymbolIndices.left : -1, placedTextSymbolIndices.vertical || -1, placedIconSymbolIndex, verticalPlacedIconSymbolIndex, key, textBoxStartIndex, textBoxEndIndex, verticalTextBoxStartIndex, verticalTextBoxEndIndex, iconBoxStartIndex, iconBoxEndIndex, verticalIconBoxStartIndex, verticalIconBoxEndIndex, featureIndex, numHorizontalGlyphVertices, numVerticalGlyphVertices, numIconVertices, numVerticalIconVertices, useRuntimeCollisionCircles, 0, textBoxScale, textOffset0, textOffset1, collisionCircleDiameter);
+    const variableAnchorOffset = getTextVariableAnchorOffset(layer, feature, canonical);
+    const [textAnchorOffsetStartIndex, textAnchorOffsetEndIndex] = addTextVariableAnchorOffsets(bucket.textAnchorOffsets, variableAnchorOffset);
+    bucket.symbolInstances.emplaceBack(anchor.x, anchor.y, placedTextSymbolIndices.right >= 0 ? placedTextSymbolIndices.right : -1, placedTextSymbolIndices.center >= 0 ? placedTextSymbolIndices.center : -1, placedTextSymbolIndices.left >= 0 ? placedTextSymbolIndices.left : -1, placedTextSymbolIndices.vertical || -1, placedIconSymbolIndex, verticalPlacedIconSymbolIndex, key, textBoxStartIndex, textBoxEndIndex, verticalTextBoxStartIndex, verticalTextBoxEndIndex, iconBoxStartIndex, iconBoxEndIndex, verticalIconBoxStartIndex, verticalIconBoxEndIndex, featureIndex, numHorizontalGlyphVertices, numVerticalGlyphVertices, numIconVertices, numVerticalIconVertices, useRuntimeCollisionCircles, 0, textBoxScale, collisionCircleDiameter, textAnchorOffsetStartIndex, textAnchorOffsetEndIndex);
 }
 function anchorIsTooClose(bucket, text, repeatDistance, anchor) {
     const compareText = bucket.compareText;
@@ -29902,23 +30348,29 @@ const earthRadius = 6371008.8;
  * A `LngLat` object represents a given longitude and latitude coordinate, measured in degrees.
  * These coordinates are based on the [WGS84 (EPSG:4326) standard](https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84).
  *
- * MapLibre GL uses longitude, latitude coordinate order (as opposed to latitude, longitude) to match the
+ * MapLibre GL JS uses longitude, latitude coordinate order (as opposed to latitude, longitude) to match the
  * [GeoJSON specification](https://tools.ietf.org/html/rfc7946).
  *
- * Note that any MapLibre GL method that accepts a `LngLat` object as an argument or option
+ * Note that any MapLibre GL JS method that accepts a `LngLat` object as an argument or option
  * can also accept an `Array` of two numbers and will perform an implicit conversion.
  * This flexible type is documented as {@link LngLatLike}.
  *
- * @param {number} lng Longitude, measured in degrees.
- * @param {number} lat Latitude, measured in degrees.
+ * @group Geography and Geometry
+ *
  * @example
- * var ll = new maplibregl.LngLat(-123.9749, 40.7736);
+ * ```ts
+ * let ll = new maplibregl.LngLat(-123.9749, 40.7736);
  * ll.lng; // = -123.9749
- * @see [Get coordinates of the mouse pointer](https://maplibre.org/maplibre-gl-js-docs/example/mouse-position/)
- * @see [Display a popup](https://maplibre.org/maplibre-gl-js-docs/example/popup/)
- * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js-docs/example/timeline-animation/)
+ * ```
+ * @see [Get coordinates of the mouse pointer](https://maplibre.org/maplibre-gl-js/docs/examples/mouse-position/)
+ * @see [Display a popup](https://maplibre.org/maplibre-gl-js/docs/examples/popup/)
+ * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js/docs/examples/timeline-animation/)
  */
 class LngLat {
+    /**
+     * @param lng - Longitude, measured in degrees.
+     * @param lat - Latitude, measured in degrees.
+     */
     constructor(lng, lat) {
         if (isNaN(lng) || isNaN(lat)) {
             throw new Error(`Invalid LngLat object: (${lng}, ${lat})`);
@@ -29932,11 +30384,13 @@ class LngLat {
     /**
      * Returns a new `LngLat` object whose longitude is wrapped to the range (-180, 180).
      *
-     * @returns {LngLat} The wrapped `LngLat` object.
+     * @returns The wrapped `LngLat` object.
      * @example
-     * var ll = new maplibregl.LngLat(286.0251, 40.7736);
-     * var wrapped = ll.wrap();
+     * ```ts
+     * let ll = new maplibregl.LngLat(286.0251, 40.7736);
+     * let wrapped = ll.wrap();
      * wrapped.lng; // = -73.9749
+     * ```
      */
     wrap() {
         return new LngLat(wrap$1(this.lng, -180, 180), this.lat);
@@ -29944,10 +30398,12 @@ class LngLat {
     /**
      * Returns the coordinates represented as an array of two numbers.
      *
-     * @returns {[number,number]} The coordinates represented as an array of longitude and latitude.
+     * @returns The coordinates represented as an array of longitude and latitude.
      * @example
-     * var ll = new maplibregl.LngLat(-73.9749, 40.7736);
+     * ```ts
+     * let ll = new maplibregl.LngLat(-73.9749, 40.7736);
      * ll.toArray(); // = [-73.9749, 40.7736]
+     * ```
      */
     toArray() {
         return [this.lng, this.lat];
@@ -29955,10 +30411,12 @@ class LngLat {
     /**
      * Returns the coordinates represent as a string.
      *
-     * @returns {string} The coordinates represented as a string of the format `'LngLat(lng, lat)'`.
+     * @returns The coordinates represented as a string of the format `'LngLat(lng, lat)'`.
      * @example
-     * var ll = new maplibregl.LngLat(-73.9749, 40.7736);
+     * ```ts
+     * let ll = new maplibregl.LngLat(-73.9749, 40.7736);
      * ll.toString(); // = "LngLat(-73.9749, 40.7736)"
+     * ```
      */
     toString() {
         return `LngLat(${this.lng}, ${this.lat})`;
@@ -29967,12 +30425,14 @@ class LngLat {
      * Returns the approximate distance between a pair of coordinates in meters
      * Uses the Haversine Formula (from R.W. Sinnott, "Virtues of the Haversine", Sky and Telescope, vol. 68, no. 2, 1984, p. 159)
      *
-     * @param {LngLat} lngLat coordinates to compute the distance to
-     * @returns {number} Distance in meters between the two coordinates.
+     * @param lngLat - coordinates to compute the distance to
+     * @returns Distance in meters between the two coordinates.
      * @example
-     * var new_york = new maplibregl.LngLat(-74.0060, 40.7128);
-     * var los_angeles = new maplibregl.LngLat(-118.2437, 34.0522);
+     * ```ts
+     * let new_york = new maplibregl.LngLat(-74.0060, 40.7128);
+     * let los_angeles = new maplibregl.LngLat(-118.2437, 34.0522);
      * new_york.distanceTo(los_angeles); // = 3935751.690893987, "true distance" using a non-spherical approximation is ~3966km
+     * ```
      */
     distanceTo(lngLat) {
         const rad = Math.PI / 180;
@@ -29988,12 +30448,14 @@ class LngLat {
      *
      * If a `LngLat` object is passed in, the function returns it unchanged.
      *
-     * @param {LngLatLike} input An array of two numbers or object to convert, or a `LngLat` object to return.
-     * @returns {LngLat} A new `LngLat` object, if a conversion occurred, or the original `LngLat` object.
+     * @param input - An array of two numbers or object to convert, or a `LngLat` object to return.
+     * @returns A new `LngLat` object, if a conversion occurred, or the original `LngLat` object.
      * @example
-     * var arr = [-73.9749, 40.7736];
-     * var ll = maplibregl.LngLat.convert(arr);
+     * ```ts
+     * let arr = [-73.9749, 40.7736];
+     * let ll = maplibregl.LngLat.convert(arr);
      * ll;   // = LngLat {lng: -73.9749, lat: 40.7736}
+     * ```
      */
     static convert(input) {
         if (input instanceof LngLat) {
@@ -30046,9 +30508,8 @@ function altitudeFromMercatorZ(z, y) {
  *
  * At the equator the scale factor will be 1, which increases at higher latitudes.
  *
- * @param {number} lat Latitude
- * @returns {number} scale factor
- * @private
+ * @param lat - Latitude
+ * @returns scale factor
  */
 function mercatorScale(lat) {
     return 1 / Math.cos(lat * Math.PI / 180);
@@ -30067,15 +30528,20 @@ function mercatorScale(lat) {
  *
  * The `z` dimension of `MercatorCoordinate` is conformal. A cube in the mercator coordinate space would be rendered as a cube.
  *
- * @param {number} x The x component of the position.
- * @param {number} y The y component of the position.
- * @param {number} z The z component of the position.
- * @example
- * var nullIsland = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+ * @group Geography and Geometry
  *
- * @see [Add a custom style layer](https://maplibre.org/maplibre-gl-js-docs/example/custom-style-layer/)
+ * @example
+ * ```ts
+ * let nullIsland = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+ * ```
+ * @see [Add a custom style layer](https://maplibre.org/maplibre-gl-js/docs/examples/custom-style-layer/)
  */
 class MercatorCoordinate {
+    /**
+     * @param x - The x component of the position.
+     * @param y - The y component of the position.
+     * @param z - The z component of the position.
+     */
     constructor(x, y, z = 0) {
         this.x = +x;
         this.y = +y;
@@ -30084,12 +30550,14 @@ class MercatorCoordinate {
     /**
      * Project a `LngLat` to a `MercatorCoordinate`.
      *
-     * @param {LngLatLike} lngLatLike The location to project.
-     * @param {number} altitude The altitude in meters of the position.
-     * @returns {MercatorCoordinate} The projected mercator coordinate.
+     * @param lngLatLike - The location to project.
+     * @param altitude - The altitude in meters of the position.
+     * @returns The projected mercator coordinate.
      * @example
-     * var coord = maplibregl.MercatorCoordinate.fromLngLat({ lng: 0, lat: 0}, 0);
+     * ```ts
+     * let coord = maplibregl.MercatorCoordinate.fromLngLat({ lng: 0, lat: 0}, 0);
      * coord; // MercatorCoordinate(0.5, 0.5, 0)
+     * ```
      */
     static fromLngLat(lngLatLike, altitude = 0) {
         const lngLat = LngLat.convert(lngLatLike);
@@ -30098,10 +30566,12 @@ class MercatorCoordinate {
     /**
      * Returns the `LngLat` for the coordinate.
      *
-     * @returns {LngLat} The `LngLat` object.
+     * @returns The `LngLat` object.
      * @example
-     * var coord = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
-     * var lngLat = coord.toLngLat(); // LngLat(0, 0)
+     * ```ts
+     * let coord = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+     * let lngLat = coord.toLngLat(); // LngLat(0, 0)
+     * ```
      */
     toLngLat() {
         return new LngLat(lngFromMercatorX(this.x), latFromMercatorY(this.y));
@@ -30109,10 +30579,12 @@ class MercatorCoordinate {
     /**
      * Returns the altitude in meters of the coordinate.
      *
-     * @returns {number} The altitude in meters.
+     * @returns The altitude in meters.
      * @example
-     * var coord = new maplibregl.MercatorCoordinate(0, 0, 0.02);
+     * ```ts
+     * let coord = new maplibregl.MercatorCoordinate(0, 0, 0.02);
      * coord.toAltitude(); // 6914.281956295339
+     * ```
      */
     toAltitude() {
         return altitudeFromMercatorZ(this.z, this.y);
@@ -30123,7 +30595,7 @@ class MercatorCoordinate {
      * For coordinates in real world units using meters, this naturally provides the scale
      * to transform into `MercatorCoordinate`s.
      *
-     * @returns {number} Distance of 1 meter in `MercatorCoordinate` units.
+     * @returns Distance of 1 meter in `MercatorCoordinate` units.
      */
     meterInMercatorCoordinateUnits() {
         // 1 meter / circumference at equator in meters * Mercator projection scale factor at this latitude
@@ -30131,6 +30603,9 @@ class MercatorCoordinate {
     }
 }
 
+/**
+ * A canonical way to define a tile ID
+ */
 class CanonicalTileID {
     constructor(z, x, y) {
         if (z < 0 || z > 25 || y < 0 || y >= Math.pow(2, z) || x < 0 || x >= Math.pow(2, z)) {
@@ -30163,12 +30638,16 @@ class CanonicalTileID {
     }
     getTilePoint(coord) {
         const tilesAtZoom = Math.pow(2, this.z);
-        return new pointGeometry((coord.x * tilesAtZoom - this.x) * EXTENT, (coord.y * tilesAtZoom - this.y) * EXTENT);
+        return new Point$3((coord.x * tilesAtZoom - this.x) * EXTENT, (coord.y * tilesAtZoom - this.y) * EXTENT);
     }
     toString() {
         return `${this.z}/${this.x}/${this.y}`;
     }
 }
+/**
+ * @internal
+ * An unwrapped tile identifier
+ */
 class UnwrappedTileID {
     constructor(wrap, canonical) {
         this.wrap = wrap;
@@ -30176,6 +30655,9 @@ class UnwrappedTileID {
         this.key = calculateKey(wrap, canonical.z, canonical.z, canonical.x, canonical.y);
     }
 }
+/**
+ * An overscaled tile identifier
+ */
 class OverscaledTileID {
     constructor(overscaledZ, wrap, z, x, y) {
         if (overscaledZ < z)
@@ -30311,6 +30793,8 @@ class WorkerTile {
         this.collectResourceTiming = !!params.collectResourceTiming;
         this.returnDependencies = !!params.returnDependencies;
         this.promoteId = params.promoteId;
+        this.inFlightDependencies = [];
+        this.dependencySentinel = -1;
     }
     parse(data, layerIndex, availableImages, actor, callback) {
         this.status = 'parsing';
@@ -30375,40 +30859,53 @@ class WorkerTile {
         let iconMap;
         let patternMap;
         const stacks = mapObject(options.glyphDependencies, (glyphs) => Object.keys(glyphs).map(Number));
+        this.inFlightDependencies.forEach((request) => request === null || request === void 0 ? void 0 : request.cancel());
+        this.inFlightDependencies = [];
+        // cancelling seems to be not sufficient, we seems to still manage to get a callback hit, so use a sentinel to drop stale results
+        const dependencySentinel = ++this.dependencySentinel;
         if (Object.keys(stacks).length) {
-            actor.send('getGlyphs', { uid: this.uid, stacks, source: this.source, tileID: this.tileID, type: 'glyphs' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getGlyphs', { uid: this.uid, stacks, source: this.source, tileID: this.tileID, type: 'glyphs' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     glyphMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             glyphMap = {};
         }
         const icons = Object.keys(options.iconDependencies);
         if (icons.length) {
-            actor.send('getImages', { icons, source: this.source, tileID: this.tileID, type: 'icons' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getImages', { icons, source: this.source, tileID: this.tileID, type: 'icons' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     iconMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             iconMap = {};
         }
         const patterns = Object.keys(options.patternDependencies);
         if (patterns.length) {
-            actor.send('getImages', { icons: patterns, source: this.source, tileID: this.tileID, type: 'patterns' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getImages', { icons: patterns, source: this.source, tileID: this.tileID, type: 'patterns' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     patternMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             patternMap = {};
@@ -30475,8 +30972,10 @@ var PerformanceMarkers;
 })(PerformanceMarkers || (PerformanceMarkers = {}));
 let lastFrameTime = null;
 let frameTimes = [];
-const minFramerateTarget = 30;
+const minFramerateTarget = 60;
 const frameTimeTarget = 1000 / minFramerateTarget;
+const loadTimeKey = 'loadTime';
+const fullLoadTimeKey = 'fullLoadTime';
 const PerformanceUtils = {
     mark(marker) {
         performance.mark(marker);
@@ -30492,17 +30991,17 @@ const PerformanceUtils = {
     clearMetrics() {
         lastFrameTime = null;
         frameTimes = [];
-        performance.clearMeasures('loadTime');
-        performance.clearMeasures('fullLoadTime');
+        performance.clearMeasures(loadTimeKey);
+        performance.clearMeasures(fullLoadTimeKey);
         for (const marker in PerformanceMarkers) {
             performance.clearMarks(PerformanceMarkers[marker]);
         }
     },
     getPerformanceMetrics() {
-        performance.measure('loadTime', PerformanceMarkers.create, PerformanceMarkers.load);
-        performance.measure('fullLoadTime', PerformanceMarkers.create, PerformanceMarkers.fullLoad);
-        const loadTime = performance.getEntriesByName('loadTime')[0].duration;
-        const fullLoadTime = performance.getEntriesByName('fullLoadTime')[0].duration;
+        performance.measure(loadTimeKey, PerformanceMarkers.create, PerformanceMarkers.load);
+        performance.measure(fullLoadTimeKey, PerformanceMarkers.create, PerformanceMarkers.fullLoad);
+        const loadTime = performance.getEntriesByName(loadTimeKey)[0].duration;
+        const fullLoadTime = performance.getEntriesByName(fullLoadTimeKey)[0].duration;
         const totalFrames = frameTimes.length;
         const avgFrameTime = frameTimes.reduce((prev, curr) => prev + curr, 0) / totalFrames / 1000;
         const fps = 1 / avgFrameTime;
@@ -30517,15 +31016,14 @@ const PerformanceUtils = {
             loadTime,
             fullLoadTime,
             fps,
-            percentDroppedFrames
+            percentDroppedFrames,
+            totalFrames
         };
     }
 };
 /**
+ * @internal
  * Safe wrapper for the performance resource timing API in web workers with graceful degradation
- *
- * @param {RequestParameters} request
- * @private
  */
 class RequestPerformance {
     constructor(request) {
@@ -30554,7 +31052,7 @@ class RequestPerformance {
 var performance$1 = performance;
 
 /**
- * @private
+ * Loads a vector tile
  */
 function loadVectorTile(params, callback) {
     const request = getArrayBuffer(params.request, (err, data, cacheControl, expires) => {
@@ -30563,7 +31061,7 @@ function loadVectorTile(params, callback) {
         }
         else if (data) {
             callback(null, {
-                vectorTile: new vectorTile.VectorTile(new pbf(data)),
+                vectorTile: new vectorTile.VectorTile(new Protobuf(data)),
                 rawData: data,
                 cacheControl,
                 expires
@@ -30581,22 +31079,20 @@ function loadVectorTile(params, callback) {
  * for data formats that can be parsed/converted into an in-memory VectorTile
  * representation.  To do so, create it with
  * `new VectorTileWorkerSource(actor, styleLayers, customLoadVectorDataFunction)`.
- *
- * @private
  */
 class VectorTileWorkerSource {
     /**
-     * @param [loadVectorData] Optional method for custom loading of a VectorTile
+     * @param loadVectorData - Optional method for custom loading of a VectorTile
      * object based on parameters passed from the main-thread Source. See
      * {@link VectorTileWorkerSource#loadTile}. The default implementation simply
      * loads the pbf at `params.url`.
-     * @private
      */
     constructor(actor, layerIndex, availableImages, loadVectorData) {
         this.actor = actor;
         this.layerIndex = layerIndex;
         this.availableImages = availableImages;
         this.loadVectorData = loadVectorData || loadVectorTile;
+        this.fetching = {};
         this.loading = {};
         this.loaded = {};
     }
@@ -30604,7 +31100,6 @@ class VectorTileWorkerSource {
      * Implements {@link WorkerSource#loadTile}. Delegates to
      * {@link VectorTileWorkerSource#loadVectorData} (which by default expects
      * a `params.url` property) for fetching and producing a VectorTile object.
-     * @private
      */
     loadTile(params, callback) {
         const uid = params.uid;
@@ -30636,42 +31131,51 @@ class VectorTileWorkerSource {
             }
             workerTile.vectorTile = response.vectorTile;
             workerTile.parse(response.vectorTile, this.layerIndex, this.availableImages, this.actor, (err, result) => {
+                delete this.fetching[uid];
                 if (err || !result)
                     return callback(err);
                 // Transferring a copy of rawTileData because the worker needs to retain its copy.
-                callback(null, extend$2({ rawTileData: rawTileData.slice(0) }, result, cacheControl, resourceTiming));
+                callback(null, extend$1({ rawTileData: rawTileData.slice(0) }, result, cacheControl, resourceTiming));
             });
             this.loaded = this.loaded || {};
             this.loaded[uid] = workerTile;
+            // keep the original fetching state so that reload tile can pick it up if the original parse is cancelled by reloads' parse
+            this.fetching[uid] = { rawTileData, cacheControl, resourceTiming };
         });
     }
     /**
      * Implements {@link WorkerSource#reloadTile}.
-     * @private
      */
     reloadTile(params, callback) {
-        const loaded = this.loaded, uid = params.uid, vtSource = this;
+        const loaded = this.loaded;
+        const uid = params.uid;
         if (loaded && loaded[uid]) {
             const workerTile = loaded[uid];
             workerTile.showCollisionBoxes = params.showCollisionBoxes;
-            const done = (err, data) => {
-                const reloadCallback = workerTile.reloadCallback;
-                if (reloadCallback) {
-                    delete workerTile.reloadCallback;
-                    workerTile.parse(workerTile.vectorTile, vtSource.layerIndex, this.availableImages, vtSource.actor, reloadCallback);
-                }
-                callback(err, data);
-            };
             if (workerTile.status === 'parsing') {
-                workerTile.reloadCallback = done;
+                workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, (err, result) => {
+                    if (err || !result)
+                        return callback(err, result);
+                    // if we have cancelled the original parse, make sure to pass the rawTileData from the original fetch
+                    let parseResult;
+                    if (this.fetching[uid]) {
+                        const { rawTileData, cacheControl, resourceTiming } = this.fetching[uid];
+                        delete this.fetching[uid];
+                        parseResult = extend$1({ rawTileData: rawTileData.slice(0) }, result, cacheControl, resourceTiming);
+                    }
+                    else {
+                        parseResult = result;
+                    }
+                    callback(null, parseResult);
+                });
             }
             else if (workerTile.status === 'done') {
                 // if there was no vector tile data on the initial load, don't try and re-parse tile
                 if (workerTile.vectorTile) {
-                    workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, done);
+                    workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, callback);
                 }
                 else {
-                    done();
+                    callback();
                 }
             }
         }
@@ -30679,9 +31183,8 @@ class VectorTileWorkerSource {
     /**
      * Implements {@link WorkerSource#abortTile}.
      *
-     * @param params
-     * @param params.uid The UID for this tile.
-     * @private
+     * @param params - The tile parameters
+     * @param callback - The callback
      */
     abortTile(params, callback) {
         const loading = this.loading, uid = params.uid;
@@ -30694,9 +31197,8 @@ class VectorTileWorkerSource {
     /**
      * Implements {@link WorkerSource#removeTile}.
      *
-     * @param params
-     * @param params.uid The UID for this tile.
-     * @private
+     * @param params - The tile parameters
+     * @param callback - The callback
      */
     removeTile(params, callback) {
         const loaded = this.loaded, uid = params.uid;
@@ -30718,18 +31220,42 @@ class VectorTileWorkerSource {
 class DEMData {
     // RGBAImage data has uniform 1px padding on all sides: square tile edge size defines stride
     // and dim is calculated as stride - 2.
-    constructor(uid, data, encoding) {
+    constructor(uid, data, encoding, redMix = 1.0, greenMix = 1.0, blueMix = 1.0, baseMix = 0.0) {
         this.uid = uid;
         if (data.height !== data.width)
             throw new RangeError('DEM tiles must be square');
-        if (encoding && encoding !== 'mapbox' && encoding !== 'terrarium') {
-            warnOnce(`"${encoding}" is not a valid encoding type. Valid types include "mapbox" and "terrarium".`);
+        if (encoding && !['mapbox', 'terrarium', 'custom'].includes(encoding)) {
+            warnOnce(`"${encoding}" is not a valid encoding type. Valid types include "mapbox", "terrarium" and "custom".`);
             return;
         }
         this.stride = data.height;
         const dim = this.dim = data.height - 2;
         this.data = new Uint32Array(data.data.buffer);
-        this.encoding = encoding || 'mapbox';
+        switch (encoding) {
+            case 'terrarium':
+                // unpacking formula for mapzen terrarium:
+                // https://aws.amazon.com/public-datasets/terrain/
+                this.redMix = 256.0;
+                this.greenMix = 1.0;
+                this.blueMix = 1.0 / 256.0;
+                this.baseMix = 32768.0;
+                break;
+            case 'custom':
+                this.redMix = redMix;
+                this.greenMix = greenMix;
+                this.blueMix = blueMix;
+                this.baseMix = baseMix;
+                break;
+            case 'mapbox':
+            default:
+                // unpacking formula for mapbox.terrain-rgb:
+                // https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
+                this.redMix = 6553.6;
+                this.greenMix = 25.6;
+                this.blueMix = 0.1;
+                this.baseMix = 10000.0;
+                break;
+        }
         // in order to avoid flashing seams between tiles, here we are initially populating a 1px border of pixels around the image
         // with the data of the nearest pixel from the image. this data is eventually replaced when the tile's neighboring
         // tiles are loaded and the accurate data can be backfilled using DEMData#backfillBorder
@@ -30764,26 +31290,18 @@ class DEMData {
     get(x, y) {
         const pixels = new Uint8Array(this.data.buffer);
         const index = this._idx(x, y) * 4;
-        const unpack = this.encoding === 'terrarium' ? this._unpackTerrarium : this._unpackMapbox;
-        return unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
+        return this.unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
     }
     getUnpackVector() {
-        return this.encoding === 'terrarium' ? [256.0, 1.0, 1.0 / 256.0, 32768.0] : [6553.6, 25.6, 0.1, 10000.0];
+        return [this.redMix, this.greenMix, this.blueMix, this.baseMix];
     }
     _idx(x, y) {
         if (x < -1 || x >= this.dim + 1 || y < -1 || y >= this.dim + 1)
             throw new RangeError('out of range source coordinates for DEM data');
         return (y + 1) * this.stride + (x + 1);
     }
-    _unpackMapbox(r, g, b) {
-        // unpacking formula for mapbox.terrain-rgb:
-        // https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-        return ((r * 256 * 256 + g * 256.0 + b) / 10.0 - 10000.0);
-    }
-    _unpackTerrarium(r, g, b) {
-        // unpacking formula for mapzen terrarium:
-        // https://aws.amazon.com/public-datasets/terrain/
-        return ((r * 256 + g + b / 256) - 32768.0);
+    unpack(r, g, b) {
+        return (r * this.redMix + g * this.greenMix + b * this.blueMix - this.baseMix);
     }
     getPixels() {
         return new RGBAImage({ width: this.stride, height: this.stride }, new Uint8Array(this.data.buffer));
@@ -30899,6 +31417,8 @@ function rewindRing(ring, dir) {
     if (area + err >= 0 !== !!dir) ring.reverse();
 }
 
+var rewind$2 = /*@__PURE__*/getDefaultExportFromCjs(geojsonRewind);
+
 const toGeoJSON = vectorTile.VectorTileFeature.prototype.toGeoJSON;
 let FeatureWrapper$1 = class FeatureWrapper {
     constructor(feature) {
@@ -30920,7 +31440,7 @@ let FeatureWrapper$1 = class FeatureWrapper {
         if (this._feature.type === 1) {
             const geometry = [];
             for (const point of this._feature.geometry) {
-                geometry.push([new pointGeometry(point[0], point[1])]);
+                geometry.push([new Point$3(point[0], point[1])]);
             }
             return geometry;
         }
@@ -30929,7 +31449,7 @@ let FeatureWrapper$1 = class FeatureWrapper {
             for (const ring of this._feature.geometry) {
                 const newRing = [];
                 for (const point of ring) {
-                    newRing.push(new pointGeometry(point[0], point[1]));
+                    newRing.push(new Point$3(point[0], point[1]));
                 }
                 geometry.push(newRing);
             }
@@ -30953,11 +31473,7 @@ let GeoJSONWrapper$2 = class GeoJSONWrapper {
     }
 };
 
-var vtPbfExports = {};
-var vtPbf = {
-  get exports(){ return vtPbfExports; },
-  set exports(v){ vtPbfExports = v; },
-};
+var vtPbf$1 = {exports: {}};
 
 'use strict';
 
@@ -31027,13 +31543,17 @@ FeatureWrapper.prototype.bbox = function () {
 
 FeatureWrapper.prototype.toGeoJSON = VectorTileFeature.prototype.toGeoJSON;
 
+var geojson_wrapper$1 = /*@__PURE__*/getDefaultExportFromCjs(geojson_wrapper);
+
+var vtPbf = vtPbf$1.exports;
+
 var Pbf = pbf;
 var GeoJSONWrapper = geojson_wrapper;
 
-vtPbf.exports = fromVectorTileJs;
-var fromVectorTileJs_1 = vtPbfExports.fromVectorTileJs = fromVectorTileJs;
-var fromGeojsonVt_1 = vtPbfExports.fromGeojsonVt = fromGeojsonVt;
-var GeoJSONWrapper_1 = vtPbfExports.GeoJSONWrapper = GeoJSONWrapper;
+vtPbf$1.exports = fromVectorTileJs;
+var fromVectorTileJs_1 = vtPbf$1.exports.fromVectorTileJs = fromVectorTileJs;
+var fromGeojsonVt_1 = vtPbf$1.exports.fromGeojsonVt = fromGeojsonVt;
+var GeoJSONWrapper_1 = vtPbf$1.exports.GeoJSONWrapper = GeoJSONWrapper;
 
 /**
  * Serialize a vector-tile-js-created tile to pbf
@@ -31207,18 +31727,262 @@ function writeValue (value, pbf) {
   }
 }
 
-function sortKD(ids, coords, nodeSize, left, right, depth) {
-    if (right - left <= nodeSize) return;
+var vtPbfExports = vtPbf$1.exports;
+var vtpbf = /*@__PURE__*/getDefaultExportFromCjs(vtPbfExports);
 
-    const m = (left + right) >> 1;
+const ARRAY_TYPES = [
+    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array,
+    Int32Array, Uint32Array, Float32Array, Float64Array
+];
 
-    select(ids, coords, m, left, right, depth % 2);
+/** @typedef {Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor} TypedArrayConstructor */
 
-    sortKD(ids, coords, nodeSize, left, m - 1, depth + 1);
-    sortKD(ids, coords, nodeSize, m + 1, right, depth + 1);
+const VERSION = 1; // serialized format version
+const HEADER_SIZE = 8;
+
+class KDBush {
+
+    /**
+     * Creates an index from raw `ArrayBuffer` data.
+     * @param {ArrayBuffer} data
+     */
+    static from(data) {
+        if (!(data instanceof ArrayBuffer)) {
+            throw new Error('Data must be an instance of ArrayBuffer.');
+        }
+        const [magic, versionAndType] = new Uint8Array(data, 0, 2);
+        if (magic !== 0xdb) {
+            throw new Error('Data does not appear to be in a KDBush format.');
+        }
+        const version = versionAndType >> 4;
+        if (version !== VERSION) {
+            throw new Error(`Got v${version} data when expected v${VERSION}.`);
+        }
+        const ArrayType = ARRAY_TYPES[versionAndType & 0x0f];
+        if (!ArrayType) {
+            throw new Error('Unrecognized array type.');
+        }
+        const [nodeSize] = new Uint16Array(data, 2, 1);
+        const [numItems] = new Uint32Array(data, 4, 1);
+
+        return new KDBush(numItems, nodeSize, ArrayType, data);
+    }
+
+    /**
+     * Creates an index that will hold a given number of items.
+     * @param {number} numItems
+     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
+     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
+     * @param {ArrayBuffer} [data] (For internal use only)
+     */
+    constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
+        if (isNaN(numItems) || numItems < 0) throw new Error(`Unpexpected numItems value: ${numItems}.`);
+
+        this.numItems = +numItems;
+        this.nodeSize = Math.min(Math.max(+nodeSize, 2), 65535);
+        this.ArrayType = ArrayType;
+        this.IndexArrayType = numItems < 65536 ? Uint16Array : Uint32Array;
+
+        const arrayTypeIndex = ARRAY_TYPES.indexOf(this.ArrayType);
+        const coordsByteSize = numItems * 2 * this.ArrayType.BYTES_PER_ELEMENT;
+        const idsByteSize = numItems * this.IndexArrayType.BYTES_PER_ELEMENT;
+        const padCoords = (8 - idsByteSize % 8) % 8;
+
+        if (arrayTypeIndex < 0) {
+            throw new Error(`Unexpected typed array class: ${ArrayType}.`);
+        }
+
+        if (data && (data instanceof ArrayBuffer)) { // reconstruct an index from a buffer
+            this.data = data;
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+            this._pos = numItems * 2;
+            this._finished = true;
+        } else { // initialize a new index
+            this.data = new ArrayBuffer(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+            this._pos = 0;
+            this._finished = false;
+
+            // set header
+            new Uint8Array(this.data, 0, 2).set([0xdb, (VERSION << 4) + arrayTypeIndex]);
+            new Uint16Array(this.data, 2, 1)[0] = nodeSize;
+            new Uint32Array(this.data, 4, 1)[0] = numItems;
+        }
+    }
+
+    /**
+     * Add a point to the index.
+     * @param {number} x
+     * @param {number} y
+     * @returns {number} An incremental index associated with the added item (starting from `0`).
+     */
+    add(x, y) {
+        const index = this._pos >> 1;
+        this.ids[index] = index;
+        this.coords[this._pos++] = x;
+        this.coords[this._pos++] = y;
+        return index;
+    }
+
+    /**
+     * Perform indexing of the added points.
+     */
+    finish() {
+        const numAdded = this._pos >> 1;
+        if (numAdded !== this.numItems) {
+            throw new Error(`Added ${numAdded} items when expected ${this.numItems}.`);
+        }
+        // kd-sort both arrays for efficient search
+        sort(this.ids, this.coords, this.nodeSize, 0, this.numItems - 1, 0);
+
+        this._finished = true;
+        return this;
+    }
+
+    /**
+     * Search the index for items within a given bounding box.
+     * @param {number} minX
+     * @param {number} minY
+     * @param {number} maxX
+     * @param {number} maxY
+     * @returns {number[]} An array of indices correponding to the found items.
+     */
+    range(minX, minY, maxX, maxY) {
+        if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
+
+        const {ids, coords, nodeSize} = this;
+        const stack = [0, ids.length - 1, 0];
+        const result = [];
+
+        // recursively search for items in range in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop() || 0;
+            const right = stack.pop() || 0;
+            const left = stack.pop() || 0;
+
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    const x = coords[2 * i];
+                    const y = coords[2 * i + 1];
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[i]);
+                }
+                continue;
+            }
+
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
+
+            // queue search in halves that intersect the query
+            if (axis === 0 ? minX <= x : minY <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? maxX >= x : maxY >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Search the index for items within a given radius.
+     * @param {number} qx
+     * @param {number} qy
+     * @param {number} r Query radius.
+     * @returns {number[]} An array of indices correponding to the found items.
+     */
+    within(qx, qy, r) {
+        if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
+
+        const {ids, coords, nodeSize} = this;
+        const stack = [0, ids.length - 1, 0];
+        const result = [];
+        const r2 = r * r;
+
+        // recursively search for items within radius in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop() || 0;
+            const right = stack.pop() || 0;
+            const left = stack.pop() || 0;
+
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
+                }
+                continue;
+            }
+
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
+
+            // queue search in halves that intersect the query
+            if (axis === 0 ? qx - r <= x : qy - r <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? qx + r >= x : qy + r >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+
+        return result;
+    }
 }
 
-function select(ids, coords, k, left, right, inc) {
+/**
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} nodeSize
+ * @param {number} left
+ * @param {number} right
+ * @param {number} axis
+ */
+function sort(ids, coords, nodeSize, left, right, axis) {
+    if (right - left <= nodeSize) return;
+
+    const m = (left + right) >> 1; // middle index
+
+    // sort ids and coords around the middle index so that the halves lie
+    // either left/right or top/bottom correspondingly (taking turns)
+    select(ids, coords, m, left, right, axis);
+
+    // recursively kd-sort first half and second half on the opposite axis
+    sort(ids, coords, nodeSize, left, m - 1, 1 - axis);
+    sort(ids, coords, nodeSize, m + 1, right, 1 - axis);
+}
+
+/**
+ * Custom Floyd-Rivest selection algorithm: sort ids and coords so that
+ * [left..k-1] items are smaller than k-th item (on either x or y axis)
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} k
+ * @param {number} left
+ * @param {number} right
+ * @param {number} axis
+ */
+function select(ids, coords, k, left, right, axis) {
 
     while (right > left) {
         if (right - left > 600) {
@@ -31229,25 +31993,25 @@ function select(ids, coords, k, left, right, inc) {
             const sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
             const newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
             const newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
-            select(ids, coords, k, newLeft, newRight, inc);
+            select(ids, coords, k, newLeft, newRight, axis);
         }
 
-        const t = coords[2 * k + inc];
+        const t = coords[2 * k + axis];
         let i = left;
         let j = right;
 
         swapItem(ids, coords, left, k);
-        if (coords[2 * right + inc] > t) swapItem(ids, coords, left, right);
+        if (coords[2 * right + axis] > t) swapItem(ids, coords, left, right);
 
         while (i < j) {
             swapItem(ids, coords, i, j);
             i++;
             j--;
-            while (coords[2 * i + inc] < t) i++;
-            while (coords[2 * j + inc] > t) j--;
+            while (coords[2 * i + axis] < t) i++;
+            while (coords[2 * j + axis] > t) j--;
         }
 
-        if (coords[2 * left + inc] === t) swapItem(ids, coords, left, j);
+        if (coords[2 * left + axis] === t) swapItem(ids, coords, left, j);
         else {
             j++;
             swapItem(ids, coords, j, right);
@@ -31258,137 +32022,39 @@ function select(ids, coords, k, left, right, inc) {
     }
 }
 
+/**
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} i
+ * @param {number} j
+ */
 function swapItem(ids, coords, i, j) {
     swap(ids, i, j);
     swap(coords, 2 * i, 2 * j);
     swap(coords, 2 * i + 1, 2 * j + 1);
 }
 
+/**
+ * @param {InstanceType<TypedArrayConstructor>} arr
+ * @param {number} i
+ * @param {number} j
+ */
 function swap(arr, i, j) {
     const tmp = arr[i];
     arr[i] = arr[j];
     arr[j] = tmp;
 }
 
-function range(ids, coords, minX, minY, maxX, maxY, nodeSize) {
-    const stack = [0, ids.length - 1, 0];
-    const result = [];
-    let x, y;
-
-    while (stack.length) {
-        const axis = stack.pop();
-        const right = stack.pop();
-        const left = stack.pop();
-
-        if (right - left <= nodeSize) {
-            for (let i = left; i <= right; i++) {
-                x = coords[2 * i];
-                y = coords[2 * i + 1];
-                if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[i]);
-            }
-            continue;
-        }
-
-        const m = Math.floor((left + right) / 2);
-
-        x = coords[2 * m];
-        y = coords[2 * m + 1];
-
-        if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
-
-        const nextAxis = (axis + 1) % 2;
-
-        if (axis === 0 ? minX <= x : minY <= y) {
-            stack.push(left);
-            stack.push(m - 1);
-            stack.push(nextAxis);
-        }
-        if (axis === 0 ? maxX >= x : maxY >= y) {
-            stack.push(m + 1);
-            stack.push(right);
-            stack.push(nextAxis);
-        }
-    }
-
-    return result;
-}
-
-function within(ids, coords, qx, qy, r, nodeSize) {
-    const stack = [0, ids.length - 1, 0];
-    const result = [];
-    const r2 = r * r;
-
-    while (stack.length) {
-        const axis = stack.pop();
-        const right = stack.pop();
-        const left = stack.pop();
-
-        if (right - left <= nodeSize) {
-            for (let i = left; i <= right; i++) {
-                if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
-            }
-            continue;
-        }
-
-        const m = Math.floor((left + right) / 2);
-
-        const x = coords[2 * m];
-        const y = coords[2 * m + 1];
-
-        if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
-
-        const nextAxis = (axis + 1) % 2;
-
-        if (axis === 0 ? qx - r <= x : qy - r <= y) {
-            stack.push(left);
-            stack.push(m - 1);
-            stack.push(nextAxis);
-        }
-        if (axis === 0 ? qx + r >= x : qy + r >= y) {
-            stack.push(m + 1);
-            stack.push(right);
-            stack.push(nextAxis);
-        }
-    }
-
-    return result;
-}
-
+/**
+ * @param {number} ax
+ * @param {number} ay
+ * @param {number} bx
+ * @param {number} by
+ */
 function sqDist(ax, ay, bx, by) {
     const dx = ax - bx;
     const dy = ay - by;
     return dx * dx + dy * dy;
-}
-
-const defaultGetX = p => p[0];
-const defaultGetY = p => p[1];
-
-class KDBush {
-    constructor(points, getX = defaultGetX, getY = defaultGetY, nodeSize = 64, ArrayType = Float64Array) {
-        this.nodeSize = nodeSize;
-        this.points = points;
-
-        const IndexArrayType = points.length < 65536 ? Uint16Array : Uint32Array;
-
-        const ids = this.ids = new IndexArrayType(points.length);
-        const coords = this.coords = new ArrayType(points.length * 2);
-
-        for (let i = 0; i < points.length; i++) {
-            ids[i] = i;
-            coords[2 * i] = getX(points[i]);
-            coords[2 * i + 1] = getY(points[i]);
-        }
-
-        sortKD(ids, coords, nodeSize, 0, ids.length - 1, 0);
-    }
-
-    range(minX, minY, maxX, maxY) {
-        return range(this.ids, this.coords, minX, minY, maxX, maxY, this.nodeSize);
-    }
-
-    within(x, y, r) {
-        return within(this.ids, this.coords, x, y, r, this.nodeSize);
-    }
 }
 
 const defaultOptions = {
@@ -31412,14 +32078,22 @@ const defaultOptions = {
 
 const fround = Math.fround || (tmp => ((x) => { tmp[0] = +x; return tmp[0]; }))(new Float32Array(1));
 
+const OFFSET_ZOOM = 2;
+const OFFSET_ID = 3;
+const OFFSET_PARENT = 4;
+const OFFSET_NUM = 5;
+const OFFSET_PROP = 6;
+
 class Supercluster {
     constructor(options) {
-        this.options = extend$1(Object.create(defaultOptions), options);
+        this.options = Object.assign(Object.create(defaultOptions), options);
         this.trees = new Array(this.options.maxZoom + 1);
+        this.stride = this.options.reduce ? 7 : 6;
+        this.clusterProps = [];
     }
 
     load(points) {
-        const {log, minZoom, maxZoom, nodeSize} = this.options;
+        const {log, minZoom, maxZoom} = this.options;
 
         if (log) console.time('total time');
 
@@ -31429,12 +32103,26 @@ class Supercluster {
         this.points = points;
 
         // generate a cluster object for each point and index input points into a KD-tree
-        let clusters = [];
+        const data = [];
+
         for (let i = 0; i < points.length; i++) {
-            if (!points[i].geometry) continue;
-            clusters.push(createPointCluster(points[i], i));
+            const p = points[i];
+            if (!p.geometry) continue;
+
+            const [lng, lat] = p.geometry.coordinates;
+            const x = fround(lngX(lng));
+            const y = fround(latY(lat));
+            // store internal point/cluster data in flat numeric arrays for performance
+            data.push(
+                x, y, // projected point coordinates
+                Infinity, // the last zoom the point was processed at
+                i, // index of the source feature in the original input array
+                -1, // parent cluster id
+                1 // number of points in a cluster
+            );
+            if (this.options.reduce) data.push(0); // noop
         }
-        this.trees[maxZoom + 1] = new KDBush(clusters, getX, getY, nodeSize, Float32Array);
+        let tree = this.trees[maxZoom + 1] = this._createTree(data);
 
         if (log) console.timeEnd(timerId);
 
@@ -31444,10 +32132,9 @@ class Supercluster {
             const now = +Date.now();
 
             // create a new set of clusters for the zoom and index them with a KD-tree
-            clusters = this._cluster(clusters, z);
-            this.trees[z] = new KDBush(clusters, getX, getY, nodeSize, Float32Array);
+            tree = this.trees[z] = this._createTree(this._cluster(tree, z));
 
-            if (log) console.log('z%d: %d clusters in %dms', z, clusters.length, +Date.now() - now);
+            if (log) console.log('z%d: %d clusters in %dms', z, tree.numItems, +Date.now() - now);
         }
 
         if (log) console.timeEnd('total time');
@@ -31472,10 +32159,11 @@ class Supercluster {
 
         const tree = this.trees[this._limitZoom(zoom)];
         const ids = tree.range(lngX(minLng), latY(maxLat), lngX(maxLng), latY(minLat));
+        const data = tree.data;
         const clusters = [];
         for (const id of ids) {
-            const c = tree.points[id];
-            clusters.push(c.numPoints ? getClusterJSON(c) : this.points[c.index]);
+            const k = this.stride * id;
+            clusters.push(data[k + OFFSET_NUM] > 1 ? getClusterJSON(data, k, this.clusterProps) : this.points[data[k + OFFSET_ID]]);
         }
         return clusters;
     }
@@ -31485,19 +32173,21 @@ class Supercluster {
         const originZoom = this._getOriginZoom(clusterId);
         const errorMsg = 'No cluster with the specified id.';
 
-        const index = this.trees[originZoom];
-        if (!index) throw new Error(errorMsg);
+        const tree = this.trees[originZoom];
+        if (!tree) throw new Error(errorMsg);
 
-        const origin = index.points[originId];
-        if (!origin) throw new Error(errorMsg);
+        const data = tree.data;
+        if (originId * this.stride >= data.length) throw new Error(errorMsg);
 
         const r = this.options.radius / (this.options.extent * Math.pow(2, originZoom - 1));
-        const ids = index.within(origin.x, origin.y, r);
+        const x = data[originId * this.stride];
+        const y = data[originId * this.stride + 1];
+        const ids = tree.within(x, y, r);
         const children = [];
         for (const id of ids) {
-            const c = index.points[id];
-            if (c.parentId === clusterId) {
-                children.push(c.numPoints ? getClusterJSON(c) : this.points[c.index]);
+            const k = id * this.stride;
+            if (data[k + OFFSET_PARENT] === clusterId) {
+                children.push(data[k + OFFSET_NUM] > 1 ? getClusterJSON(data, k, this.clusterProps) : this.points[data[k + OFFSET_ID]]);
             }
         }
 
@@ -31530,17 +32220,17 @@ class Supercluster {
 
         this._addTileFeatures(
             tree.range((x - p) / z2, top, (x + 1 + p) / z2, bottom),
-            tree.points, x, y, z2, tile);
+            tree.data, x, y, z2, tile);
 
         if (x === 0) {
             this._addTileFeatures(
                 tree.range(1 - p / z2, top, 1, bottom),
-                tree.points, z2, y, z2, tile);
+                tree.data, z2, y, z2, tile);
         }
         if (x === z2 - 1) {
             this._addTileFeatures(
                 tree.range(0, top, p / z2, bottom),
-                tree.points, -1, y, z2, tile);
+                tree.data, -1, y, z2, tile);
         }
 
         return tile.features.length ? tile : null;
@@ -31585,21 +32275,30 @@ class Supercluster {
         return skipped;
     }
 
-    _addTileFeatures(ids, points, x, y, z2, tile) {
+    _createTree(data) {
+        const tree = new KDBush(data.length / this.stride | 0, this.options.nodeSize, Float32Array);
+        for (let i = 0; i < data.length; i += this.stride) tree.add(data[i], data[i + 1]);
+        tree.finish();
+        tree.data = data;
+        return tree;
+    }
+
+    _addTileFeatures(ids, data, x, y, z2, tile) {
         for (const i of ids) {
-            const c = points[i];
-            const isCluster = c.numPoints;
+            const k = i * this.stride;
+            const isCluster = data[k + OFFSET_NUM] > 1;
 
             let tags, px, py;
             if (isCluster) {
-                tags = getClusterProperties(c);
-                px = c.x;
-                py = c.y;
+                tags = getClusterProperties(data, k, this.clusterProps);
+                px = data[k];
+                py = data[k + 1];
             } else {
-                const p = this.points[c.index];
+                const p = this.points[data[k + OFFSET_ID]];
                 tags = p.properties;
-                px = lngX(p.geometry.coordinates[0]);
-                py = latY(p.geometry.coordinates[1]);
+                const [lng, lat] = p.geometry.coordinates;
+                px = lngX(lng);
+                py = latY(lat);
             }
 
             const f = {
@@ -31613,14 +32312,12 @@ class Supercluster {
 
             // assign id
             let id;
-            if (isCluster) {
-                id = c.id;
-            } else if (this.options.generateId) {
-                // optionally generate id
-                id = c.index;
-            } else if (this.points[c.index].id) {
+            if (isCluster || this.options.generateId) {
+                // optionally generate id for points
+                id = data[k + OFFSET_ID];
+            } else {
                 // keep id if already assigned
-                id = this.points[c.index].id;
+                id = this.points[data[k + OFFSET_ID]].id;
             }
 
             if (id !== undefined) f.id = id;
@@ -31633,78 +32330,86 @@ class Supercluster {
         return Math.max(this.options.minZoom, Math.min(Math.floor(+z), this.options.maxZoom + 1));
     }
 
-    _cluster(points, zoom) {
-        const clusters = [];
+    _cluster(tree, zoom) {
         const {radius, extent, reduce, minPoints} = this.options;
         const r = radius / (extent * Math.pow(2, zoom));
+        const data = tree.data;
+        const nextData = [];
+        const stride = this.stride;
 
         // loop through each point
-        for (let i = 0; i < points.length; i++) {
-            const p = points[i];
+        for (let i = 0; i < data.length; i += stride) {
             // if we've already visited the point at this zoom level, skip it
-            if (p.zoom <= zoom) continue;
-            p.zoom = zoom;
+            if (data[i + OFFSET_ZOOM] <= zoom) continue;
+            data[i + OFFSET_ZOOM] = zoom;
 
             // find all nearby points
-            const tree = this.trees[zoom + 1];
-            const neighborIds = tree.within(p.x, p.y, r);
+            const x = data[i];
+            const y = data[i + 1];
+            const neighborIds = tree.within(data[i], data[i + 1], r);
 
-            const numPointsOrigin = p.numPoints || 1;
+            const numPointsOrigin = data[i + OFFSET_NUM];
             let numPoints = numPointsOrigin;
 
             // count the number of points in a potential cluster
             for (const neighborId of neighborIds) {
-                const b = tree.points[neighborId];
+                const k = neighborId * stride;
                 // filter out neighbors that are already processed
-                if (b.zoom > zoom) numPoints += b.numPoints || 1;
+                if (data[k + OFFSET_ZOOM] > zoom) numPoints += data[k + OFFSET_NUM];
             }
 
             // if there were neighbors to merge, and there are enough points to form a cluster
             if (numPoints > numPointsOrigin && numPoints >= minPoints) {
-                let wx = p.x * numPointsOrigin;
-                let wy = p.y * numPointsOrigin;
+                let wx = x * numPointsOrigin;
+                let wy = y * numPointsOrigin;
 
-                let clusterProperties = reduce && numPointsOrigin > 1 ? this._map(p, true) : null;
+                let clusterProperties;
+                let clusterPropIndex = -1;
 
                 // encode both zoom and point index on which the cluster originated -- offset by total length of features
-                const id = (i << 5) + (zoom + 1) + this.points.length;
+                const id = ((i / stride | 0) << 5) + (zoom + 1) + this.points.length;
 
                 for (const neighborId of neighborIds) {
-                    const b = tree.points[neighborId];
+                    const k = neighborId * stride;
 
-                    if (b.zoom <= zoom) continue;
-                    b.zoom = zoom; // save the zoom (so it doesn't get processed twice)
+                    if (data[k + OFFSET_ZOOM] <= zoom) continue;
+                    data[k + OFFSET_ZOOM] = zoom; // save the zoom (so it doesn't get processed twice)
 
-                    const numPoints2 = b.numPoints || 1;
-                    wx += b.x * numPoints2; // accumulate coordinates for calculating weighted center
-                    wy += b.y * numPoints2;
+                    const numPoints2 = data[k + OFFSET_NUM];
+                    wx += data[k] * numPoints2; // accumulate coordinates for calculating weighted center
+                    wy += data[k + 1] * numPoints2;
 
-                    b.parentId = id;
+                    data[k + OFFSET_PARENT] = id;
 
                     if (reduce) {
-                        if (!clusterProperties) clusterProperties = this._map(p, true);
-                        reduce(clusterProperties, this._map(b));
+                        if (!clusterProperties) {
+                            clusterProperties = this._map(data, i, true);
+                            clusterPropIndex = this.clusterProps.length;
+                            this.clusterProps.push(clusterProperties);
+                        }
+                        reduce(clusterProperties, this._map(data, k));
                     }
                 }
 
-                p.parentId = id;
-                clusters.push(createCluster(wx / numPoints, wy / numPoints, id, numPoints, clusterProperties));
+                data[i + OFFSET_PARENT] = id;
+                nextData.push(wx / numPoints, wy / numPoints, Infinity, id, -1, numPoints);
+                if (reduce) nextData.push(clusterPropIndex);
 
             } else { // left points as unclustered
-                clusters.push(p);
+                for (let j = 0; j < stride; j++) nextData.push(data[i + j]);
 
                 if (numPoints > 1) {
                     for (const neighborId of neighborIds) {
-                        const b = tree.points[neighborId];
-                        if (b.zoom <= zoom) continue;
-                        b.zoom = zoom;
-                        clusters.push(b);
+                        const k = neighborId * stride;
+                        if (data[k + OFFSET_ZOOM] <= zoom) continue;
+                        data[k + OFFSET_ZOOM] = zoom;
+                        for (let j = 0; j < stride; j++) nextData.push(data[k + j]);
                     }
                 }
             }
         }
 
-        return clusters;
+        return nextData;
     }
 
     // get index of the point from which the cluster originated
@@ -31717,59 +32422,39 @@ class Supercluster {
         return (clusterId - this.points.length) % 32;
     }
 
-    _map(point, clone) {
-        if (point.numPoints) {
-            return clone ? extend$1({}, point.properties) : point.properties;
+    _map(data, i, clone) {
+        if (data[i + OFFSET_NUM] > 1) {
+            const props = this.clusterProps[data[i + OFFSET_PROP]];
+            return clone ? Object.assign({}, props) : props;
         }
-        const original = this.points[point.index].properties;
+        const original = this.points[data[i + OFFSET_ID]].properties;
         const result = this.options.map(original);
-        return clone && result === original ? extend$1({}, result) : result;
+        return clone && result === original ? Object.assign({}, result) : result;
     }
 }
 
-function createCluster(x, y, id, numPoints, properties) {
-    return {
-        x: fround(x), // weighted cluster center; round for consistency with Float32Array index
-        y: fround(y),
-        zoom: Infinity, // the last zoom the cluster was processed at
-        id, // encodes index of the first child of the cluster and its zoom level
-        parentId: -1, // parent cluster id
-        numPoints,
-        properties
-    };
-}
-
-function createPointCluster(p, id) {
-    const [x, y] = p.geometry.coordinates;
-    return {
-        x: fround(lngX(x)), // projected point coordinates
-        y: fround(latY(y)),
-        zoom: Infinity, // the last zoom the point was processed at
-        index: id, // index of the source feature in the original input array,
-        parentId: -1 // parent cluster id
-    };
-}
-
-function getClusterJSON(cluster) {
+function getClusterJSON(data, i, clusterProps) {
     return {
         type: 'Feature',
-        id: cluster.id,
-        properties: getClusterProperties(cluster),
+        id: data[i + OFFSET_ID],
+        properties: getClusterProperties(data, i, clusterProps),
         geometry: {
             type: 'Point',
-            coordinates: [xLng(cluster.x), yLat(cluster.y)]
+            coordinates: [xLng(data[i]), yLat(data[i + 1])]
         }
     };
 }
 
-function getClusterProperties(cluster) {
-    const count = cluster.numPoints;
+function getClusterProperties(data, i, clusterProps) {
+    const count = data[i + OFFSET_NUM];
     const abbrev =
         count >= 10000 ? `${Math.round(count / 1000)  }k` :
         count >= 1000 ? `${Math.round(count / 100) / 10  }k` : count;
-    return extend$1(extend$1({}, cluster.properties), {
+    const propIndex = data[i + OFFSET_PROP];
+    const properties = propIndex === -1 ? {} : Object.assign({}, clusterProps[propIndex]);
+    return Object.assign(properties, {
         cluster: true,
-        cluster_id: cluster.id,
+        cluster_id: data[i + OFFSET_ID],
         point_count: count,
         point_count_abbreviated: abbrev
     });
@@ -31792,18 +32477,6 @@ function xLng(x) {
 function yLat(y) {
     const y2 = (180 - y * 360) * Math.PI / 180;
     return 360 * Math.atan(Math.exp(y2)) / Math.PI - 90;
-}
-
-function extend$1(dest, src) {
-    for (const id in src) dest[id] = src[id];
-    return dest;
-}
-
-function getX(p) {
-    return p.x;
-}
-function getY(p) {
-    return p.y;
 }
 
 // calculate simplification data using optimized Douglas-Peucker algorithm
@@ -32807,7 +33480,7 @@ function loadGeoJSONTile(params, callback) {
     // Encode the geojson-vt tile into binary vector tile form.  This
     // is a convenience that allows `FeatureIndex` to operate the same way
     // across `VectorTileSource` and `GeoJSONSource` data.
-    let pbf = vtPbfExports(geojsonWrapper);
+    let pbf = vtpbf(geojsonWrapper);
     if (pbf.byteOffset !== 0 || pbf.byteLength !== pbf.buffer.byteLength) {
         // Compatibility with node Buffer (https://github.com/mapbox/pbf/issues/35)
         pbf = new Uint8Array(pbf);
@@ -32824,15 +33497,12 @@ function loadGeoJSONTile(params, callback) {
  * representation.  To do so, create it with
  * `new GeoJSONWorkerSource(actor, layerIndex, customLoadGeoJSONFunction)`.
  * For a full example, see [mapbox-gl-topojson](https://github.com/developmentseed/mapbox-gl-topojson).
- *
- * @private
  */
 class GeoJSONWorkerSource extends VectorTileWorkerSource {
     /**
-     * @param [loadGeoJSON] Optional method for custom loading/parsing of
+     * @param loadGeoJSON - Optional method for custom loading/parsing of
      * GeoJSON based on parameters passed from the main-thread Source.
      * See {@link GeoJSONWorkerSource#loadGeoJSON}.
-     * @private
      */
     constructor(actor, layerIndex, availableImages, loadGeoJSON) {
         super(actor, layerIndex, availableImages, loadGeoJSONTile);
@@ -32844,11 +33514,9 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
          * GeoJSON is loaded and parsed from `params.url` if it exists, or else
          * expected as a literal (string or object) `params.data`.
          *
-         * @param params
-         * @param [params.url] A URL to the remote GeoJSON data.
-         * @param [params.data] Literal GeoJSON data. Must be provided if `params.url` is not.
-         * @returns {Cancelable} A Cancelable object.
-         * @private
+         * @param params - the parameters
+         * @param callback - the callback for completion or error
+         * @returns A Cancelable object.
          */
         this.loadGeoJSON = (params, callback) => {
             const { promoteId } = params;
@@ -32902,9 +33570,8 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
      * When a `loadData` request comes in while a previous one is being processed,
      * the previous one is aborted.
      *
-     * @param params
-     * @param callback
-     * @private
+     * @param params - the parameters
+     * @param callback - the callback for completion or error
      */
     loadData(params, callback) {
         var _a;
@@ -32926,7 +33593,7 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
                 return callback(new Error(`Input data given to '${params.source}' is not a valid GeoJSON object.`));
             }
             else {
-                geojsonRewind(data, true);
+                rewind$2(data, true);
                 try {
                     if (params.filter) {
                         const compiled = createExpression(params.filter, { type: 'boolean', 'property-type': 'data-driven', overridable: false, transition: false });
@@ -32963,9 +33630,8 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
     * If the tile is loaded, uses the implementation in VectorTileWorkerSource.
     * Otherwise, such as after a setData() call, we load the tile fresh.
     *
-    * @param params
-    * @param params.uid The UID for this tile.
-    * @private
+    * @param params - the parameters
+    * @param callback - the callback for completion or error
     */
     reloadTile(params, callback) {
         const loaded = this.loaded, uid = params.uid;
@@ -33042,7 +33708,7 @@ function getSuperclusterOptions({ superclusterOptions, clusterProperties }) {
 }
 
 /**
- * @private
+ * The Worker class responsidble for background thread related execution
  */
 class Worker {
     constructor(self) {
@@ -33131,7 +33797,6 @@ class Worker {
      * Load a {@link WorkerSource} script at params.url.  The script is run
      * (using importScripts) with `registerWorkerSource` in scope, which is a
      * function taking `(name, workerSourceObject)`.
-     *  @private
      */
     loadWorkerSource(map, params, callback) {
         try {

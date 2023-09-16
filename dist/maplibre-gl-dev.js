@@ -1,4 +1,4 @@
-/* MapLibre GL JS is licensed under the 3-Clause BSD License. Full text of license: https://github.com/maplibre/maplibre-gl-js/blob/v3.0.0-pre.4/LICENSE.txt */
+/* MapLibre GL JS is licensed under the 3-Clause BSD License. Full text of license: https://github.com/maplibre/maplibre-gl-js/blob/v3.3.1/LICENSE.txt */
 (function (global, factory) {
 typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
 typeof define === 'function' && define.amd ? define(factory) :
@@ -50,10 +50,7 @@ function getAugmentedNamespace(n) {
 	if (typeof f == "function") {
 		var a = function a () {
 			if (this instanceof a) {
-				var args = [null];
-				args.push.apply(args, arguments);
-				var Ctor = Function.bind.apply(f, args);
-				return new Ctor();
+        return Reflect.construct(f, arguments, this.constructor);
 			}
 			return f.apply(this, arguments);
 		};
@@ -385,6 +382,8 @@ Point$1.convert = function (a) {
     return a;
 };
 
+var Point$2 = /*@__PURE__*/getDefaultExportFromCjs(pointGeometry);
+
 'use strict';
 
 var unitbezier = UnitBezier;
@@ -464,16 +463,12 @@ UnitBezier.prototype = {
     }
 };
 
-/**
- * @module util
- * @private
- */
+var UnitBezier$1 = /*@__PURE__*/getDefaultExportFromCjs(unitbezier);
+
 /**
  * Given a value `t` that varies between 0 and 1, return
  * an interpolation function that eases between 0 and 1 in a pleasing
  * cubic in-out fashion.
- *
- * @private
  */
 function easeCubicInOut(t) {
     if (t <= 0)
@@ -487,14 +482,13 @@ function easeCubicInOut(t) {
  * Given given (x, y), (x1, y1) control points for a bezier curve,
  * return a function that interpolates along that curve.
  *
- * @param p1x control point 1 x coordinate
- * @param p1y control point 1 y coordinate
- * @param p2x control point 2 x coordinate
- * @param p2y control point 2 y coordinate
- * @private
+ * @param p1x - control point 1 x coordinate
+ * @param p1y - control point 1 y coordinate
+ * @param p2x - control point 2 x coordinate
+ * @param p2y - control point 2 y coordinate
  */
 function bezier$1(p1x, p1y, p2x, p2y) {
-    const bezier = new unitbezier(p1x, p1y, p2x, p2y);
+    const bezier = new UnitBezier$1(p1x, p1y, p2x, p2y);
     return function (t) {
         return bezier.solve(t);
     };
@@ -502,45 +496,40 @@ function bezier$1(p1x, p1y, p2x, p2y) {
 /**
  * A default bezier-curve powered easing function with
  * control points (0.25, 0.1) and (0.25, 1)
- *
- * @private
  */
-const ease = bezier$1(0.25, 0.1, 0.25, 1);
+const defaultEasing = bezier$1(0.25, 0.1, 0.25, 1);
 /**
  * constrain n to the given range via min + max
  *
- * @param n value
- * @param min the minimum value to be returned
- * @param max the maximum value to be returned
+ * @param n - value
+ * @param min - the minimum value to be returned
+ * @param max - the maximum value to be returned
  * @returns the clamped value
- * @private
  */
-function clamp(n, min, max) {
+function clamp$1(n, min, max) {
     return Math.min(max, Math.max(min, n));
 }
 /**
  * constrain n to the given range, excluding the minimum, via modular arithmetic
  *
- * @param n value
- * @param min the minimum value to be returned, exclusive
- * @param max the maximum value to be returned, inclusive
+ * @param n - value
+ * @param min - the minimum value to be returned, exclusive
+ * @param max - the maximum value to be returned, inclusive
  * @returns constrained number
- * @private
  */
 function wrap(n, min, max) {
     const d = max - min;
     const w = ((n - min) % d + d) % d + min;
     return (w === min) ? max : w;
 }
-/*
+/**
  * Call an asynchronous function on an array of arguments,
  * calling `callback` with the completed results of all calls.
  *
- * @param array input to each call of the async function.
- * @param fn an async function with signature (data, callback)
- * @param callback a callback run after all async work is done.
+ * @param array - input to each call of the async function.
+ * @param fn - an async function with signature (data, callback)
+ * @param callback - a callback run after all async work is done.
  * called with an array, containing the results of each async call.
- * @private
  */
 function asyncAll(array, fn, callback) {
     if (!array.length) {
@@ -559,12 +548,11 @@ function asyncAll(array, fn, callback) {
         });
     });
 }
-/*
+/**
  * Compute the difference between the keys in one object and the keys
  * in another object.
  *
  * @returns keys difference
- * @private
  */
 function keysDifference(obj, other) {
     const difference = [];
@@ -581,9 +569,8 @@ function keysDifference(obj, other) {
  * The last source object given overrides properties from previous
  * source objects.
  *
- * @param dest destination object
- * @param sources sources from which properties are pulled
- * @private
+ * @param dest - destination object
+ * @param sources - sources from which properties are pulled
  */
 function extend(dest, ...sources) {
     for (const src of sources) {
@@ -597,15 +584,15 @@ function extend(dest, ...sources) {
  * Given an object and a number of properties as strings, return version
  * of that object with only those properties.
  *
- * @param src the object
- * @param properties an array of property names chosen
+ * @param src - the object
+ * @param properties - an array of property names chosen
  * to appear on the resulting object.
  * @returns object with limited properties.
  * @example
- * var foo = { name: 'Charlie', age: 10 };
- * var justName = pick(foo, ['name']);
- * // justName = { name: 'Charlie' }
- * @private
+ * ```ts
+ * let foo = { name: 'Charlie', age: 10 };
+ * let justName = pick(foo, ['name']); // justName = { name: 'Charlie' }
+ * ```
  */
 function pick(src, properties) {
     const result = {};
@@ -623,21 +610,18 @@ let id = 1;
  * each call.
  *
  * @returns unique numeric id.
- * @private
  */
 function uniqueId() {
     return id++;
 }
 /**
  * Return whether a given value is a power of two
- * @private
  */
 function isPowerOfTwo(value) {
     return (Math.log(value) / Math.LN2) % 1 === 0;
 }
 /**
  * Return the next power of two, or the input value if already a power of two
- * @private
  */
 function nextPowerOfTwo(value) {
     if (value <= 1)
@@ -645,39 +629,8 @@ function nextPowerOfTwo(value) {
     return Math.pow(2, Math.ceil(Math.log(value) / Math.LN2));
 }
 /**
- * Given an array of member function names as strings, replace all of them
- * with bound versions that will always refer to `context` as `this`. This
- * is useful for classes where otherwise event bindings would reassign
- * `this` to the evented object or some other value: this lets you ensure
- * the `this` value always.
- *
- * @param fns list of member function names
- * @param context the context value
- * @example
- * function MyClass() {
- *   bindAll(['ontimer'], this);
- *   this.name = 'Tom';
- * }
- * MyClass.prototype.ontimer = function() {
- *   alert(this.name);
- * };
- * var myClass = new MyClass();
- * setTimeout(myClass.ontimer, 100);
- * @private
- */
-function bindAll(fns, context) {
-    fns.forEach((fn) => {
-        if (!context[fn]) {
-            return;
-        }
-        context[fn] = context[fn].bind(context);
-    });
-}
-/**
  * Create an object by mapping all the values of an existing object while
  * preserving their keys.
- *
- * @private
  */
 function mapObject(input, iterator, context) {
     const output = {};
@@ -688,8 +641,6 @@ function mapObject(input, iterator, context) {
 }
 /**
  * Create an object by filtering out values of an existing object.
- *
- * @private
  */
 function filterObject(input, iterator, context) {
     const output = {};
@@ -702,8 +653,8 @@ function filterObject(input, iterator, context) {
 }
 /**
  * Deeply compares two object literals.
- * @param a first object literal to be compared
- * @param b second object literal to be compared
+ * @param a - first object literal to be compared
+ * @param b - second object literal to be compared
  * @returns true if the two object literals are deeply equal, false otherwise
  */
 function deepEqual$1(a, b) {
@@ -732,8 +683,6 @@ function deepEqual$1(a, b) {
 }
 /**
  * Deeply clones two objects.
- *
- * @private
  */
 function clone$9(input) {
     if (Array.isArray(input)) {
@@ -748,8 +697,6 @@ function clone$9(input) {
 }
 /**
  * Check if two arrays have at least one common element.
- *
- * @private
  */
 function arraysIntersect(a, b) {
     for (let l = 0; l < a.length; l++) {
@@ -761,8 +708,6 @@ function arraysIntersect(a, b) {
 /**
  * Print a warning message to the console and ensure duplicate warning messages
  * are not printed.
- *
- * @private
  */
 const warnOnceHistory = {};
 function warnOnce(message) {
@@ -776,7 +721,6 @@ function warnOnce(message) {
 /**
  * Indicates if the provided Points are in a counter clockwise (true) or clockwise (false) order
  *
- * @private
  * @returns true for a counter clockwise set of points
  */
 // http://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
@@ -787,10 +731,10 @@ function isCounterClockwise(a, b, c) {
  * For two lines a and b in 2d space, defined by any two points along the lines,
  * find the intersection point, or return null if the lines are parallel
  *
- * @param a1 First point on line a
- * @param a2 Second point on line a
- * @param b1 First point on line b
- * @param b2 Second point on line b
+ * @param a1 - First point on line a
+ * @param a2 - Second point on line a
+ * @param b1 - First point on line b
+ * @param b2 - Second point on line b
  *
  * @returns the intersection point of the two lines or null if they are parallel
  */
@@ -808,15 +752,14 @@ function findLineIntersection(a1, a2, b1, b2) {
     const originDeltaX = a1.x - b1.x;
     const aInterpolation = (bDeltaX * originDeltaY - bDeltaY * originDeltaX) / denominator;
     // Find intersection by projecting out from origin of first segment
-    return new pointGeometry(a1.x + (aInterpolation * aDeltaX), a1.y + (aInterpolation * aDeltaY));
+    return new Point$2(a1.x + (aInterpolation * aDeltaX), a1.y + (aInterpolation * aDeltaY));
 }
 /**
  * Returns the signed area for the polygon ring.  Positive areas are exterior rings and
  * have a clockwise winding.  Negative areas are interior rings and have a counter clockwise
  * ordering.
  *
- * @private
- * @param ring Exterior or interior ring
+ * @param ring - Exterior or interior ring
  */
 function calculateSignedArea(ring) {
     let sum = 0;
@@ -830,9 +773,8 @@ function calculateSignedArea(ring) {
 /**
  * Detects closed polygons, first + last point are equal
  *
- * @private
- * @param points array of points
- * @return true if the points are a closed polygon
+ * @param points - array of points
+ * @returns `true` if the points are a closed polygon
  */
 function isClosedPolygon(points) {
     // If it is 2 points that are the same then it is a point
@@ -851,9 +793,8 @@ function isClosedPolygon(points) {
 /**
  * Converts spherical coordinates to cartesian coordinates.
  *
- * @private
- * @param spherical Spherical coordinates, in [radial, azimuthal, polar]
- * @return cartesian coordinates in [x, y, z]
+ * @param spherical - Spherical coordinates, in [radial, azimuthal, polar]
+ * @returns cartesian coordinates in [x, y, z]
  */
 function sphericalToCartesian([r, azimuthal, polar]) {
     // We abstract "north"/"up" (compass-wise) to be 0° when really this is 90° (π/2):
@@ -871,8 +812,7 @@ function sphericalToCartesian([r, azimuthal, polar]) {
 /**
  *  Returns true if the when run in the web-worker context.
  *
- * @private
- * @returns {boolean}
+ * @returns `true` if the when run in the web-worker context.
  */
 function isWorker() {
     // @ts-ignore
@@ -881,9 +821,8 @@ function isWorker() {
 /**
  * Parses data from 'Cache-Control' headers.
  *
- * @private
- * @param cacheControl Value of 'Cache-Control' header
- * @return object containing parsed header info.
+ * @param cacheControl - Value of 'Cache-Control' header
+ * @returns object containing parsed header info.
  */
 function parseCacheControl(cacheControl) {
     // Taken from [Wreck](https://github.com/hapijs/wreck)
@@ -912,10 +851,9 @@ let _isSafari = null;
  *
  * This should be removed once the underlying Safari issue is fixed.
  *
- * @private
- * @param scope {WindowOrWorkerGlobalScope} Since this function is used both on the main thread and WebWorker context,
+ * @param scope - Since this function is used both on the main thread and WebWorker context,
  *      let the calling scope pass in the global scope object.
- * @returns {boolean}
+ * @returns `true` when run in WebKit derived browsers.
  */
 function isSafari(scope) {
     if (_isSafari == null) {
@@ -959,8 +897,8 @@ function isImageBitmap(image) {
  * perfectly fine with ImageBitmaps. Might also be used for environments (other than testing) not supporting
  * ArrayBuffers.
  *
- * @param data {ArrayBuffer} Data to convert
- * @param callback A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image bitmap (when no error) as the second
+ * @param data - Data to convert
+ * @param callback - A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image bitmap (when no error) as the second
  */
 function arrayBufferToImageBitmap(data, callback) {
     const blob = new Blob([new Uint8Array(data)], { type: 'image/png' });
@@ -978,8 +916,8 @@ const transparentPngUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAA
  * perfectly fine with ImageBitmaps. Might also be used for environments (other than testing) not supporting
  * ArrayBuffers.
  *
- * @param data {ArrayBuffer} Data to convert
- * @param callback A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image element (when no error) as the second
+ * @param data - Data to convert
+ * @param callback - A callback executed after the conversion is finished. Invoked with error (if any) as the first argument and resulting image element (when no error) as the second
  */
 function arrayBufferToImage(data, callback) {
     const img = new Image();
@@ -1002,10 +940,8 @@ const now = typeof performance !== 'undefined' && performance && performance.now
     Date.now.bind(Date);
 let linkEl;
 let reducedMotionQuery;
-/**
- * @private
- */
-const exported = {
+/** */
+const browser = {
     /**
      * Provides a function that outputs milliseconds: either performance.now()
      * or a fallback to Date.now()
@@ -1052,19 +988,21 @@ const exported = {
 const config = {
     MAX_PARALLEL_IMAGE_REQUESTS: 16,
     MAX_PARALLEL_IMAGE_REQUESTS_PER_FRAME: 8,
+    MAX_TILE_CACHE_ZOOM_LEVELS: 5,
     REGISTERED_PROTOCOLS: {},
     WORKER_URL: ''
 };
 
 /**
  * An error thrown when a HTTP request results in an error response.
- * @extends Error
- * @param {number} status The response's HTTP status code.
- * @param {string} statusText The response's HTTP status text.
- * @param {string} url The request's URL.
- * @param {Blob} body The response's body.
  */
 class AJAXError extends Error {
+    /**
+     * @param status - The response's HTTP status code.
+     * @param statusText - The response's HTTP status text.
+     * @param url - The request's URL.
+     * @param body - The response's body.
+     */
     constructor(status, statusText, url, body) {
         super(`AJAXError: ${statusText} (${status}): ${url}`);
         this.status = status;
@@ -1081,6 +1019,7 @@ class AJAXError extends Error {
 const getReferrer = isWorker() ?
     () => self.worker && self.worker.referrer :
     () => (window.location.protocol === 'blob:' ? window.parent : window).location.href;
+const getProtocolAction = url => config.REGISTERED_PROTOCOLS[url.substring(0, url.indexOf('://'))];
 // Determines whether a URL is a file:// URL. This is obviously the case if it begins
 // with file://. Relative URLs are also file:// URLs iff the original document was loaded
 // via a file:// URL.
@@ -1092,6 +1031,7 @@ function makeFetchRequest(requestParameters, callback) {
         body: requestParameters.body,
         credentials: requestParameters.credentials,
         headers: requestParameters.headers,
+        cache: requestParameters.cache,
         referrer: getReferrer(),
         signal: controller.signal
     });
@@ -1133,7 +1073,7 @@ function makeFetchRequest(requestParameters, callback) {
         });
     };
     const finishRequest = (response) => {
-        (requestParameters.type === 'arrayBuffer' ? response.arrayBuffer() :
+        ((requestParameters.type === 'arrayBuffer' || requestParameters.type === 'image') ? response.arrayBuffer() :
             requestParameters.type === 'json' ? response.json() :
                 response.text()).then(result => {
             if (aborted)
@@ -1155,7 +1095,7 @@ function makeFetchRequest(requestParameters, callback) {
 function makeXMLHttpRequest(requestParameters, callback) {
     const xhr = new XMLHttpRequest();
     xhr.open(requestParameters.method || 'GET', requestParameters.url, true);
-    if (requestParameters.type === 'arrayBuffer') {
+    if (requestParameters.type === 'arrayBuffer' || requestParameters.type === 'image') {
         xhr.responseType = 'arraybuffer';
     }
     for (const k in requestParameters.headers) {
@@ -1204,8 +1144,7 @@ const makeRequest = function (requestParameters, callback) {
             return self.worker.actor.send('getResource', requestParameters, callback);
         }
         if (!isWorker()) {
-            const protocol = requestParameters.url.substring(0, requestParameters.url.indexOf('://'));
-            const action = config.REGISTERED_PROTOCOLS[protocol] || makeFetchRequest;
+            const action = getProtocolAction(requestParameters.url) || makeFetchRequest;
             return action(requestParameters, callback);
         }
     }
@@ -1229,10 +1168,21 @@ const getArrayBuffer = function (requestParameters, callback) {
 const postData = function (requestParameters, callback) {
     return makeRequest(extend(requestParameters, { method: 'POST' }), callback);
 };
-function sameOrigin(url) {
-    const a = window.document.createElement('a');
-    a.href = url;
-    return a.protocol === window.document.location.protocol && a.host === window.document.location.host;
+function sameOrigin(inComingUrl) {
+    // URL class should be available everywhere
+    // https://developer.mozilla.org/en-US/docs/Web/API/URL
+    // In addtion, a relative URL "/foo" or "./foo" will throw exception in its ctor,
+    // try-catch is expansive so just use a heuristic check to avoid it
+    // also check data URL
+    if (!inComingUrl ||
+        inComingUrl.indexOf('://') <= 0 || // relative URL
+        inComingUrl.indexOf('data:image/') === 0 || // data image URL
+        inComingUrl.indexOf('blob:') === 0) { // blob
+        return true;
+    }
+    const urlObj = new URL(inComingUrl);
+    const locationObj = window.location;
+    return urlObj.protocol === locationObj.protocol && urlObj.host === locationObj.host;
 }
 const getVideo = function (urls, callback) {
     const video = window.document.createElement('video');
@@ -1266,12 +1216,18 @@ function _removeEventListener(type, listener, listenerList) {
         }
     }
 }
+/**
+ * The event class
+ */
 class Event {
     constructor(type, data = {}) {
         extend(this, data);
         this.type = type;
     }
 }
+/**
+ * An error event
+ */
 class ErrorEvent extends Event {
     constructor(error, data = {}) {
         super('error', extend({ error }, data));
@@ -1280,17 +1236,17 @@ class ErrorEvent extends Event {
 /**
  * Methods mixed in to other classes for event capabilities.
  *
- * @mixin Evented
+ * @group Event Related
  */
 class Evented {
     /**
      * Adds a listener to a specified event type.
      *
-     * @param {string} type The event type to add a listen for.
-     * @param {Function} listener The function to be called when the event is fired.
-     *   The listener function is called with the data object passed to `fire`,
-     *   extended with `target` and `type` properties.
-     * @returns {Object} `this`
+     * @param type - The event type to add a listen for.
+     * @param listener - The function to be called when the event is fired.
+     * The listener function is called with the data object passed to `fire`,
+     * extended with `target` and `type` properties.
+     * @returns `this`
      */
     on(type, listener) {
         this._listeners = this._listeners || {};
@@ -1300,9 +1256,9 @@ class Evented {
     /**
      * Removes a previously registered event listener.
      *
-     * @param {string} type The event type to remove listeners for.
-     * @param {Function} listener The listener function to remove.
-     * @returns {Object} `this`
+     * @param type - The event type to remove listeners for.
+     * @param listener - The listener function to remove.
+     * @returns `this`
      */
     off(type, listener) {
         _removeEventListener(type, listener, this._listeners);
@@ -1314,9 +1270,9 @@ class Evented {
      *
      * The listener will be called first time the event fires after the listener is registered.
      *
-     * @param {string} type The event type to listen for.
-     * @param {Function} listener The function to be called when the event is fired the first time.
-     * @returns {Object} `this` or a promise if a listener is not provided
+     * @param type - The event type to listen for.
+     * @param listener - The function to be called when the event is fired the first time.
+     * @returns `this` or a promise if a listener is not provided
      */
     once(type, listener) {
         if (!listener) {
@@ -1362,9 +1318,8 @@ class Evented {
     /**
      * Returns a true if this instance of Evented or any forwardeed instances of Evented have a listener for the specified type.
      *
-     * @param {string} type The event type
-     * @returns {boolean} `true` if there is at least one registered listener for specified event type, `false` otherwise
-     * @private
+     * @param type - The event type
+     * @returns `true` if there is at least one registered listener for specified event type, `false` otherwise
      */
     listens(type) {
         return ((this._listeners && this._listeners[type] && this._listeners[type].length > 0) ||
@@ -1373,10 +1328,7 @@ class Evented {
     }
     /**
      * Bubble all events fired by this instance of Evented to this parent instance of Evented.
-     *
-     * @private
-     * @returns {Object} `this`
-     * @private
+     * @returns `this`
      */
     setEventedParent(parent, data) {
         this._eventedParent = parent;
@@ -1384,211 +1336,6 @@ class Evented {
         return this;
     }
 }
-
-var csscolorparser = {};
-
-var parseCSSColor_1;
-// (c) Dean McNamee <dean@gmail.com>, 2012.
-//
-// https://github.com/deanm/css-color-parser-js
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// sell copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// IN THE SOFTWARE.
-
-// http://www.w3.org/TR/css3-color/
-var kCSSColorTable = {
-  "transparent": [0,0,0,0], "aliceblue": [240,248,255,1],
-  "antiquewhite": [250,235,215,1], "aqua": [0,255,255,1],
-  "aquamarine": [127,255,212,1], "azure": [240,255,255,1],
-  "beige": [245,245,220,1], "bisque": [255,228,196,1],
-  "black": [0,0,0,1], "blanchedalmond": [255,235,205,1],
-  "blue": [0,0,255,1], "blueviolet": [138,43,226,1],
-  "brown": [165,42,42,1], "burlywood": [222,184,135,1],
-  "cadetblue": [95,158,160,1], "chartreuse": [127,255,0,1],
-  "chocolate": [210,105,30,1], "coral": [255,127,80,1],
-  "cornflowerblue": [100,149,237,1], "cornsilk": [255,248,220,1],
-  "crimson": [220,20,60,1], "cyan": [0,255,255,1],
-  "darkblue": [0,0,139,1], "darkcyan": [0,139,139,1],
-  "darkgoldenrod": [184,134,11,1], "darkgray": [169,169,169,1],
-  "darkgreen": [0,100,0,1], "darkgrey": [169,169,169,1],
-  "darkkhaki": [189,183,107,1], "darkmagenta": [139,0,139,1],
-  "darkolivegreen": [85,107,47,1], "darkorange": [255,140,0,1],
-  "darkorchid": [153,50,204,1], "darkred": [139,0,0,1],
-  "darksalmon": [233,150,122,1], "darkseagreen": [143,188,143,1],
-  "darkslateblue": [72,61,139,1], "darkslategray": [47,79,79,1],
-  "darkslategrey": [47,79,79,1], "darkturquoise": [0,206,209,1],
-  "darkviolet": [148,0,211,1], "deeppink": [255,20,147,1],
-  "deepskyblue": [0,191,255,1], "dimgray": [105,105,105,1],
-  "dimgrey": [105,105,105,1], "dodgerblue": [30,144,255,1],
-  "firebrick": [178,34,34,1], "floralwhite": [255,250,240,1],
-  "forestgreen": [34,139,34,1], "fuchsia": [255,0,255,1],
-  "gainsboro": [220,220,220,1], "ghostwhite": [248,248,255,1],
-  "gold": [255,215,0,1], "goldenrod": [218,165,32,1],
-  "gray": [128,128,128,1], "green": [0,128,0,1],
-  "greenyellow": [173,255,47,1], "grey": [128,128,128,1],
-  "honeydew": [240,255,240,1], "hotpink": [255,105,180,1],
-  "indianred": [205,92,92,1], "indigo": [75,0,130,1],
-  "ivory": [255,255,240,1], "khaki": [240,230,140,1],
-  "lavender": [230,230,250,1], "lavenderblush": [255,240,245,1],
-  "lawngreen": [124,252,0,1], "lemonchiffon": [255,250,205,1],
-  "lightblue": [173,216,230,1], "lightcoral": [240,128,128,1],
-  "lightcyan": [224,255,255,1], "lightgoldenrodyellow": [250,250,210,1],
-  "lightgray": [211,211,211,1], "lightgreen": [144,238,144,1],
-  "lightgrey": [211,211,211,1], "lightpink": [255,182,193,1],
-  "lightsalmon": [255,160,122,1], "lightseagreen": [32,178,170,1],
-  "lightskyblue": [135,206,250,1], "lightslategray": [119,136,153,1],
-  "lightslategrey": [119,136,153,1], "lightsteelblue": [176,196,222,1],
-  "lightyellow": [255,255,224,1], "lime": [0,255,0,1],
-  "limegreen": [50,205,50,1], "linen": [250,240,230,1],
-  "magenta": [255,0,255,1], "maroon": [128,0,0,1],
-  "mediumaquamarine": [102,205,170,1], "mediumblue": [0,0,205,1],
-  "mediumorchid": [186,85,211,1], "mediumpurple": [147,112,219,1],
-  "mediumseagreen": [60,179,113,1], "mediumslateblue": [123,104,238,1],
-  "mediumspringgreen": [0,250,154,1], "mediumturquoise": [72,209,204,1],
-  "mediumvioletred": [199,21,133,1], "midnightblue": [25,25,112,1],
-  "mintcream": [245,255,250,1], "mistyrose": [255,228,225,1],
-  "moccasin": [255,228,181,1], "navajowhite": [255,222,173,1],
-  "navy": [0,0,128,1], "oldlace": [253,245,230,1],
-  "olive": [128,128,0,1], "olivedrab": [107,142,35,1],
-  "orange": [255,165,0,1], "orangered": [255,69,0,1],
-  "orchid": [218,112,214,1], "palegoldenrod": [238,232,170,1],
-  "palegreen": [152,251,152,1], "paleturquoise": [175,238,238,1],
-  "palevioletred": [219,112,147,1], "papayawhip": [255,239,213,1],
-  "peachpuff": [255,218,185,1], "peru": [205,133,63,1],
-  "pink": [255,192,203,1], "plum": [221,160,221,1],
-  "powderblue": [176,224,230,1], "purple": [128,0,128,1],
-  "rebeccapurple": [102,51,153,1],
-  "red": [255,0,0,1], "rosybrown": [188,143,143,1],
-  "royalblue": [65,105,225,1], "saddlebrown": [139,69,19,1],
-  "salmon": [250,128,114,1], "sandybrown": [244,164,96,1],
-  "seagreen": [46,139,87,1], "seashell": [255,245,238,1],
-  "sienna": [160,82,45,1], "silver": [192,192,192,1],
-  "skyblue": [135,206,235,1], "slateblue": [106,90,205,1],
-  "slategray": [112,128,144,1], "slategrey": [112,128,144,1],
-  "snow": [255,250,250,1], "springgreen": [0,255,127,1],
-  "steelblue": [70,130,180,1], "tan": [210,180,140,1],
-  "teal": [0,128,128,1], "thistle": [216,191,216,1],
-  "tomato": [255,99,71,1], "turquoise": [64,224,208,1],
-  "violet": [238,130,238,1], "wheat": [245,222,179,1],
-  "white": [255,255,255,1], "whitesmoke": [245,245,245,1],
-  "yellow": [255,255,0,1], "yellowgreen": [154,205,50,1]};
-
-function clamp_css_byte(i) {  // Clamp to integer 0 .. 255.
-  i = Math.round(i);  // Seems to be what Chrome does (vs truncation).
-  return i < 0 ? 0 : i > 255 ? 255 : i;
-}
-
-function clamp_css_float(f) {  // Clamp to float 0.0 .. 1.0.
-  return f < 0 ? 0 : f > 1 ? 1 : f;
-}
-
-function parse_css_int(str) {  // int or percentage.
-  if (str[str.length - 1] === '%')
-    return clamp_css_byte(parseFloat(str) / 100 * 255);
-  return clamp_css_byte(parseInt(str));
-}
-
-function parse_css_float(str) {  // float or percentage.
-  if (str[str.length - 1] === '%')
-    return clamp_css_float(parseFloat(str) / 100);
-  return clamp_css_float(parseFloat(str));
-}
-
-function css_hue_to_rgb(m1, m2, h) {
-  if (h < 0) h += 1;
-  else if (h > 1) h -= 1;
-
-  if (h * 6 < 1) return m1 + (m2 - m1) * h * 6;
-  if (h * 2 < 1) return m2;
-  if (h * 3 < 2) return m1 + (m2 - m1) * (2/3 - h) * 6;
-  return m1;
-}
-
-function parseCSSColor(css_str) {
-  // Remove all whitespace, not compliant, but should just be more accepting.
-  var str = css_str.replace(/ /g, '').toLowerCase();
-
-  // Color keywords (and transparent) lookup.
-  if (str in kCSSColorTable) return kCSSColorTable[str].slice();  // dup.
-
-  // #abc and #abc123 syntax.
-  if (str[0] === '#') {
-    if (str.length === 4) {
-      var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
-      if (!(iv >= 0 && iv <= 0xfff)) return null;  // Covers NaN.
-      return [((iv & 0xf00) >> 4) | ((iv & 0xf00) >> 8),
-              (iv & 0xf0) | ((iv & 0xf0) >> 4),
-              (iv & 0xf) | ((iv & 0xf) << 4),
-              1];
-    } else if (str.length === 7) {
-      var iv = parseInt(str.substr(1), 16);  // TODO(deanm): Stricter parsing.
-      if (!(iv >= 0 && iv <= 0xffffff)) return null;  // Covers NaN.
-      return [(iv & 0xff0000) >> 16,
-              (iv & 0xff00) >> 8,
-              iv & 0xff,
-              1];
-    }
-
-    return null;
-  }
-
-  var op = str.indexOf('('), ep = str.indexOf(')');
-  if (op !== -1 && ep + 1 === str.length) {
-    var fname = str.substr(0, op);
-    var params = str.substr(op+1, ep-(op+1)).split(',');
-    var alpha = 1;  // To allow case fallthrough.
-    switch (fname) {
-      case 'rgba':
-        if (params.length !== 4) return null;
-        alpha = parse_css_float(params.pop());
-        // Fall through.
-      case 'rgb':
-        if (params.length !== 3) return null;
-        return [parse_css_int(params[0]),
-                parse_css_int(params[1]),
-                parse_css_int(params[2]),
-                alpha];
-      case 'hsla':
-        if (params.length !== 4) return null;
-        alpha = parse_css_float(params.pop());
-        // Fall through.
-      case 'hsl':
-        if (params.length !== 3) return null;
-        var h = (((parseFloat(params[0]) % 360) + 360) % 360) / 360;  // 0 .. 1
-        // NOTE(deanm): According to the CSS spec s/l should only be
-        // percentages, but we don't bother and let float or percentage.
-        var s = parse_css_float(params[1]);
-        var l = parse_css_float(params[2]);
-        var m2 = l <= 0.5 ? l * (s + 1) : l + s - l * s;
-        var m1 = l * 2 - m2;
-        return [clamp_css_byte(css_hue_to_rgb(m1, m2, h+1/3) * 255),
-                clamp_css_byte(css_hue_to_rgb(m1, m2, h) * 255),
-                clamp_css_byte(css_hue_to_rgb(m1, m2, h-1/3) * 255),
-                alpha];
-      default:
-        return null;
-    }
-  }
-
-  return null;
-}
-
-try { parseCSSColor_1 = csscolorparser.parseCSSColor = parseCSSColor; } catch(e) { }
 
 var $version = 8;
 var $root = {
@@ -1830,9 +1577,27 @@ var source_raster_dem = {
 			terrarium: {
 			},
 			mapbox: {
+			},
+			custom: {
 			}
 		},
 		"default": "mapbox"
+	},
+	redMix: {
+		type: "number",
+		"default": 1
+	},
+	blueMix: {
+		type: "number",
+		"default": 1
+	},
+	greenMix: {
+		type: "number",
+		"default": 1
+	},
+	baseMix: {
+		type: "number",
+		"default": 0
 	},
 	volatile: {
 		type: "boolean",
@@ -2801,6 +2566,25 @@ var layout_symbol = {
 			]
 		},
 		"property-type": "data-constant"
+	},
+	"text-variable-anchor-offset": {
+		type: "variableAnchorOffsetCollection",
+		requires: [
+			"text-field",
+			{
+				"symbol-placement": [
+					"point"
+				]
+			}
+		],
+		expression: {
+			interpolated: true,
+			parameters: [
+				"zoom",
+				"feature"
+			]
+		},
+		"property-type": "data-driven"
 	},
 	"text-anchor": {
 		type: "enum",
@@ -5121,6 +4905,7 @@ const CollatorType = { kind: 'collator' };
 const FormattedType = { kind: 'formatted' };
 const PaddingType = { kind: 'padding' };
 const ResolvedImageType = { kind: 'resolvedImage' };
+const VariableAnchorOffsetCollectionType = { kind: 'variableAnchorOffsetCollection' };
 function array$1(itemType, N) {
     return {
         kind: 'array',
@@ -5149,7 +4934,8 @@ const valueMemberTypes = [
     ObjectType,
     array$1(ValueType),
     PaddingType,
-    ResolvedImageType
+    ResolvedImageType,
+    VariableAnchorOffsetCollectionType
 ];
 /**
  * Returns null if `t` is a subtype of `expected`; otherwise returns an
@@ -5199,50 +4985,524 @@ function isValidNativeType(provided, allowedTypes) {
         }
     });
 }
+/**
+ * Verify whether the specified type is of the same type as the specified sample.
+ *
+ * @param provided Type to verify
+ * @param sample Sample type to reference
+ * @returns `true` if both objects are of the same type, `false` otherwise
+ * @example basic types
+ * if (verifyType(outputType, ValueType)) {
+ *     // type narrowed to:
+ *     outputType.kind; // 'value'
+ * }
+ * @example array types
+ * if (verifyType(outputType, array(NumberType))) {
+ *     // type narrowed to:
+ *     outputType.kind; // 'array'
+ *     outputType.itemType; // NumberTypeT
+ *     outputType.itemType.kind; // 'number'
+ * }
+ */
+function verifyType(provided, sample) {
+    if (provided.kind === 'array' && sample.kind === 'array') {
+        return provided.itemType.kind === sample.itemType.kind && typeof provided.N === 'number';
+    }
+    return provided.kind === sample.kind;
+}
+
+// See https://observablehq.com/@mbostock/lab-and-rgb
+const Xn = 0.96422, Yn = 1, Zn = 0.82521, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1, deg2rad = Math.PI / 180, rad2deg = 180 / Math.PI;
+function constrainAngle(angle) {
+    angle = angle % 360;
+    if (angle < 0) {
+        angle += 360;
+    }
+    return angle;
+}
+function rgbToLab([r, g, b, alpha]) {
+    r = rgb2xyz(r);
+    g = rgb2xyz(g);
+    b = rgb2xyz(b);
+    let x, z;
+    const y = xyz2lab((0.2225045 * r + 0.7168786 * g + 0.0606169 * b) / Yn);
+    if (r === g && g === b) {
+        x = z = y;
+    }
+    else {
+        x = xyz2lab((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn);
+        z = xyz2lab((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+    }
+    const l = 116 * y - 16;
+    return [(l < 0) ? 0 : l, 500 * (x - y), 200 * (y - z), alpha];
+}
+function rgb2xyz(x) {
+    return (x <= 0.04045) ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+}
+function xyz2lab(t) {
+    return (t > t3) ? Math.pow(t, 1 / 3) : t / t2 + t0;
+}
+function labToRgb([l, a, b, alpha]) {
+    let y = (l + 16) / 116, x = isNaN(a) ? y : y + a / 500, z = isNaN(b) ? y : y - b / 200;
+    y = Yn * lab2xyz(y);
+    x = Xn * lab2xyz(x);
+    z = Zn * lab2xyz(z);
+    return [
+        xyz2rgb(3.1338561 * x - 1.6168667 * y - 0.4906146 * z),
+        xyz2rgb(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z),
+        xyz2rgb(0.0719453 * x - 0.2289914 * y + 1.4052427 * z),
+        alpha,
+    ];
+}
+function xyz2rgb(x) {
+    x = (x <= 0.00304) ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+    return (x < 0) ? 0 : (x > 1) ? 1 : x; // clip to 0..1 range
+}
+function lab2xyz(t) {
+    return (t > t1) ? t * t * t : t2 * (t - t0);
+}
+function rgbToHcl(rgbColor) {
+    const [l, a, b, alpha] = rgbToLab(rgbColor);
+    const c = Math.sqrt(a * a + b * b);
+    const h = Math.round(c * 10000) ? constrainAngle(Math.atan2(b, a) * rad2deg) : NaN;
+    return [h, c, l, alpha];
+}
+function hclToRgb([h, c, l, alpha]) {
+    h = isNaN(h) ? 0 : h * deg2rad;
+    return labToRgb([l, Math.cos(h) * c, Math.sin(h) * c, alpha]);
+}
+// https://drafts.csswg.org/css-color-4/#hsl-to-rgb
+function hslToRgb([h, s, l, alpha]) {
+    h = constrainAngle(h);
+    s /= 100;
+    l /= 100;
+    function f(n) {
+        const k = (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    }
+    return [f(0), f(8), f(4), alpha];
+}
 
 /**
- * An RGBA color value. Create instances from color strings using the static
- * method `Color.parse`. The constructor accepts RGB channel values in the range
- * `[0, 1]`, premultiplied by A.
+ * CSS color parser compliant with CSS Color 4 Specification.
+ * Supports: named colors, `transparent` keyword, all rgb hex notations,
+ * rgb(), rgba(), hsl() and hsla() functions.
+ * Does not round the parsed values to integers from the range 0..255.
  *
- * @param {number} r The red channel.
- * @param {number} g The green channel.
- * @param {number} b The blue channel.
- * @param {number} a The alpha channel.
+ * Syntax:
+ *
+ * <alpha-value> = <number> | <percentage>
+ *         <hue> = <number> | <angle>
+ *
+ *         rgb() = rgb( <percentage>{3} [ / <alpha-value> ]? ) | rgb( <number>{3} [ / <alpha-value> ]? )
+ *         rgb() = rgb( <percentage>#{3} , <alpha-value>? )    | rgb( <number>#{3} , <alpha-value>? )
+ *
+ *         hsl() = hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? )
+ *         hsl() = hsl( <hue>, <percentage>, <percentage>, <alpha-value>? )
+ *
+ * Caveats:
+ *   - <angle> - <number> with optional `deg` suffix; `grad`, `rad`, `turn` are not supported
+ *   - `none` keyword is not supported
+ *   - comments inside rgb()/hsl() are not supported
+ *   - legacy color syntax rgba() is supported with an identical grammar and behavior to rgb()
+ *   - legacy color syntax hsla() is supported with an identical grammar and behavior to hsl()
+ *
+ * @param input CSS color string to parse.
+ * @returns Color in sRGB color space, with `red`, `green`, `blue`
+ * and `alpha` channels normalized to the range 0..1,
+ * or `undefined` if the input is not a valid color string.
+ */
+function parseCssColor(input) {
+    input = input.toLowerCase().trim();
+    if (input === 'transparent') {
+        return [0, 0, 0, 0];
+    }
+    // 'white', 'black', 'blue'
+    const namedColorsMatch = namedColors[input];
+    if (namedColorsMatch) {
+        const [r, g, b] = namedColorsMatch;
+        return [r / 255, g / 255, b / 255, 1];
+    }
+    // #f0c, #f0cf, #ff00cc, #ff00ccff
+    if (input.startsWith('#')) {
+        const hexRegexp = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/;
+        if (hexRegexp.test(input)) {
+            const step = input.length < 6 ? 1 : 2;
+            let i = 1;
+            return [
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i += step)),
+                parseHex(input.slice(i, i + step) || 'ff'),
+            ];
+        }
+    }
+    // rgb(128 0 0), rgb(50% 0% 0%), rgba(255,0,255,0.6), rgb(255 0 255 / 60%), rgb(100% 0% 100% /.6)
+    if (input.startsWith('rgb')) {
+        const rgbRegExp = /^rgba?\(\s*([\de.+-]+)(%)?(?:\s+|\s*(,)\s*)([\de.+-]+)(%)?(?:\s+|\s*(,)\s*)([\de.+-]+)(%)?(?:\s*([,\/])\s*([\de.+-]+)(%)?)?\s*\)$/;
+        const rgbMatch = input.match(rgbRegExp);
+        if (rgbMatch) {
+            const [_, // eslint-disable-line @typescript-eslint/no-unused-vars
+            r, // <numeric>
+            rp, // %         (optional)
+            f1, // ,         (optional)
+            g, // <numeric>
+            gp, // %         (optional)
+            f2, // ,         (optional)
+            b, // <numeric>
+            bp, // %         (optional)
+            f3, // ,|/       (optional)
+            a, // <numeric> (optional)
+            ap, // %         (optional)
+            ] = rgbMatch;
+            const argFormat = [f1 || ' ', f2 || ' ', f3].join('');
+            if (argFormat === '  ' ||
+                argFormat === '  /' ||
+                argFormat === ',,' ||
+                argFormat === ',,,') {
+                const valFormat = [rp, gp, bp].join('');
+                const maxValue = (valFormat === '%%%') ? 100 :
+                    (valFormat === '') ? 255 : 0;
+                if (maxValue) {
+                    const rgba = [
+                        clamp(+r / maxValue, 0, 1),
+                        clamp(+g / maxValue, 0, 1),
+                        clamp(+b / maxValue, 0, 1),
+                        a ? parseAlpha(+a, ap) : 1,
+                    ];
+                    if (validateNumbers(rgba)) {
+                        return rgba;
+                    }
+                    // invalid numbers
+                }
+                // values must be all numbers or all percentages
+            }
+            return; // comma optional syntax requires no commas at all
+        }
+    }
+    // hsl(120 50% 80%), hsla(120deg,50%,80%,.9), hsl(12e1 50% 80% / 90%)
+    const hslRegExp = /^hsla?\(\s*([\de.+-]+)(?:deg)?(?:\s+|\s*(,)\s*)([\de.+-]+)%(?:\s+|\s*(,)\s*)([\de.+-]+)%(?:\s*([,\/])\s*([\de.+-]+)(%)?)?\s*\)$/;
+    const hslMatch = input.match(hslRegExp);
+    if (hslMatch) {
+        const [_, // eslint-disable-line @typescript-eslint/no-unused-vars
+        h, // <numeric>
+        f1, // ,         (optional)
+        s, // <numeric>
+        f2, // ,         (optional)
+        l, // <numeric>
+        f3, // ,|/       (optional)
+        a, // <numeric> (optional)
+        ap, // %         (optional)
+        ] = hslMatch;
+        const argFormat = [f1 || ' ', f2 || ' ', f3].join('');
+        if (argFormat === '  ' ||
+            argFormat === '  /' ||
+            argFormat === ',,' ||
+            argFormat === ',,,') {
+            const hsla = [
+                +h,
+                clamp(+s, 0, 100),
+                clamp(+l, 0, 100),
+                a ? parseAlpha(+a, ap) : 1,
+            ];
+            if (validateNumbers(hsla)) {
+                return hslToRgb(hsla);
+            }
+            // invalid numbers
+        }
+        // comma optional syntax requires no commas at all
+    }
+}
+function parseHex(hex) {
+    return parseInt(hex.padEnd(2, hex), 16) / 255;
+}
+function parseAlpha(a, asPercentage) {
+    return clamp(asPercentage ? (a / 100) : a, 0, 1);
+}
+function clamp(n, min, max) {
+    return Math.min(Math.max(min, n), max);
+}
+/**
+ * The regular expression for numeric values is not super specific, and it may
+ * happen that it will accept a value that is not a valid number. In order to
+ * detect and eliminate such values this function exists.
+ *
+ * @param array Array of uncertain numbers.
+ * @returns `true` if the specified array contains only valid numbers, `false` otherwise.
+ */
+function validateNumbers(array) {
+    return !array.some(Number.isNaN);
+}
+/**
+ * To generate:
+ * - visit {@link https://www.w3.org/TR/css-color-4/#named-colors}
+ * - run in the console:
+ * @example
+ * copy(`{\n${[...document.querySelector('.named-color-table tbody').children].map((tr) => `${tr.cells[2].textContent.trim()}: [${tr.cells[4].textContent.trim().split(/\s+/).join(', ')}],`).join('\n')}\n}`);
+ */
+const namedColors = {
+    aliceblue: [240, 248, 255],
+    antiquewhite: [250, 235, 215],
+    aqua: [0, 255, 255],
+    aquamarine: [127, 255, 212],
+    azure: [240, 255, 255],
+    beige: [245, 245, 220],
+    bisque: [255, 228, 196],
+    black: [0, 0, 0],
+    blanchedalmond: [255, 235, 205],
+    blue: [0, 0, 255],
+    blueviolet: [138, 43, 226],
+    brown: [165, 42, 42],
+    burlywood: [222, 184, 135],
+    cadetblue: [95, 158, 160],
+    chartreuse: [127, 255, 0],
+    chocolate: [210, 105, 30],
+    coral: [255, 127, 80],
+    cornflowerblue: [100, 149, 237],
+    cornsilk: [255, 248, 220],
+    crimson: [220, 20, 60],
+    cyan: [0, 255, 255],
+    darkblue: [0, 0, 139],
+    darkcyan: [0, 139, 139],
+    darkgoldenrod: [184, 134, 11],
+    darkgray: [169, 169, 169],
+    darkgreen: [0, 100, 0],
+    darkgrey: [169, 169, 169],
+    darkkhaki: [189, 183, 107],
+    darkmagenta: [139, 0, 139],
+    darkolivegreen: [85, 107, 47],
+    darkorange: [255, 140, 0],
+    darkorchid: [153, 50, 204],
+    darkred: [139, 0, 0],
+    darksalmon: [233, 150, 122],
+    darkseagreen: [143, 188, 143],
+    darkslateblue: [72, 61, 139],
+    darkslategray: [47, 79, 79],
+    darkslategrey: [47, 79, 79],
+    darkturquoise: [0, 206, 209],
+    darkviolet: [148, 0, 211],
+    deeppink: [255, 20, 147],
+    deepskyblue: [0, 191, 255],
+    dimgray: [105, 105, 105],
+    dimgrey: [105, 105, 105],
+    dodgerblue: [30, 144, 255],
+    firebrick: [178, 34, 34],
+    floralwhite: [255, 250, 240],
+    forestgreen: [34, 139, 34],
+    fuchsia: [255, 0, 255],
+    gainsboro: [220, 220, 220],
+    ghostwhite: [248, 248, 255],
+    gold: [255, 215, 0],
+    goldenrod: [218, 165, 32],
+    gray: [128, 128, 128],
+    green: [0, 128, 0],
+    greenyellow: [173, 255, 47],
+    grey: [128, 128, 128],
+    honeydew: [240, 255, 240],
+    hotpink: [255, 105, 180],
+    indianred: [205, 92, 92],
+    indigo: [75, 0, 130],
+    ivory: [255, 255, 240],
+    khaki: [240, 230, 140],
+    lavender: [230, 230, 250],
+    lavenderblush: [255, 240, 245],
+    lawngreen: [124, 252, 0],
+    lemonchiffon: [255, 250, 205],
+    lightblue: [173, 216, 230],
+    lightcoral: [240, 128, 128],
+    lightcyan: [224, 255, 255],
+    lightgoldenrodyellow: [250, 250, 210],
+    lightgray: [211, 211, 211],
+    lightgreen: [144, 238, 144],
+    lightgrey: [211, 211, 211],
+    lightpink: [255, 182, 193],
+    lightsalmon: [255, 160, 122],
+    lightseagreen: [32, 178, 170],
+    lightskyblue: [135, 206, 250],
+    lightslategray: [119, 136, 153],
+    lightslategrey: [119, 136, 153],
+    lightsteelblue: [176, 196, 222],
+    lightyellow: [255, 255, 224],
+    lime: [0, 255, 0],
+    limegreen: [50, 205, 50],
+    linen: [250, 240, 230],
+    magenta: [255, 0, 255],
+    maroon: [128, 0, 0],
+    mediumaquamarine: [102, 205, 170],
+    mediumblue: [0, 0, 205],
+    mediumorchid: [186, 85, 211],
+    mediumpurple: [147, 112, 219],
+    mediumseagreen: [60, 179, 113],
+    mediumslateblue: [123, 104, 238],
+    mediumspringgreen: [0, 250, 154],
+    mediumturquoise: [72, 209, 204],
+    mediumvioletred: [199, 21, 133],
+    midnightblue: [25, 25, 112],
+    mintcream: [245, 255, 250],
+    mistyrose: [255, 228, 225],
+    moccasin: [255, 228, 181],
+    navajowhite: [255, 222, 173],
+    navy: [0, 0, 128],
+    oldlace: [253, 245, 230],
+    olive: [128, 128, 0],
+    olivedrab: [107, 142, 35],
+    orange: [255, 165, 0],
+    orangered: [255, 69, 0],
+    orchid: [218, 112, 214],
+    palegoldenrod: [238, 232, 170],
+    palegreen: [152, 251, 152],
+    paleturquoise: [175, 238, 238],
+    palevioletred: [219, 112, 147],
+    papayawhip: [255, 239, 213],
+    peachpuff: [255, 218, 185],
+    peru: [205, 133, 63],
+    pink: [255, 192, 203],
+    plum: [221, 160, 221],
+    powderblue: [176, 224, 230],
+    purple: [128, 0, 128],
+    rebeccapurple: [102, 51, 153],
+    red: [255, 0, 0],
+    rosybrown: [188, 143, 143],
+    royalblue: [65, 105, 225],
+    saddlebrown: [139, 69, 19],
+    salmon: [250, 128, 114],
+    sandybrown: [244, 164, 96],
+    seagreen: [46, 139, 87],
+    seashell: [255, 245, 238],
+    sienna: [160, 82, 45],
+    silver: [192, 192, 192],
+    skyblue: [135, 206, 235],
+    slateblue: [106, 90, 205],
+    slategray: [112, 128, 144],
+    slategrey: [112, 128, 144],
+    snow: [255, 250, 250],
+    springgreen: [0, 255, 127],
+    steelblue: [70, 130, 180],
+    tan: [210, 180, 140],
+    teal: [0, 128, 128],
+    thistle: [216, 191, 216],
+    tomato: [255, 99, 71],
+    turquoise: [64, 224, 208],
+    violet: [238, 130, 238],
+    wheat: [245, 222, 179],
+    white: [255, 255, 255],
+    whitesmoke: [245, 245, 245],
+    yellow: [255, 255, 0],
+    yellowgreen: [154, 205, 50],
+};
+
+/**
+ * Color representation used by WebGL.
+ * Defined in sRGB color space and pre-blended with alpha.
  * @private
  */
 class Color {
-    constructor(r, g, b, a = 1) {
+    /**
+     * @param r Red component premultiplied by `alpha` 0..1
+     * @param g Green component premultiplied by `alpha` 0..1
+     * @param b Blue component premultiplied by `alpha` 0..1
+     * @param [alpha=1] Alpha component 0..1
+     * @param [premultiplied=true] Whether the `r`, `g` and `b` values have already
+     * been multiplied by alpha. If `true` nothing happens if `false` then they will
+     * be multiplied automatically.
+     */
+    constructor(r, g, b, alpha = 1, premultiplied = true) {
         this.r = r;
         this.g = g;
         this.b = b;
-        this.a = a;
+        this.a = alpha;
+        if (!premultiplied) {
+            this.r *= alpha;
+            this.g *= alpha;
+            this.b *= alpha;
+            if (!alpha) {
+                // alpha = 0 erases completely rgb channels. This behavior is not desirable
+                // if this particular color is later used in color interpolation.
+                // Because of that, a reference to original color is saved.
+                this.overwriteGetter('rgb', [r, g, b, alpha]);
+            }
+        }
     }
     /**
-     * Parses valid CSS color strings and returns a `Color` instance.
-     * @param input A valid CSS color string.
+     * Parses CSS color strings and converts colors to sRGB color space if needed.
+     * Officially supported color formats:
+     * - keyword, e.g. 'aquamarine' or 'steelblue'
+     * - hex (with 3, 4, 6 or 8 digits), e.g. '#f0f' or '#e9bebea9'
+     * - rgb and rgba, e.g. 'rgb(0,240,120)' or 'rgba(0%,94%,47%,0.1)' or 'rgb(0 240 120 / .3)'
+     * - hsl and hsla, e.g. 'hsl(0,0%,83%)' or 'hsla(0,0%,83%,.5)' or 'hsl(0 0% 83% / 20%)'
+     *
+     * @param input CSS color string to parse.
      * @returns A `Color` instance, or `undefined` if the input is not a valid color string.
      */
     static parse(input) {
-        if (!input) {
-            return undefined;
-        }
+        // in zoom-and-property function input could be an instance of Color class
         if (input instanceof Color) {
             return input;
         }
         if (typeof input !== 'string') {
-            return undefined;
+            return;
         }
-        const rgba = parseCSSColor_1(input);
-        if (!rgba) {
-            return undefined;
+        const rgba = parseCssColor(input);
+        if (rgba) {
+            return new Color(...rgba, false);
         }
-        return new Color(rgba[0] / 255 * rgba[3], rgba[1] / 255 * rgba[3], rgba[2] / 255 * rgba[3], rgba[3]);
     }
     /**
-     * Returns an RGBA string representing the color value.
+     * Used in color interpolation and by 'to-rgba' expression.
      *
-     * @returns An RGBA string.
+     * @returns Gien color, with reversed alpha blending, in sRGB color space.
+     */
+    get rgb() {
+        const { r, g, b, a } = this;
+        const f = a || Infinity; // reverse alpha blending factor
+        return this.overwriteGetter('rgb', [r / f, g / f, b / f, a]);
+    }
+    /**
+     * Used in color interpolation.
+     *
+     * @returns Gien color, with reversed alpha blending, in HCL color space.
+     */
+    get hcl() {
+        return this.overwriteGetter('hcl', rgbToHcl(this.rgb));
+    }
+    /**
+     * Used in color interpolation.
+     *
+     * @returns Gien color, with reversed alpha blending, in LAB color space.
+     */
+    get lab() {
+        return this.overwriteGetter('lab', rgbToLab(this.rgb));
+    }
+    /**
+     * Lazy getter pattern. When getter is called for the first time lazy value
+     * is calculated and then overwrites getter function in given object instance.
+     *
+     * @example:
+     * const redColor = Color.parse('red');
+     * let x = redColor.hcl; // this will invoke `get hcl()`, which will calculate
+     * // the value of red in HCL space and invoke this `overwriteGetter` function
+     * // which in turn will set a field with a key 'hcl' in the `redColor` object.
+     * // In other words it will override `get hcl()` from its `Color` prototype
+     * // with its own property: hcl = [calculated red value in hcl].
+     * let y = redColor.hcl; // next call will no longer invoke getter but simply
+     * // return the previously calculated value
+     * x === y; // true - `x` is exactly the same object as `y`
+     *
+     * @param getterKey Getter key
+     * @param lazyValue Lazily calculated value to be memoized by current instance
+     * @private
+     */
+    overwriteGetter(getterKey, lazyValue) {
+        Object.defineProperty(this, getterKey, { value: lazyValue });
+        return lazyValue;
+    }
+    /**
+     * Used by 'to-string' expression.
+     *
+     * @returns Serialized color in format `rgba(r,g,b,a)`
+     * where r,g,b are numbers within 0..255 and alpha is number within 1..0
+     *
      * @example
      * var purple = new Color.parse('purple');
      * purple.toString; // = "rgba(128,0,128,1)"
@@ -5250,17 +5510,8 @@ class Color {
      * translucentGreen.toString(); // = "rgba(26,207,26,0.73)"
      */
     toString() {
-        const [r, g, b, a] = this.toArray();
-        return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`;
-    }
-    toArray() {
-        const { r, g, b, a } = this;
-        return a === 0 ? [0, 0, 0, 0] : [
-            r * 255 / a,
-            g * 255 / a,
-            b * 255 / a,
-            a
-        ];
+        const [r, g, b, a] = this.rgb;
+        return `rgba(${[r, g, b].map(n => Math.round(n * 255)).join(',')},${a})`;
     }
 }
 Color.black = new Color(0, 0, 0, 1);
@@ -5380,6 +5631,44 @@ class Padding {
     }
 }
 
+/** Set of valid anchor positions, as a set for validation */
+const anchors = new Set(['center', 'left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right']);
+/**
+ * Utility class to assist managing values for text-variable-anchor-offset property. Create instances from
+ * bare arrays using the static method `VariableAnchorOffsetCollection.parse`.
+ * @private
+ */
+class VariableAnchorOffsetCollection {
+    constructor(values) {
+        this.values = values.slice();
+    }
+    static parse(input) {
+        if (input instanceof VariableAnchorOffsetCollection) {
+            return input;
+        }
+        if (!Array.isArray(input) ||
+            input.length < 1 ||
+            input.length % 2 !== 0) {
+            return undefined;
+        }
+        for (let i = 0; i < input.length; i += 2) {
+            // Elements in even positions should be anchor positions; Elements in odd positions should be offset values
+            const anchorValue = input[i];
+            const offsetValue = input[i + 1];
+            if (typeof anchorValue !== 'string' || !anchors.has(anchorValue)) {
+                return undefined;
+            }
+            if (!Array.isArray(offsetValue) || offsetValue.length !== 2 || typeof offsetValue[0] !== 'number' || typeof offsetValue[1] !== 'number') {
+                return undefined;
+            }
+        }
+        return new VariableAnchorOffsetCollection(input);
+    }
+    toString() {
+        return JSON.stringify(this.values);
+    }
+}
+
 class ResolvedImage {
     constructor(options) {
         this.name = options.name;
@@ -5408,31 +5697,16 @@ function validateRGBA(r, g, b, a) {
     return null;
 }
 function isValue(mixed) {
-    if (mixed === null) {
-        return true;
-    }
-    else if (typeof mixed === 'string') {
-        return true;
-    }
-    else if (typeof mixed === 'boolean') {
-        return true;
-    }
-    else if (typeof mixed === 'number') {
-        return true;
-    }
-    else if (mixed instanceof Color) {
-        return true;
-    }
-    else if (mixed instanceof Collator) {
-        return true;
-    }
-    else if (mixed instanceof Formatted) {
-        return true;
-    }
-    else if (mixed instanceof Padding) {
-        return true;
-    }
-    else if (mixed instanceof ResolvedImage) {
+    if (mixed === null ||
+        typeof mixed === 'string' ||
+        typeof mixed === 'boolean' ||
+        typeof mixed === 'number' ||
+        mixed instanceof Color ||
+        mixed instanceof Collator ||
+        mixed instanceof Formatted ||
+        mixed instanceof Padding ||
+        mixed instanceof VariableAnchorOffsetCollection ||
+        mixed instanceof ResolvedImage) {
         return true;
     }
     else if (Array.isArray(mixed)) {
@@ -5480,6 +5754,9 @@ function typeOf(value) {
     else if (value instanceof Padding) {
         return PaddingType;
     }
+    else if (value instanceof VariableAnchorOffsetCollection) {
+        return VariableAnchorOffsetCollectionType;
+    }
     else if (value instanceof ResolvedImage) {
         return ResolvedImageType;
     }
@@ -5513,7 +5790,7 @@ function toString(value) {
     else if (type === 'string' || type === 'number' || type === 'boolean') {
         return String(value);
     }
-    else if (value instanceof Color || value instanceof Formatted || value instanceof Padding || value instanceof ResolvedImage) {
+    else if (value instanceof Color || value instanceof Formatted || value instanceof Padding || value instanceof VariableAnchorOffsetCollection || value instanceof ResolvedImage) {
         return value.toString();
     }
     else {
@@ -5677,71 +5954,80 @@ class Coercion {
         return new Coercion(type, parsed);
     }
     evaluate(ctx) {
-        if (this.type.kind === 'boolean') {
-            return Boolean(this.args[0].evaluate(ctx));
-        }
-        else if (this.type.kind === 'color') {
-            let input;
-            let error;
-            for (const arg of this.args) {
-                input = arg.evaluate(ctx);
-                error = null;
-                if (input instanceof Color) {
-                    return input;
-                }
-                else if (typeof input === 'string') {
-                    const c = ctx.parseColor(input);
-                    if (c)
-                        return c;
-                }
-                else if (Array.isArray(input)) {
-                    if (input.length < 3 || input.length > 4) {
-                        error = `Invalid rbga value ${JSON.stringify(input)}: expected an array containing either three or four numeric values.`;
+        switch (this.type.kind) {
+            case 'boolean':
+                return Boolean(this.args[0].evaluate(ctx));
+            case 'color': {
+                let input;
+                let error;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    error = null;
+                    if (input instanceof Color) {
+                        return input;
                     }
-                    else {
-                        error = validateRGBA(input[0], input[1], input[2], input[3]);
+                    else if (typeof input === 'string') {
+                        const c = ctx.parseColor(input);
+                        if (c)
+                            return c;
                     }
-                    if (!error) {
-                        return new Color(input[0] / 255, input[1] / 255, input[2] / 255, input[3]);
+                    else if (Array.isArray(input)) {
+                        if (input.length < 3 || input.length > 4) {
+                            error = `Invalid rbga value ${JSON.stringify(input)}: expected an array containing either three or four numeric values.`;
+                        }
+                        else {
+                            error = validateRGBA(input[0], input[1], input[2], input[3]);
+                        }
+                        if (!error) {
+                            return new Color(input[0] / 255, input[1] / 255, input[2] / 255, input[3]);
+                        }
                     }
                 }
+                throw new RuntimeError(error || `Could not parse color from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(error || `Could not parse color from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
-        }
-        else if (this.type.kind === 'padding') {
-            let input;
-            for (const arg of this.args) {
-                input = arg.evaluate(ctx);
-                const pad = Padding.parse(input);
-                if (pad) {
-                    return pad;
+            case 'padding': {
+                let input;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    const pad = Padding.parse(input);
+                    if (pad) {
+                        return pad;
+                    }
                 }
+                throw new RuntimeError(`Could not parse padding from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(`Could not parse padding from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
-        }
-        else if (this.type.kind === 'number') {
-            let value = null;
-            for (const arg of this.args) {
-                value = arg.evaluate(ctx);
-                if (value === null)
-                    return 0;
-                const num = Number(value);
-                if (isNaN(num))
-                    continue;
-                return num;
+            case 'variableAnchorOffsetCollection': {
+                let input;
+                for (const arg of this.args) {
+                    input = arg.evaluate(ctx);
+                    const coll = VariableAnchorOffsetCollection.parse(input);
+                    if (coll) {
+                        return coll;
+                    }
+                }
+                throw new RuntimeError(`Could not parse variableAnchorOffsetCollection from value '${typeof input === 'string' ? input : JSON.stringify(input)}'`);
             }
-            throw new RuntimeError(`Could not convert ${JSON.stringify(value)} to number.`);
-        }
-        else if (this.type.kind === 'formatted') {
-            // There is no explicit 'to-formatted' but this coercion can be implicitly
-            // created by properties that expect the 'formatted' type.
-            return Formatted.fromString(toString(this.args[0].evaluate(ctx)));
-        }
-        else if (this.type.kind === 'resolvedImage') {
-            return ResolvedImage.fromString(toString(this.args[0].evaluate(ctx)));
-        }
-        else {
-            return toString(this.args[0].evaluate(ctx));
+            case 'number': {
+                let value = null;
+                for (const arg of this.args) {
+                    value = arg.evaluate(ctx);
+                    if (value === null)
+                        return 0;
+                    const num = Number(value);
+                    if (isNaN(num))
+                        continue;
+                    return num;
+                }
+                throw new RuntimeError(`Could not convert ${JSON.stringify(value)} to number.`);
+            }
+            case 'formatted':
+                // There is no explicit 'to-formatted' but this coercion can be implicitly
+                // created by properties that expect the 'formatted' type.
+                return Formatted.fromString(toString(this.args[0].evaluate(ctx)));
+            case 'resolvedImage':
+                return ResolvedImage.fromString(toString(this.args[0].evaluate(ctx)));
+            default:
+                return toString(this.args[0].evaluate(ctx));
         }
     }
     eachChild(fn) {
@@ -5861,6 +6147,9 @@ class ParsingContext {
                         parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
                     }
                     else if (expected.kind === 'padding' && (actual.kind === 'value' || actual.kind === 'number' || actual.kind === 'array')) {
+                        parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
+                    }
+                    else if (expected.kind === 'variableAnchorOffsetCollection' && (actual.kind === 'value' || actual.kind === 'array')) {
                         parsed = annotate(parsed, expected, options.typeAnnotation || 'coerce');
                     }
                     else if (this.checkSubtype(expected, actual)) {
@@ -6612,19 +6901,80 @@ class Step {
     }
 }
 
+/**
+ * Checks whether the specified color space is one of the supported interpolation color spaces.
+ *
+ * @param colorSpace Color space key to verify.
+ * @returns `true` if the specified color space is one of the supported
+ * interpolation color spaces, `false` otherwise
+ */
+function isSupportedInterpolationColorSpace(colorSpace) {
+    return colorSpace === 'rgb' || colorSpace === 'hcl' || colorSpace === 'lab';
+}
+/**
+ * @param interpolationType Interpolation type
+ * @returns interpolation fn
+ * @deprecated use `interpolate[type]` instead
+ */
 const interpolateFactory = (interpolationType) => {
     switch (interpolationType) {
         case 'number': return number;
         case 'color': return color;
         case 'array': return array;
         case 'padding': return padding;
+        case 'variableAnchorOffsetCollection': return variableAnchorOffsetCollection;
     }
 };
-function number(a, b, t) {
-    return (a * (1 - t)) + (b * t);
+function number(from, to, t) {
+    return from + t * (to - from);
 }
-function color(from, to, t) {
-    return new Color(number(from.r, to.r, t), number(from.g, to.g, t), number(from.b, to.b, t), number(from.a, to.a, t));
+function color(from, to, t, spaceKey = 'rgb') {
+    switch (spaceKey) {
+        case 'rgb': {
+            const [r, g, b, alpha] = array(from.rgb, to.rgb, t);
+            return new Color(r, g, b, alpha, false);
+        }
+        case 'hcl': {
+            const [hue0, chroma0, light0, alphaF] = from.hcl;
+            const [hue1, chroma1, light1, alphaT] = to.hcl;
+            // https://github.com/gka/chroma.js/blob/cd1b3c0926c7a85cbdc3b1453b3a94006de91a92/src/interpolator/_hsx.js
+            let hue, chroma;
+            if (!isNaN(hue0) && !isNaN(hue1)) {
+                let dh = hue1 - hue0;
+                if (hue1 > hue0 && dh > 180) {
+                    dh -= 360;
+                }
+                else if (hue1 < hue0 && hue0 - hue1 > 180) {
+                    dh += 360;
+                }
+                hue = hue0 + t * dh;
+            }
+            else if (!isNaN(hue0)) {
+                hue = hue0;
+                if (light1 === 1 || light1 === 0)
+                    chroma = chroma0;
+            }
+            else if (!isNaN(hue1)) {
+                hue = hue1;
+                if (light0 === 1 || light0 === 0)
+                    chroma = chroma1;
+            }
+            else {
+                hue = NaN;
+            }
+            const [r, g, b, alpha] = hclToRgb([
+                hue,
+                chroma !== null && chroma !== void 0 ? chroma : number(chroma0, chroma1, t),
+                number(light0, light1, t),
+                number(alphaF, alphaT, t),
+            ]);
+            return new Color(r, g, b, alpha, false);
+        }
+        case 'lab': {
+            const [r, g, b, alpha] = labToRgb(array(from.lab, to.lab, t));
+            return new Color(r, g, b, alpha, false);
+        }
+    }
 }
 function array(from, to, t) {
     return from.map((d, i) => {
@@ -6632,123 +6982,35 @@ function array(from, to, t) {
     });
 }
 function padding(from, to, t) {
-    const fromVal = from.values;
-    const toVal = to.values;
-    return new Padding([
-        number(fromVal[0], toVal[0], t),
-        number(fromVal[1], toVal[1], t),
-        number(fromVal[2], toVal[2], t),
-        number(fromVal[3], toVal[3], t)
-    ]);
+    return new Padding(array(from.values, to.values, t));
 }
-const interpolates = {
+function variableAnchorOffsetCollection(from, to, t) {
+    const fromValues = from.values;
+    const toValues = to.values;
+    if (fromValues.length !== toValues.length) {
+        throw new RuntimeError(`Cannot interpolate values of different length. from: ${from.toString()}, to: ${to.toString()}`);
+    }
+    const output = [];
+    for (let i = 0; i < fromValues.length; i += 2) {
+        // Anchor entries must match
+        if (fromValues[i] !== toValues[i]) {
+            throw new RuntimeError(`Cannot interpolate values containing mismatched anchors. from[${i}]: ${fromValues[i]}, to[${i}]: ${toValues[i]}`);
+        }
+        output.push(fromValues[i]);
+        // Interpolate the offset values for each anchor
+        const [fx, fy] = fromValues[i + 1];
+        const [tx, ty] = toValues[i + 1];
+        output.push([number(fx, tx, t), number(fy, ty, t)]);
+    }
+    return new VariableAnchorOffsetCollection(output);
+}
+const interpolate = {
     number,
     color,
     array,
-    padding
+    padding,
+    variableAnchorOffsetCollection
 };
-
-var interpolate = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  array: array,
-  color: color,
-  default: interpolates,
-  interpolateFactory: interpolateFactory,
-  number: number,
-  padding: padding
-});
-
-// Constants
-const Xn = 0.950470, // D65 standard referent
-Yn = 1, Zn = 1.088830, t0 = 4 / 29, t1 = 6 / 29, t2 = 3 * t1 * t1, t3 = t1 * t1 * t1, deg2rad = Math.PI / 180, rad2deg = 180 / Math.PI;
-// Utilities
-function xyz2lab(t) {
-    return t > t3 ? Math.pow(t, 1 / 3) : t / t2 + t0;
-}
-function lab2xyz(t) {
-    return t > t1 ? t * t * t : t2 * (t - t0);
-}
-function xyz2rgb(x) {
-    return 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055);
-}
-function rgb2xyz(x) {
-    x /= 255;
-    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-}
-// LAB
-function rgbToLab(rgbColor) {
-    const b = rgb2xyz(rgbColor.r), a = rgb2xyz(rgbColor.g), l = rgb2xyz(rgbColor.b), x = xyz2lab((0.4124564 * b + 0.3575761 * a + 0.1804375 * l) / Xn), y = xyz2lab((0.2126729 * b + 0.7151522 * a + 0.0721750 * l) / Yn), z = xyz2lab((0.0193339 * b + 0.1191920 * a + 0.9503041 * l) / Zn);
-    return {
-        l: 116 * y - 16,
-        a: 500 * (x - y),
-        b: 200 * (y - z),
-        alpha: rgbColor.a
-    };
-}
-function labToRgb(labColor) {
-    let y = (labColor.l + 16) / 116, x = isNaN(labColor.a) ? y : y + labColor.a / 500, z = isNaN(labColor.b) ? y : y - labColor.b / 200;
-    y = Yn * lab2xyz(y);
-    x = Xn * lab2xyz(x);
-    z = Zn * lab2xyz(z);
-    return new Color(xyz2rgb(3.2404542 * x - 1.5371385 * y - 0.4985314 * z), // D65 -> sRGB
-    xyz2rgb(-0.9692660 * x + 1.8760108 * y + 0.0415560 * z), xyz2rgb(0.0556434 * x - 0.2040259 * y + 1.0572252 * z), labColor.alpha);
-}
-function interpolateLab(from, to, t) {
-    return {
-        l: number(from.l, to.l, t),
-        a: number(from.a, to.a, t),
-        b: number(from.b, to.b, t),
-        alpha: number(from.alpha, to.alpha, t)
-    };
-}
-// HCL
-function rgbToHcl(rgbColor) {
-    const { l, a, b } = rgbToLab(rgbColor);
-    const h = Math.atan2(b, a) * rad2deg;
-    return {
-        h: h < 0 ? h + 360 : h,
-        c: Math.sqrt(a * a + b * b),
-        l,
-        alpha: rgbColor.a
-    };
-}
-function hclToRgb(hclColor) {
-    const h = hclColor.h * deg2rad, c = hclColor.c, l = hclColor.l;
-    return labToRgb({
-        l,
-        a: Math.cos(h) * c,
-        b: Math.sin(h) * c,
-        alpha: hclColor.alpha
-    });
-}
-function interpolateHue(a, b, t) {
-    const d = b - a;
-    return a + t * (d > 180 || d < -180 ? d - 360 * Math.round(d / 360) : d);
-}
-function interpolateHcl(from, to, t) {
-    return {
-        h: interpolateHue(from.h, to.h, t),
-        c: number(from.c, to.c, t),
-        l: number(from.l, to.l, t),
-        alpha: number(from.alpha, to.alpha, t)
-    };
-}
-const lab = {
-    forward: rgbToLab,
-    reverse: labToRgb,
-    interpolate: interpolateLab
-};
-const hcl = {
-    forward: rgbToHcl,
-    reverse: hclToRgb,
-    interpolate: interpolateHcl
-};
-
-var colorSpaces = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  hcl: hcl,
-  lab: lab
-});
 
 class Interpolate {
     constructor(type, operator, interpolation, input, stops) {
@@ -6773,7 +7035,7 @@ class Interpolate {
         }
         else if (interpolation.name === 'cubic-bezier') {
             const c = interpolation.controlPoints;
-            const ub = new unitbezier(c[0], c[1], c[2], c[3]);
+            const ub = new UnitBezier$1(c[0], c[1], c[2], c[3]);
             t = ub.solve(exponentialInterpolation(input, 1, lower, upper));
         }
         return t;
@@ -6843,12 +7105,11 @@ class Interpolate {
             outputType = outputType || parsed.type;
             stops.push([label, parsed]);
         }
-        if (outputType.kind !== 'number' &&
-            outputType.kind !== 'color' &&
-            outputType.kind !== 'padding' &&
-            !(outputType.kind === 'array' &&
-                outputType.itemType.kind === 'number' &&
-                typeof outputType.N === 'number')) {
+        if (!verifyType(outputType, NumberType) &&
+            !verifyType(outputType, ColorType) &&
+            !verifyType(outputType, PaddingType) &&
+            !verifyType(outputType, VariableAnchorOffsetCollectionType) &&
+            !verifyType(outputType, array$1(NumberType))) {
             return context.error(`Type ${toString$1(outputType)} is not interpolatable.`);
         }
         return new Interpolate(outputType, operator, interpolation, input, stops);
@@ -6873,14 +7134,13 @@ class Interpolate {
         const t = Interpolate.interpolationFactor(this.interpolation, value, lower, upper);
         const outputLower = outputs[index].evaluate(ctx);
         const outputUpper = outputs[index + 1].evaluate(ctx);
-        if (this.operator === 'interpolate') {
-            return interpolate[this.type.kind.toLowerCase()](outputLower, outputUpper, t); // eslint-disable-line import/namespace
-        }
-        else if (this.operator === 'interpolate-hcl') {
-            return hcl.reverse(hcl.interpolate(hcl.forward(outputLower), hcl.forward(outputUpper), t));
-        }
-        else {
-            return lab.reverse(lab.interpolate(lab.forward(outputLower), lab.forward(outputUpper), t));
+        switch (this.operator) {
+            case 'interpolate':
+                return interpolate[this.type.kind](outputLower, outputUpper, t);
+            case 'interpolate-hcl':
+                return interpolate.color(outputLower, outputUpper, t, 'hcl');
+            case 'interpolate-lab':
+                return interpolate.color(outputLower, outputUpper, t, 'lab');
         }
     }
     eachChild(fn) {
@@ -7785,7 +8045,7 @@ function rgba(ctx, [r, g, b, a]) {
     const error = validateRGBA(r, g, b, alpha);
     if (error)
         throw new RuntimeError(error);
-    return new Color(r / 255 * alpha, g / 255 * alpha, b / 255 * alpha, alpha);
+    return new Color(r / 255, g / 255, b / 255, alpha, false);
 }
 function has(key, obj) {
     return key in obj;
@@ -7824,8 +8084,9 @@ CompoundExpression.register(expressions, {
         array$1(NumberType, 4),
         [ColorType],
         (ctx, [v]) => {
-            return v.evaluate(ctx).toArray();
-        }
+            const [r, g, b, a] = v.evaluate(ctx).rgb;
+            return [r * 255, g * 255, b * 255, a];
+        },
     ],
     'rgb': [
         ColorType,
@@ -8312,8 +8573,8 @@ function createFunction(parameters, propertySpec) {
             parameters.default = parseFn(propertySpec.default);
         }
     }
-    if (parameters.colorSpace && parameters.colorSpace !== 'rgb' && !colorSpaces[parameters.colorSpace]) { // eslint-disable-line import/namespace
-        throw new Error(`Unknown color space: ${parameters.colorSpace}`);
+    if (parameters.colorSpace && !isSupportedInterpolationColorSpace(parameters.colorSpace)) {
+        throw new Error(`Unknown color space: "${parameters.colorSpace}"`);
     }
     let innerFun;
     let hashedStops;
@@ -8442,11 +8703,7 @@ function evaluateExponentialFunction(parameters, propertySpec, input) {
     const t = interpolationFactor(input, base, parameters.stops[index][0], parameters.stops[index + 1][0]);
     const outputLower = parameters.stops[index][1];
     const outputUpper = parameters.stops[index + 1][1];
-    let interp = interpolate[propertySpec.type] || identityFunction; // eslint-disable-line import/namespace
-    if (parameters.colorSpace && parameters.colorSpace !== 'rgb') {
-        const colorspace = colorSpaces[parameters.colorSpace]; // eslint-disable-line import/namespace
-        interp = (a, b) => colorspace.reverse(colorspace.interpolate(colorspace.forward(a), colorspace.forward(b), t));
-    }
+    const interp = interpolate[propertySpec.type] || identityFunction;
     if (typeof outputLower.evaluate === 'function') {
         return {
             evaluate(...args) {
@@ -8456,11 +8713,11 @@ function evaluateExponentialFunction(parameters, propertySpec, input) {
                 if (evaluatedLower === undefined || evaluatedUpper === undefined) {
                     return undefined;
                 }
-                return interp(evaluatedLower, evaluatedUpper, t);
+                return interp(evaluatedLower, evaluatedUpper, t, parameters.colorSpace);
             }
         };
     }
-    return interp(outputLower, outputUpper, t);
+    return interp(outputLower, outputUpper, t, parameters.colorSpace);
 }
 function evaluateIdentityFunction(parameters, propertySpec, input) {
     switch (propertySpec.type) {
@@ -8639,6 +8896,9 @@ class ZoomDependentExpression {
         }
     }
 }
+function isZoomExpression(expression) {
+    return expression._styleExpression !== undefined;
+}
 function createPropertyExpression(expressionInput, propertySpec) {
     const expression = createExpression(expressionInput, propertySpec);
     if (expression.result === 'error') {
@@ -8711,6 +8971,9 @@ function normalizePropertyExpression(value, specification) {
         else if (specification.type === 'padding' && (typeof value === 'number' || Array.isArray(value))) {
             constant = Padding.parse(value);
         }
+        else if (specification.type === 'variableAnchorOffsetCollection' && Array.isArray(value)) {
+            constant = VariableAnchorOffsetCollection.parse(value);
+        }
         return {
             kind: 'constant',
             evaluate: () => constant
@@ -8764,7 +9027,8 @@ function getExpectedType(spec) {
         boolean: BooleanType,
         formatted: FormattedType,
         padding: PaddingType,
-        resolvedImage: ResolvedImageType
+        resolvedImage: ResolvedImageType,
+        variableAnchorOffsetCollection: VariableAnchorOffsetCollectionType
     };
     if (spec.type === 'array') {
         return array$1(types[spec.value] || ValueType, spec.length);
@@ -8783,6 +9047,9 @@ function getDefaultValue(spec) {
     }
     else if (spec.type === 'padding') {
         return Padding.parse(spec.default) || null;
+    }
+    else if (spec.type === 'variableAnchorOffsetCollection') {
+        return VariableAnchorOffsetCollection.parse(spec.default) || null;
     }
     else if (spec.default === undefined) {
         return null;
@@ -8843,7 +9110,7 @@ const filterSpec = {
  * passes its test.
  *
  * @private
- * @param {Array} filter maplibre gl filter
+ * @param {Array} filter MapLibre filter
  * @returns {Function} filter-evaluating function
  */
 function createFilter(filter) {
@@ -9906,7 +10173,7 @@ function validateColor(options) {
     if (type !== 'string') {
         return [new ValidationError(key, value, `color expected, ${type} found`)];
     }
-    if (parseCSSColor_1(value) === null) {
+    if (!Color.parse(String(value))) { // cast String object to string primitive
         return [new ValidationError(key, value, `color expected, "${value}" found`)];
     }
     return [];
@@ -10453,6 +10720,38 @@ function validatePadding(options) {
     }
 }
 
+function validateVariableAnchorOffsetCollection(options) {
+    const key = options.key;
+    const value = options.value;
+    const type = getType(value);
+    const styleSpec = options.styleSpec;
+    if (type !== 'array' || value.length < 1 || value.length % 2 !== 0) {
+        return [new ValidationError(key, value, 'variableAnchorOffsetCollection requires a non-empty array of even length')];
+    }
+    let errors = [];
+    for (let i = 0; i < value.length; i += 2) {
+        // Elements in even positions should be values from text-anchor enum
+        errors = errors.concat(validateEnum({
+            key: `${key}[${i}]`,
+            value: value[i],
+            valueSpec: styleSpec['layout_symbol']['text-anchor']
+        }));
+        // Elements in odd positions should be points (2-element numeric arrays)
+        errors = errors.concat(validateArray({
+            key: `${key}[${i + 1}]`,
+            value: value[i + 1],
+            valueSpec: {
+                length: 2,
+                value: 'number'
+            },
+            validateSpec: options.validateSpec,
+            style: options.style,
+            styleSpec
+        }));
+    }
+    return errors;
+}
+
 function validateSprite(options) {
     let errors = [];
     const sprite = options.value;
@@ -10515,6 +10814,7 @@ const VALIDATORS = {
     'formatted': validateFormatted,
     'resolvedImage': validateImage,
     'padding': validatePadding,
+    'variableAnchorOffsetCollection': validateVariableAnchorOffsetCollection,
     'sprite': validateSprite,
 };
 // Main recursive validation function. Tracks:
@@ -10564,7 +10864,7 @@ function validateGlyphsUrl(options) {
 }
 
 /**
- * Validate a MapLibre GL style against the style specification. This entrypoint,
+ * Validate a MapLibre style against the style specification. This entrypoint,
  * `maplibre-gl-style-spec/lib/validate_style.min`, is designed to produce as
  * small a browserify bundle as possible by omitting unnecessary functionality
  * and legacy style specifications.
@@ -10643,6 +10943,7 @@ const expression = {
     createPropertyExpression,
     isExpression,
     isExpressionFilter,
+    isZoomExpression,
     normalizePropertyExpression,
 };
 const styleFunction = {
@@ -10847,11 +11148,7 @@ const registry = {};
 /**
  * Register the given class as serializable.
  *
- * @param options
- * @param options.omit List of properties to omit from serialization (e.g., cached/computed properties)
- * @param options.shallow List of properties that should be serialized by a simple shallow copy, rather than by a recursive call to serialize().
- *
- * @private
+ * @param options - the registration options
  */
 function register(name, klass, options = {}) {
     if (registry[name])
@@ -10897,8 +11194,6 @@ function isArrayBuffer(value) {
  * If a `transferables` array is provided, add any transferable objects (i.e.,
  * any ArrayBuffers or ArrayBuffer views) to the list. (If a copy is needed,
  * this should happen in the client code, before using serialize().)
- *
- * @private
  */
 function serialize(input, transferables) {
     if (input === null ||
@@ -11474,7 +11769,6 @@ function charAllowsIdeographicBreaking(char) {
  * adjacent characters can be rotated. For example, a Chinese character is
  * always drawn upright. An uprightly oriented character causes an adjacent
  * “neutral” character to be drawn upright as well.
- * @private
  */
 function charHasUprightVerticalOrientation(char) {
     if (char === 0x02EA /* modifier letter yin departing tone mark */ ||
@@ -11584,7 +11878,6 @@ function charHasUprightVerticalOrientation(char) {
  * fraction ½ is drawn upright among Chinese characters but rotated among Latin
  * letters. A neutrally oriented character does not influence whether an
  * adjacent character is drawn upright or rotated.
- * @private
  */
 function charHasNeutralVerticalOrientation(char) {
     if (unicodeBlockLookup['Latin-1 Supplement'](char)) {
@@ -11684,7 +11977,6 @@ function charHasNeutralVerticalOrientation(char) {
  * oriented vertically, even if both adjacent characters are upright. For
  * example, a Latin letter is drawn rotated along a vertical line. A rotated
  * character causes an adjacent “neutral” character to be drawn rotated as well.
- * @private
  */
 function charHasRotatedVerticalOrientation(char) {
     return !(charHasUprightVerticalOrientation(char) ||
@@ -11780,12 +12072,13 @@ const registerForPluginStateChange = function (callback) {
 const clearRTLTextPlugin = function () {
     pluginStatus = status.unavailable;
     pluginURL = null;
+    _completionCallback = null;
 };
 const setRTLTextPlugin = function (url, callback, deferred = false) {
     if (pluginStatus === status.deferred || pluginStatus === status.loading || pluginStatus === status.loaded) {
         throw new Error('setRTLTextPlugin cannot be called multiple times.');
     }
-    pluginURL = exported.resolveURL(url);
+    pluginURL = browser.resolveURL(url);
     pluginStatus = status.deferred;
     _completionCallback = callback;
     sendPluginStateToWorker();
@@ -11850,6 +12143,10 @@ const lazyLoadRTLTextPlugin = function () {
     }
 };
 
+/**
+ * @internal
+ * A parameter that can be evaluated to a value
+ */
 class EvaluationParameters {
     // "options" may also be another EvaluationParameters to copy, see CrossFadedProperty.possiblyEvaluate
     constructor(zoom, options) {
@@ -11889,6 +12186,7 @@ class EvaluationParameters {
 }
 
 /**
+ * @internal
  *  `PropertyValue` represents the value part of a property key-value unit. It's used to represent both
  *  paint and layout property values, and regardless of whether or not their property supports data-driven
  *  expressions.
@@ -11904,8 +12202,6 @@ class EvaluationParameters {
  *  In addition to storing the original input value, `PropertyValue` also stores a normalized representation,
  *  effectively treating functions as if they are expressions, and constant or default values as if they are
  *  (constant) expressions.
- *
- *  @private
  */
 class PropertyValue {
     constructor(property, value) {
@@ -11921,6 +12217,7 @@ class PropertyValue {
     }
 }
 /**
+ * @internal
  * Paint properties are _transitionable_: they can change in a fluid manner, interpolating or cross-fading between
  * old and new value. The duration of the transition, and the delay before it begins, is configurable.
  *
@@ -11929,8 +12226,6 @@ class PropertyValue {
  *
  * A `TransitionablePropertyValue` can calculate the next step in the evaluation chain for paint property values:
  * `TransitioningPropertyValue`.
- *
- * @private
  */
 class TransitionablePropertyValue {
     constructor(property) {
@@ -11945,11 +12240,10 @@ class TransitionablePropertyValue {
     }
 }
 /**
+ * @internal
  * `Transitionable` stores a map of all (property name, `TransitionablePropertyValue`) pairs for paint properties of a
  * given layer type. It can calculate the `TransitioningPropertyValue`s for all of them at once, producing a
  * `Transitioning` instance for the same set of properties.
- *
- * @private
  */
 class Transitionable {
     constructor(properties) {
@@ -12005,15 +12299,13 @@ class Transitionable {
         return result;
     }
 }
-// ------- Transitioning -------
 /**
+ * @internal
  * `TransitioningPropertyValue` implements the first of two intermediate steps in the evaluation chain of a paint
  * property value. In this step, transitions between old and new values are handled: as long as the transition is in
  * progress, `TransitioningPropertyValue` maintains a reference to the prior value, and interpolates between it and
  * the new value based on the current time and the configured transition duration and delay. The product is the next
  * step in the evaluation chain: the "possibly evaluated" result type `R`. See below for more on this concept.
- *
- * @private
  */
 class TransitioningPropertyValue {
     constructor(property, value, prior, transition, now) {
@@ -12057,11 +12349,10 @@ class TransitioningPropertyValue {
     }
 }
 /**
+ * @internal
  * `Transitioning` stores a map of all (property name, `TransitioningPropertyValue`) pairs for paint properties of a
  * given layer type. It can calculate the possibly-evaluated values for all of them at once, producing a
  * `PossiblyEvaluated` instance for the same set of properties.
- *
- * @private
  */
 class Transitioning {
     constructor(properties) {
@@ -12093,13 +12384,14 @@ class Transitioning {
  * `Layout` stores a map of all (property name, `PropertyValue`) pairs for layout properties of a
  * given layer type. It can calculate the possibly-evaluated values for all of them at once, producing a
  * `PossiblyEvaluated` instance for the same set of properties.
- *
- * @private
  */
 class Layout {
     constructor(properties) {
         this._properties = properties;
         this._values = Object.create(properties.defaultPropertyValues);
+    }
+    hasValue(name) {
+        return this._values[name].value !== undefined;
     }
     getValue(name) {
         return clone$9(this._values[name].value);
@@ -12126,12 +12418,11 @@ class Layout {
     }
 }
 /**
+ * @internal
  * `PossiblyEvaluatedPropertyValue` is used for data-driven paint and layout property values. It holds a
  * `PossiblyEvaluatedValue` and the `GlobalProperties` that were used to generate it. You're not allowed to supply
  * a different set of `GlobalProperties` when performing the final evaluation because they would be ignored in the
  * case where the input value was a constant or camera function.
- *
- * @private
  */
 class PossiblyEvaluatedPropertyValue {
     constructor(property, value, parameters) {
@@ -12155,9 +12446,9 @@ class PossiblyEvaluatedPropertyValue {
     }
 }
 /**
+ * @internal
  * `PossiblyEvaluated` stores a map of all (property name, `R`) pairs for paint or layout properties of a
  * given layer type.
- * @private
  */
 class PossiblyEvaluated {
     constructor(properties) {
@@ -12169,11 +12460,10 @@ class PossiblyEvaluated {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for properties that do not permit data-driven (source or composite) expressions.
  * This restriction allows us to declare statically that the result of possibly evaluating this kind of property
  * is in fact always the scalar type `T`, and can be used without further evaluating the value on a per-feature basis.
- *
- * @private
  */
 class DataConstantProperty {
     constructor(specification) {
@@ -12185,9 +12475,10 @@ class DataConstantProperty {
         return value.expression.evaluate(parameters);
     }
     interpolate(a, b, t) {
-        const interp = interpolateFactory(this.specification.type);
-        if (interp) {
-            return interp(a, b, t);
+        const interpolationType = this.specification.type;
+        const interpolationFn = interpolate[interpolationType];
+        if (interpolationFn) {
+            return interpolationFn(a, b, t);
         }
         else {
             return a;
@@ -12195,11 +12486,10 @@ class DataConstantProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for properties that permit data-driven (source or composite) expressions.
  * The result of possibly evaluating this kind of property is `PossiblyEvaluatedPropertyValue<T>`; obtaining
  * a scalar value `T` requires further evaluation on a per-feature basis.
- *
- * @private
  */
 class DataDrivenProperty {
     constructor(specification, overrides) {
@@ -12229,9 +12519,11 @@ class DataDrivenProperty {
         if (a.value.value === undefined || b.value.value === undefined) {
             return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: undefined }, a.parameters);
         }
-        const interp = interpolateFactory(this.specification.type);
-        if (interp) {
-            return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: interp(a.value.value, b.value.value, t) }, a.parameters);
+        const interpolationType = this.specification.type;
+        const interpolationFn = interpolate[interpolationType];
+        if (interpolationFn) {
+            const interpolatedValue = interpolationFn(a.value.value, b.value.value, t);
+            return new PossiblyEvaluatedPropertyValue(this, { kind: 'constant', value: interpolatedValue }, a.parameters);
         }
         else {
             return a;
@@ -12247,10 +12539,9 @@ class DataDrivenProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for  data driven `line-pattern` which are transitioned by cross-fading
  * rather than interpolation.
- *
- * @private
  */
 class CrossFadedDataDrivenProperty extends DataDrivenProperty {
     possiblyEvaluate(value, parameters, canonical, availableImages) {
@@ -12294,10 +12585,9 @@ class CrossFadedDataDrivenProperty extends DataDrivenProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for `*-pattern` and `line-dasharray`, which are transitioned by cross-fading
  * rather than interpolation.
- *
- * @private
  */
 class CrossFadedProperty {
     constructor(specification) {
@@ -12324,11 +12614,10 @@ class CrossFadedProperty {
     }
 }
 /**
+ * @internal
  * An implementation of `Property` for `heatmap-color` and `line-gradient`. Interpolation is a no-op, and
  * evaluation returns a boolean value in order to indicate its presence, but the real
  * evaluation happens in StyleLayer classes.
- *
- * @private
  */
 class ColorRampProperty {
     constructor(specification) {
@@ -12340,6 +12629,7 @@ class ColorRampProperty {
     interpolate() { return false; }
 }
 /**
+ * @internal
  * `Properties` holds objects containing default values for the layout or paint property set of a given
  * layer type. These objects are immutable, and they are used as the prototypes for the `_values` members of
  * `Transitionable`, `Transitioning`, `Layout`, and `PossiblyEvaluated`. This allows these classes to avoid
@@ -12347,8 +12637,6 @@ class ColorRampProperty {
  * on the default value: using `for (const property of Object.keys(this._values))`, they can iterate over
  * only the _own_ properties of `_values`, skipping repeated calculation of transitions and possible/final
  * evaluations for defaults, the result of which will always be the same.
- *
- * @private
  */
 class Properties {
     constructor(properties) {
@@ -12381,6 +12669,9 @@ register('CrossFadedProperty', CrossFadedProperty);
 register('ColorRampProperty', ColorRampProperty);
 
 const TRANSITION_SUFFIX = '-transition';
+/**
+ * A base class for style layers
+ */
 class StyleLayer extends Evented {
     constructor(layer, properties) {
         super();
@@ -12565,6 +12856,10 @@ class StyleLayer extends Evented {
 }
 
 // Note: all "sizes" are measured in bytes
+/**
+ * @internal
+ * A view type size
+ */
 const viewTypes = {
     'Int8': Int8Array,
     'Uint8': Uint8Array,
@@ -12574,14 +12869,11 @@ const viewTypes = {
     'Uint32': Uint32Array,
     'Float32': Float32Array
 };
-/**
- * @private
- */
+/** @internal */
 class Struct {
     /**
-     * @param {StructArray} structArray The StructArray the struct is stored in
-     * @param {number} index The index of the struct in the StructArray.
-     * @private
+     * @param structArray - The StructArray the struct is stored in
+     * @param index - The index of the struct in the StructArray.
      */
     constructor(structArray, index) {
         this._structArray = structArray;
@@ -12594,6 +12886,7 @@ class Struct {
 const DEFAULT_CAPACITY = 128;
 const RESIZE_MULTIPLIER = 5;
 /**
+ * @internal
  * `StructArray` provides an abstraction over `ArrayBuffer` and `TypedArray`
  * making it behave like an array of typed structs.
  *
@@ -12601,7 +12894,7 @@ const RESIZE_MULTIPLIER = 5;
  * associated struct type. Each particular struct type, together with an
  * alignment size, determines the memory layout of a StructArray whose elements
  * are of that type.  Thus, for each such layout that we need, we have
- * a corrseponding StructArrayLayout class, inheriting from StructArray and
+ * a corresponding StructArrayLayout class, inheriting from StructArray and
  * implementing `emplaceBack()` and `_refreshViews()`.
  *
  * In some cases, where we need to access particular elements of a StructArray,
@@ -12611,8 +12904,6 @@ const RESIZE_MULTIPLIER = 5;
  * i-th element.  This affords the convience of working with (seemingly) plain
  * Javascript objects without the overhead of serializing/deserializing them
  * into ArrayBuffers for efficient web worker transfer.
- *
- * @private
  */
 class StructArray {
     constructor() {
@@ -12624,7 +12915,6 @@ class StructArray {
      * Serialize a StructArray instance.  Serializes both the raw data and the
      * metadata needed to reconstruct the StructArray base class during
      * deserialization.
-     * @private
      */
     static serialize(array, transferables) {
         array._trim();
@@ -12656,7 +12946,7 @@ class StructArray {
         }
     }
     /**
-     * Resets the the length of the array to 0 without de-allocating capcacity.
+     * Resets the length of the array to 0 without de-allocating capcacity.
      */
     clear() {
         this.length = 0;
@@ -12665,7 +12955,7 @@ class StructArray {
      * Resize the array.
      * If `n` is greater than the current length then additional elements with undefined values are added.
      * If `n` is less than the current length then the array will be reduced to the first `n` elements.
-     * @param {number} n The new size of the array.
+     * @param n - The new size of the array.
      */
     resize(n) {
         this.reserve(n);
@@ -12674,7 +12964,7 @@ class StructArray {
     /**
      * Indicate a planned increase in size, so that any necessary allocation may
      * be done once, ahead of time.
-     * @param {number} n The expected size of the array.
+     * @param n - The expected size of the array.
      */
     reserve(n) {
         if (n > this.capacity) {
@@ -12698,8 +12988,6 @@ class StructArray {
  * particular calculating the correct byte offset for each field.  This data
  * is used at build time to generate StructArrayLayout_*#emplaceBack() and
  * other accessors, and at runtime for binding vertex buffer attributes.
- *
- * @private
  */
 function createLayout(members, alignment = 1) {
     let offset = 0;
@@ -12733,10 +13021,10 @@ function align$1(offset, size) {
 
 // This file is generated. Edit build/generate-struct-arrays.ts, then run `npm run codegen`.
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2i4 extends StructArray {
     _refreshViews() {
@@ -12758,10 +13046,10 @@ class StructArrayLayout2i4 extends StructArray {
 StructArrayLayout2i4.prototype.bytesPerElement = 4;
 register('StructArrayLayout2i4', StructArrayLayout2i4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[3]
  *
- * @private
  */
 class StructArrayLayout3i6 extends StructArray {
     _refreshViews() {
@@ -12784,10 +13072,10 @@ class StructArrayLayout3i6 extends StructArray {
 StructArrayLayout3i6.prototype.bytesPerElement = 6;
 register('StructArrayLayout3i6', StructArrayLayout3i6);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout4i8 extends StructArray {
     _refreshViews() {
@@ -12811,11 +13099,11 @@ class StructArrayLayout4i8 extends StructArray {
 StructArrayLayout4i8.prototype.bytesPerElement = 8;
 register('StructArrayLayout4i8', StructArrayLayout4i8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout2i4i12 extends StructArray {
     _refreshViews() {
@@ -12841,11 +13129,11 @@ class StructArrayLayout2i4i12 extends StructArray {
 StructArrayLayout2i4i12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2i4i12', StructArrayLayout2i4i12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Uint8[4]
  *
- * @private
  */
 class StructArrayLayout2i4ub8 extends StructArray {
     _refreshViews() {
@@ -12872,10 +13160,10 @@ class StructArrayLayout2i4ub8 extends StructArray {
 StructArrayLayout2i4ub8.prototype.bytesPerElement = 8;
 register('StructArrayLayout2i4ub8', StructArrayLayout2i4ub8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[2]
  *
- * @private
  */
 class StructArrayLayout2f8 extends StructArray {
     _refreshViews() {
@@ -12897,10 +13185,10 @@ class StructArrayLayout2f8 extends StructArray {
 StructArrayLayout2f8.prototype.bytesPerElement = 8;
 register('StructArrayLayout2f8', StructArrayLayout2f8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[10]
  *
- * @private
  */
 class StructArrayLayout10ui20 extends StructArray {
     _refreshViews() {
@@ -12930,12 +13218,12 @@ class StructArrayLayout10ui20 extends StructArray {
 StructArrayLayout10ui20.prototype.bytesPerElement = 20;
 register('StructArrayLayout10ui20', StructArrayLayout10ui20);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[4]
  * [8]: Uint16[4]
  * [16]: Int16[4]
  *
- * @private
  */
 class StructArrayLayout4i4ui4i24 extends StructArray {
     _refreshViews() {
@@ -12968,10 +13256,10 @@ class StructArrayLayout4i4ui4i24 extends StructArray {
 StructArrayLayout4i4ui4i24.prototype.bytesPerElement = 24;
 register('StructArrayLayout4i4ui4i24', StructArrayLayout4i4ui4i24);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[3]
  *
- * @private
  */
 class StructArrayLayout3f12 extends StructArray {
     _refreshViews() {
@@ -12994,10 +13282,10 @@ class StructArrayLayout3f12 extends StructArray {
 StructArrayLayout3f12.prototype.bytesPerElement = 12;
 register('StructArrayLayout3f12', StructArrayLayout3f12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint32[1]
  *
- * @private
  */
 class StructArrayLayout1ul4 extends StructArray {
     _refreshViews() {
@@ -13018,12 +13306,12 @@ class StructArrayLayout1ul4 extends StructArray {
 StructArrayLayout1ul4.prototype.bytesPerElement = 4;
 register('StructArrayLayout1ul4', StructArrayLayout1ul4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[6]
  * [12]: Uint32[1]
  * [16]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout6i1ul2ui20 extends StructArray {
     _refreshViews() {
@@ -13055,12 +13343,12 @@ class StructArrayLayout6i1ul2ui20 extends StructArray {
 StructArrayLayout6i1ul2ui20.prototype.bytesPerElement = 20;
 register('StructArrayLayout6i1ul2ui20', StructArrayLayout6i1ul2ui20);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Int16[2]
  * [8]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2i2i2i12 extends StructArray {
     _refreshViews() {
@@ -13086,12 +13374,12 @@ class StructArrayLayout2i2i2i12 extends StructArray {
 StructArrayLayout2i2i2i12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2i2i2i12', StructArrayLayout2i2i2i12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[2]
  * [8]: Float32[1]
  * [12]: Int16[2]
  *
- * @private
  */
 class StructArrayLayout2f1f2i16 extends StructArray {
     _refreshViews() {
@@ -13118,11 +13406,11 @@ class StructArrayLayout2f1f2i16 extends StructArray {
 StructArrayLayout2f1f2i16.prototype.bytesPerElement = 16;
 register('StructArrayLayout2f1f2i16', StructArrayLayout2f1f2i16);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint8[2]
  * [4]: Float32[2]
  *
- * @private
  */
 class StructArrayLayout2ub2f12 extends StructArray {
     _refreshViews() {
@@ -13147,10 +13435,10 @@ class StructArrayLayout2ub2f12 extends StructArray {
 StructArrayLayout2ub2f12.prototype.bytesPerElement = 12;
 register('StructArrayLayout2ub2f12', StructArrayLayout2ub2f12);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[3]
  *
- * @private
  */
 class StructArrayLayout3ui6 extends StructArray {
     _refreshViews() {
@@ -13173,6 +13461,7 @@ class StructArrayLayout3ui6 extends StructArray {
 StructArrayLayout3ui6.prototype.bytesPerElement = 6;
 register('StructArrayLayout3ui6', StructArrayLayout3ui6);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[2]
  * [4]: Uint16[2]
@@ -13183,7 +13472,6 @@ register('StructArrayLayout3ui6', StructArrayLayout3ui6);
  * [40]: Uint32[1]
  * [44]: Int16[1]
  *
- * @private
  */
 class StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 extends StructArray {
     _refreshViews() {
@@ -13225,15 +13513,16 @@ class StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 extends StructArray {
 StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48.prototype.bytesPerElement = 48;
 register('StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48', StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Int16[8]
  * [16]: Uint16[15]
  * [48]: Uint32[1]
- * [52]: Float32[4]
+ * [52]: Float32[2]
+ * [60]: Uint16[2]
  *
- * @private
  */
-class StructArrayLayout8i15ui1ul4f68 extends StructArray {
+class StructArrayLayout8i15ui1ul2f2ui64 extends StructArray {
     _refreshViews() {
         this.uint8 = new Uint8Array(this.arrayBuffer);
         this.int16 = new Int16Array(this.arrayBuffer);
@@ -13247,8 +13536,8 @@ class StructArrayLayout8i15ui1ul4f68 extends StructArray {
         return this.emplace(i, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27);
     }
     emplace(i, v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27) {
-        const o2 = i * 34;
-        const o4 = i * 17;
+        const o2 = i * 32;
+        const o4 = i * 16;
         this.int16[o2 + 0] = v0;
         this.int16[o2 + 1] = v1;
         this.int16[o2 + 2] = v2;
@@ -13275,18 +13564,18 @@ class StructArrayLayout8i15ui1ul4f68 extends StructArray {
         this.uint32[o4 + 12] = v23;
         this.float32[o4 + 13] = v24;
         this.float32[o4 + 14] = v25;
-        this.float32[o4 + 15] = v26;
-        this.float32[o4 + 16] = v27;
+        this.uint16[o2 + 30] = v26;
+        this.uint16[o2 + 31] = v27;
         return i;
     }
 }
-StructArrayLayout8i15ui1ul4f68.prototype.bytesPerElement = 68;
-register('StructArrayLayout8i15ui1ul4f68', StructArrayLayout8i15ui1ul4f68);
+StructArrayLayout8i15ui1ul2f2ui64.prototype.bytesPerElement = 64;
+register('StructArrayLayout8i15ui1ul2f2ui64', StructArrayLayout8i15ui1ul2f2ui64);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[1]
  *
- * @private
  */
 class StructArrayLayout1f4 extends StructArray {
     _refreshViews() {
@@ -13307,11 +13596,40 @@ class StructArrayLayout1f4 extends StructArray {
 StructArrayLayout1f4.prototype.bytesPerElement = 4;
 register('StructArrayLayout1f4', StructArrayLayout1f4);
 /**
+ * @internal
+ * Implementation of the StructArray layout:
+ * [0]: Uint16[1]
+ * [4]: Float32[2]
+ *
+ */
+class StructArrayLayout1ui2f12 extends StructArray {
+    _refreshViews() {
+        this.uint8 = new Uint8Array(this.arrayBuffer);
+        this.uint16 = new Uint16Array(this.arrayBuffer);
+        this.float32 = new Float32Array(this.arrayBuffer);
+    }
+    emplaceBack(v0, v1, v2) {
+        const i = this.length;
+        this.resize(i + 1);
+        return this.emplace(i, v0, v1, v2);
+    }
+    emplace(i, v0, v1, v2) {
+        const o2 = i * 6;
+        const o4 = i * 3;
+        this.uint16[o2 + 0] = v0;
+        this.float32[o4 + 1] = v1;
+        this.float32[o4 + 2] = v2;
+        return i;
+    }
+}
+StructArrayLayout1ui2f12.prototype.bytesPerElement = 12;
+register('StructArrayLayout1ui2f12', StructArrayLayout1ui2f12);
+/**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint32[1]
  * [4]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout1ul2ui8 extends StructArray {
     _refreshViews() {
@@ -13336,10 +13654,10 @@ class StructArrayLayout1ul2ui8 extends StructArray {
 StructArrayLayout1ul2ui8.prototype.bytesPerElement = 8;
 register('StructArrayLayout1ul2ui8', StructArrayLayout1ul2ui8);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[2]
  *
- * @private
  */
 class StructArrayLayout2ui4 extends StructArray {
     _refreshViews() {
@@ -13361,10 +13679,10 @@ class StructArrayLayout2ui4 extends StructArray {
 StructArrayLayout2ui4.prototype.bytesPerElement = 4;
 register('StructArrayLayout2ui4', StructArrayLayout2ui4);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Uint16[1]
  *
- * @private
  */
 class StructArrayLayout1ui2 extends StructArray {
     _refreshViews() {
@@ -13385,10 +13703,10 @@ class StructArrayLayout1ui2 extends StructArray {
 StructArrayLayout1ui2.prototype.bytesPerElement = 2;
 register('StructArrayLayout1ui2', StructArrayLayout1ui2);
 /**
+ * @internal
  * Implementation of the StructArray layout:
  * [0]: Float32[4]
  *
- * @private
  */
 class StructArrayLayout4f16 extends StructArray {
     _refreshViews() {
@@ -13411,6 +13729,7 @@ class StructArrayLayout4f16 extends StructArray {
 }
 StructArrayLayout4f16.prototype.bytesPerElement = 16;
 register('StructArrayLayout4f16', StructArrayLayout4f16);
+/** @internal */
 class CollisionBoxStruct extends Struct {
     get anchorPointX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorPointY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13421,23 +13740,21 @@ class CollisionBoxStruct extends Struct {
     get featureIndex() { return this._structArray.uint32[this._pos4 + 3]; }
     get sourceLayerIndex() { return this._structArray.uint16[this._pos2 + 8]; }
     get bucketIndex() { return this._structArray.uint16[this._pos2 + 9]; }
-    get anchorPoint() { return new pointGeometry(this.anchorPointX, this.anchorPointY); }
+    get anchorPoint() { return new Point$2(this.anchorPointX, this.anchorPointY); }
 }
 CollisionBoxStruct.prototype.size = 20;
-/**
- * @private
- */
+/** @internal */
 class CollisionBoxArray extends StructArrayLayout6i1ul2ui20 {
     /**
      * Return the CollisionBoxStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new CollisionBoxStruct(this, index);
     }
 }
 register('CollisionBoxArray', CollisionBoxArray);
+/** @internal */
 class PlacedSymbolStruct extends Struct {
     get anchorX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13461,20 +13778,18 @@ class PlacedSymbolStruct extends Struct {
     get associatedIconIndex() { return this._structArray.int16[this._pos2 + 22]; }
 }
 PlacedSymbolStruct.prototype.size = 48;
-/**
- * @private
- */
+/** @internal */
 class PlacedSymbolArray extends StructArrayLayout2i2ui3ul3ui2f3ub1ul1i48 {
     /**
      * Return the PlacedSymbolStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new PlacedSymbolStruct(this, index);
     }
 }
 register('PlacedSymbolArray', PlacedSymbolArray);
+/** @internal */
 class SymbolInstanceStruct extends Struct {
     get anchorX() { return this._structArray.int16[this._pos2 + 0]; }
     get anchorY() { return this._structArray.int16[this._pos2 + 1]; }
@@ -13502,55 +13817,64 @@ class SymbolInstanceStruct extends Struct {
     get crossTileID() { return this._structArray.uint32[this._pos4 + 12]; }
     set crossTileID(x) { this._structArray.uint32[this._pos4 + 12] = x; }
     get textBoxScale() { return this._structArray.float32[this._pos4 + 13]; }
-    get textOffset0() { return this._structArray.float32[this._pos4 + 14]; }
-    get textOffset1() { return this._structArray.float32[this._pos4 + 15]; }
-    get collisionCircleDiameter() { return this._structArray.float32[this._pos4 + 16]; }
+    get collisionCircleDiameter() { return this._structArray.float32[this._pos4 + 14]; }
+    get textAnchorOffsetStartIndex() { return this._structArray.uint16[this._pos2 + 30]; }
+    get textAnchorOffsetEndIndex() { return this._structArray.uint16[this._pos2 + 31]; }
 }
-SymbolInstanceStruct.prototype.size = 68;
-/**
- * @private
- */
-class SymbolInstanceArray extends StructArrayLayout8i15ui1ul4f68 {
+SymbolInstanceStruct.prototype.size = 64;
+/** @internal */
+class SymbolInstanceArray extends StructArrayLayout8i15ui1ul2f2ui64 {
     /**
      * Return the SymbolInstanceStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new SymbolInstanceStruct(this, index);
     }
 }
 register('SymbolInstanceArray', SymbolInstanceArray);
-/**
- * @private
- */
+/** @internal */
 class GlyphOffsetArray extends StructArrayLayout1f4 {
     getoffsetX(index) { return this.float32[index * 1 + 0]; }
 }
 register('GlyphOffsetArray', GlyphOffsetArray);
-/**
- * @private
- */
+/** @internal */
 class SymbolLineVertexArray extends StructArrayLayout3i6 {
     getx(index) { return this.int16[index * 3 + 0]; }
     gety(index) { return this.int16[index * 3 + 1]; }
     gettileUnitDistanceFromAnchor(index) { return this.int16[index * 3 + 2]; }
 }
 register('SymbolLineVertexArray', SymbolLineVertexArray);
+/** @internal */
+class TextAnchorOffsetStruct extends Struct {
+    get textAnchor() { return this._structArray.uint16[this._pos2 + 0]; }
+    get textOffset0() { return this._structArray.float32[this._pos4 + 1]; }
+    get textOffset1() { return this._structArray.float32[this._pos4 + 2]; }
+}
+TextAnchorOffsetStruct.prototype.size = 12;
+/** @internal */
+class TextAnchorOffsetArray extends StructArrayLayout1ui2f12 {
+    /**
+     * Return the TextAnchorOffsetStruct at the given location in the array.
+     * @param index The index of the element.
+     */
+    get(index) {
+        return new TextAnchorOffsetStruct(this, index);
+    }
+}
+register('TextAnchorOffsetArray', TextAnchorOffsetArray);
+/** @internal */
 class FeatureIndexStruct extends Struct {
     get featureIndex() { return this._structArray.uint32[this._pos4 + 0]; }
     get sourceLayerIndex() { return this._structArray.uint16[this._pos2 + 2]; }
     get bucketIndex() { return this._structArray.uint16[this._pos2 + 3]; }
 }
 FeatureIndexStruct.prototype.size = 8;
-/**
- * @private
- */
+/** @internal */
 class FeatureIndexArray extends StructArrayLayout1ul2ui8 {
     /**
      * Return the FeatureIndexStruct at the given location in the array.
-     * @param {number} index The index of the element.
-     * @private
+     * @param index The index of the element.
      */
     get(index) {
         return new FeatureIndexStruct(this, index);
@@ -13603,6 +13927,10 @@ const layout$6 = createLayout([
 ], 4);
 const { members: members$4, size: size$4, alignment: alignment$4 } = layout$6;
 
+/**
+ * @internal
+ * Used for calculations on vector segments
+ */
 class SegmentVector {
     constructor(segments = []) {
         this.segments = segments;
@@ -13645,11 +13973,9 @@ class SegmentVector {
             }]);
     }
 }
-/*
+/**
  * The maximum size of a vertex array. This limit is imposed by WebGL's 16 bit
  * addressing of vertex buffers.
- * @private
- * @readonly
  */
 SegmentVector.MAX_VERTEX_ARRAY_LENGTH = Math.pow(2, 16) - 1;
 register('SegmentVector', SegmentVector);
@@ -13658,13 +13984,11 @@ register('SegmentVector', SegmentVector);
  * Packs two numbers, interpreted as 8-bit unsigned integers, into a single
  * float.  Unpack them in the shader using the `unpack_float()` function,
  * defined in _prelude.vertex.glsl
- *
- * @private
  */
 function packUint8ToFloat(a, b) {
     // coerce a and b to 8-bit ints
-    a = clamp(Math.floor(a), 0, 255);
-    b = clamp(Math.floor(b), 0, 255);
+    a = clamp$1(Math.floor(a), 0, 255);
+    b = clamp$1(Math.floor(b), 0, 255);
     return 256 * a + b;
 }
 
@@ -13676,17 +14000,9 @@ const patternAttributes = createLayout([
     { name: 'a_pixel_ratio_to', components: 1, type: 'Uint16' },
 ]);
 
-var murmurhashJsExports = {};
-var murmurhashJs = {
-  get exports(){ return murmurhashJsExports; },
-  set exports(v){ murmurhashJsExports = v; },
-};
+var murmurhashJs$1 = {exports: {}};
 
-var murmurhash3_gcExports = {};
-var murmurhash3_gc$1 = {
-  get exports(){ return murmurhash3_gcExports; },
-  set exports(v){ murmurhash3_gcExports = v; },
-};
+var murmurhash3_gc$2 = {exports: {}};
 
 /**
  * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
@@ -13700,6 +14016,7 @@ var murmurhash3_gc$1 = {
  * @param {number} seed Positive integer only
  * @return {number} 32-bit positive integer hash 
  */
+var murmurhash3_gc = murmurhash3_gc$2.exports;
 
 (function (module) {
 	function murmurhash3_32_gc(key, seed) {
@@ -13756,16 +14073,13 @@ var murmurhash3_gc$1 = {
 
 	if('object' !== "undefined") {
 	  module.exports = murmurhash3_32_gc;
-	}
-} (murmurhash3_gc$1));
+	} 
+} (murmurhash3_gc$2));
 
-var murmurhash3_gc = murmurhash3_gcExports;
+var murmurhash3_gcExports = murmurhash3_gc$2.exports;
+var murmurhash3_gc$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhash3_gcExports);
 
-var murmurhash2_gcExports = {};
-var murmurhash2_gc$1 = {
-  get exports(){ return murmurhash2_gcExports; },
-  set exports(v){ murmurhash2_gcExports = v; },
-};
+var murmurhash2_gc$2 = {exports: {}};
 
 /**
  * JS Implementation of MurmurHash2
@@ -13779,6 +14093,7 @@ var murmurhash2_gc$1 = {
  * @param {number} seed Positive integer only
  * @return {number} 32-bit positive integer hash
  */
+var murmurhash2_gc = murmurhash2_gc$2.exports;
 
 (function (module) {
 	function murmurhash2_32_gc(str, seed) {
@@ -13821,17 +14136,23 @@ var murmurhash2_gc$1 = {
 
 	if('object' !== undefined) {
 	  module.exports = murmurhash2_32_gc;
-	}
-} (murmurhash2_gc$1));
+	} 
+} (murmurhash2_gc$2));
 
-var murmurhash2_gc = murmurhash2_gcExports;
+var murmurhash2_gcExports = murmurhash2_gc$2.exports;
+var murmurhash2_gc$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhash2_gcExports);
+
+var murmurhashJs = murmurhashJs$1.exports;
 
 var murmur3 = murmurhash3_gcExports;
 var murmur2 = murmurhash2_gcExports;
 
-murmurhashJs.exports = murmur3;
-var murmur3_1 = murmurhashJsExports.murmur3 = murmur3;
-var murmur2_1 = murmurhashJsExports.murmur2 = murmur2;
+murmurhashJs$1.exports = murmur3;
+var murmur3_1 = murmurhashJs$1.exports.murmur3 = murmur3;
+var murmur2_1 = murmurhashJs$1.exports.murmur2 = murmur2;
+
+var murmurhashJsExports = murmurhashJs$1.exports;
+var murmur3$1 = /*@__PURE__*/getDefaultExportFromCjs(murmurhashJsExports);
 
 // A transferable data structure that maps feature ids to their indices and buffer offsets
 class FeaturePositionMap {
@@ -13874,7 +14195,7 @@ class FeaturePositionMap {
     static serialize(map, transferables) {
         const ids = new Float64Array(map.ids);
         const positions = new Uint32Array(map.positions);
-        sort(ids, positions, 0, ids.length - 1);
+        sort$1(ids, positions, 0, ids.length - 1);
         if (transferables) {
             transferables.push(ids.buffer, positions.buffer);
         }
@@ -13895,11 +14216,11 @@ function getNumericId(value) {
     if (!isNaN(numValue) && numValue <= Number.MAX_SAFE_INTEGER) {
         return numValue;
     }
-    return murmurhashJsExports(String(value));
+    return murmur3$1(String(value));
 }
 // custom quicksort that sorts ids, indices and offsets together (by ids)
 // uses Hoare partitioning & manual tail call optimization to avoid worst case scenarios
-function sort(ids, positions, left, right) {
+function sort$1(ids, positions, left, right) {
     while (left < right) {
         const pivot = ids[(left + right) >> 1];
         let i = left - 1;
@@ -13919,11 +14240,11 @@ function sort(ids, positions, left, right) {
             swap$2(positions, 3 * i + 2, 3 * j + 2);
         }
         if (j - left < right - j) {
-            sort(ids, positions, left, j);
+            sort$1(ids, positions, left, j);
             left = j + 1;
         }
         else {
-            sort(ids, positions, j + 1, right);
+            sort$1(ids, positions, j + 1, right);
             right = j;
         }
     }
@@ -13935,6 +14256,10 @@ function swap$2(arr, i, j) {
 }
 register('FeaturePositionMap', FeaturePositionMap);
 
+/**
+ * @internal
+ * A base uniform abstract class
+ */
 class Uniform {
     constructor(context, location) {
         this.gl = context.gl;
@@ -14202,7 +14527,7 @@ class CompositeExpressionBinder {
     }
     setUniform(uniform, globals) {
         const currentZoom = this.useIntegerZoom ? Math.floor(globals.zoom) : globals.zoom;
-        const factor = clamp(this.expression.interpolationFactor(currentZoom, this.zoom, this.zoom + 1), 0, 1);
+        const factor = clamp$1(this.expression.interpolationFactor(currentZoom, this.zoom, this.zoom + 1), 0, 1);
         uniform.set(factor);
     }
     getBinding(context, location, _) {
@@ -14259,6 +14584,7 @@ class CrossFadedCompositeBinder {
     }
 }
 /**
+ * @internal
  * ProgramConfiguration contains the logic for binding style layer properties and tile
  * layer feature data into GL program uniforms and vertex attributes.
  *
@@ -14275,8 +14601,6 @@ class CrossFadedCompositeBinder {
  * When a vector tile is parsed, this same configuration information is used to
  * populate the attribute buffers needed for data-driven styling using the zoom
  * level and feature property data.
- *
- * @private
  */
 class ProgramConfiguration {
     constructor(layer, zoom, filterProperties) {
@@ -14561,15 +14885,12 @@ register('ProgramConfigurationSet', ProgramConfigurationSet);
  * * One bit is lost because the line vertex buffer used to pack 1 bit of other data into the int.
  * * One bit is lost to support features extending past the extent on the right edge of the tile.
  * * This leaves us with 2^13 = 8192
- *
- * @private
- * @readonly
  */
-var EXTENT = 8192;
+const EXTENT = 8192;
 
 // These bounds define the minimum and maximum supported coordinate values.
 // While visible coordinates are within [0, EXTENT], tiles may theoretically
-// contain cordinates within [-Infinity, Infinity]. Our range is limited by the
+// contain coordinates within [-Infinity, Infinity]. Our range is limited by the
 // number of bits used to represent the coordinate.
 const BITS = 15;
 const MAX = Math.pow(2, BITS - 1) - 1;
@@ -14577,8 +14898,7 @@ const MIN = -MAX - 1;
 /**
  * Loads a geometry from a VectorTileFeature and scales it to the common extent
  * used internally.
- * @param {VectorTileFeature} feature
- * @private
+ * @param feature - the vector tile feature to load
  */
 function loadGeometry(feature) {
     const scale = EXTENT / feature.extent;
@@ -14591,8 +14911,8 @@ function loadGeometry(feature) {
             // points and we need to do the same to avoid renering differences.
             const x = Math.round(point.x * scale);
             const y = Math.round(point.y * scale);
-            point.x = clamp(x, MIN, MAX);
-            point.y = clamp(y, MIN, MAX);
+            point.x = clamp$1(x, MIN, MAX);
+            point.y = clamp$1(y, MIN, MAX);
             if (x < point.x || x > point.x + 1 || y < point.y || y > point.y + 1) {
                 // warn when exceeding allowed extent except for the 1-px-off case
                 // https://github.com/mapbox/mapbox-gl-js/issues/8992
@@ -14606,9 +14926,8 @@ function loadGeometry(feature) {
 /**
  * Construct a new feature based on a VectorTileFeature for expression evaluation, the geometry of which
  * will be loaded based on necessity.
- * @param {VectorTileFeature} feature
- * @param {boolean} needGeometry
- * @private
+ * @param feature - the feature to evaluate
+ * @param needGeometry - if set to true this will load the geometry
  */
 function toEvaluationFeature(feature, needGeometry) {
     return { type: feature.type,
@@ -14621,11 +14940,11 @@ function addCircleVertex(layoutVertexArray, x, y, extrudeX, extrudeY) {
     layoutVertexArray.emplaceBack((x * 2) + ((extrudeX + 1) / 2), (y * 2) + ((extrudeY + 1) / 2));
 }
 /**
+ * @internal
  * Circles are represented by two triangles.
  *
  * Each corner has a pos that is the center of the circle and an extrusion
  * vector that is where it points.
- * @private
  */
 class CircleBucket {
     constructor(options) {
@@ -14891,10 +15210,10 @@ function polygonIntersectsBox(ring, boxX1, boxY1, boxX2, boxY2) {
             return true;
     }
     const corners = [
-        new pointGeometry(boxX1, boxY1),
-        new pointGeometry(boxX1, boxY2),
-        new pointGeometry(boxX2, boxY2),
-        new pointGeometry(boxX2, boxY1)
+        new Point$2(boxX1, boxY1),
+        new Point$2(boxX1, boxY2),
+        new Point$2(boxX2, boxY2),
+        new Point$2(boxX2, boxY1)
     ];
     if (ring.length > 2) {
         for (const corner of corners) {
@@ -14942,7 +15261,7 @@ function translate$4(queryGeometry, translate, translateAnchor, bearing, pixelsT
     if (!translate[0] && !translate[1]) {
         return queryGeometry;
     }
-    const pt = pointGeometry.convert(translate)._mult(pixelsToTileUnits);
+    const pt = Point$2.convert(translate)._mult(pixelsToTileUnits);
     if (translateAnchor === 'viewport') {
         pt._rotate(-bearing);
     }
@@ -14962,8 +15281,8 @@ function offsetLine(rings, offset) {
             const a = ring[index - 1];
             const b = ring[index];
             const c = ring[index + 1];
-            const aToB = index === 0 ? new pointGeometry(0, 0) : b.sub(a)._unit()._perp();
-            const bToC = index === ring.length - 1 ? new pointGeometry(0, 0) : c.sub(b)._unit()._perp();
+            const aToB = index === 0 ? new Point$2(0, 0) : b.sub(a)._unit()._perp();
+            const bToC = index === ring.length - 1 ? new Point$2(0, 0) : c.sub(b)._unit()._perp();
             const extrude = aToB._add(bToC)._unit();
             const cosHalfAngle = extrude.x * bToC.x + extrude.y * bToC.y;
             if (cosHalfAngle !== 0) {
@@ -14977,10 +15296,13 @@ function offsetLine(rings, offset) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$5 = new Properties({
+/* eslint-disable */
+let layout$5;
+const getLayout$3 = () => layout$5 = layout$5 || new Properties({
     "circle-sort-key": new DataDrivenProperty(v8Spec["layout_circle"]["circle-sort-key"]),
 });
-const paint$8 = new Properties({
+let paint$8;
+const getPaint$8 = () => paint$8 = paint$8 || new Properties({
     "circle-radius": new DataDrivenProperty(v8Spec["paint_circle"]["circle-radius"]),
     "circle-color": new DataDrivenProperty(v8Spec["paint_circle"]["circle-color"]),
     "circle-blur": new DataDrivenProperty(v8Spec["paint_circle"]["circle-blur"]),
@@ -14993,7 +15315,7 @@ const paint$8 = new Properties({
     "circle-stroke-color": new DataDrivenProperty(v8Spec["paint_circle"]["circle-stroke-color"]),
     "circle-stroke-opacity": new DataDrivenProperty(v8Spec["paint_circle"]["circle-stroke-opacity"]),
 });
-var properties$8 = { paint: paint$8, layout: layout$5 };
+var properties$8 = ({ get paint() { return getPaint$8(); }, get layout() { return getLayout$3(); } });
 
 /**
  * Common utilities
@@ -22658,6 +22980,9 @@ transformMat4: transformMat4,
 zero: zero
 });
 
+/**
+ * A style layer that defines a circle
+ */
 class CircleStyleLayer extends StyleLayer {
     constructor(layer) {
         super(layer, properties$8);
@@ -22703,7 +23028,7 @@ class CircleStyleLayer extends StyleLayer {
 }
 function projectPoint(p, pixelPosMatrix) {
     const point = transformMat4$1([], [p.x, p.y, 0, 1], pixelPosMatrix);
-    return new pointGeometry(point[0] / point[3], point[1] / point[3]);
+    return new Point$2(point[0] / point[3], point[1] / point[3]);
 }
 function projectQueryGeometry$1(queryGeometry, pixelPosMatrix) {
     return queryGeometry.map((p) => {
@@ -22716,14 +23041,16 @@ class HeatmapBucket extends CircleBucket {
 register('HeatmapBucket', HeatmapBucket, { omit: ['layers'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$7 = new Properties({
+/* eslint-disable */
+let paint$7;
+const getPaint$7 = () => paint$7 = paint$7 || new Properties({
     "heatmap-radius": new DataDrivenProperty(v8Spec["paint_heatmap"]["heatmap-radius"]),
     "heatmap-weight": new DataDrivenProperty(v8Spec["paint_heatmap"]["heatmap-weight"]),
     "heatmap-intensity": new DataConstantProperty(v8Spec["paint_heatmap"]["heatmap-intensity"]),
     "heatmap-color": new ColorRampProperty(v8Spec["paint_heatmap"]["heatmap-color"]),
     "heatmap-opacity": new DataConstantProperty(v8Spec["paint_heatmap"]["heatmap-opacity"]),
 });
-var properties$7 = { paint: paint$7 };
+var properties$7 = ({ get paint() { return getPaint$7(); } });
 
 function createImage(image, { width, height }, channels, data) {
     if (!data) {
@@ -22782,6 +23109,10 @@ function copyImage(srcImg, dstImg, srcPt, dstPt, size, channels) {
     }
     return dstImg;
 }
+/**
+ * @internal
+ * An image with alpha color value
+ */
 class AlphaImage {
     constructor(size, data) {
         createImage(this, size, 1, data);
@@ -22796,8 +23127,10 @@ class AlphaImage {
         copyImage(srcImg, dstImg, srcPt, dstPt, size, 1);
     }
 }
-// Not premultiplied, because ImageData is not premultiplied.
-// UNPACK_PREMULTIPLY_ALPHA_WEBGL must be used when uploading to a texture.
+/**
+ * An object to store image data not premultiplied, because ImageData is not premultiplied.
+ * UNPACK_PREMULTIPLY_ALPHA_WEBGL must be used when uploading to a texture.
+ */
 class RGBAImage {
     constructor(size, data) {
         createImage(this, size, 4, data);
@@ -22829,8 +23162,6 @@ register('RGBAImage', RGBAImage);
 /**
  * Given an expression that should evaluate to a color ramp,
  * return a RGBA image representing that ramp expression.
- *
- * @private
  */
 function renderColorRamp(params) {
     const evaluationGlobals = {};
@@ -22869,6 +23200,9 @@ function renderColorRamp(params) {
     return image;
 }
 
+/**
+ * A style layer that defines a heatmap
+ */
 class HeatmapStyleLayer extends StyleLayer {
     createBucket(options) {
         return new HeatmapBucket(options);
@@ -22910,7 +23244,9 @@ class HeatmapStyleLayer extends StyleLayer {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$6 = new Properties({
+/* eslint-disable */
+let paint$6;
+const getPaint$6 = () => paint$6 = paint$6 || new Properties({
     "hillshade-illumination-direction": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-illumination-direction"]),
     "hillshade-illumination-anchor": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-illumination-anchor"]),
     "hillshade-exaggeration": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-exaggeration"]),
@@ -22918,7 +23254,7 @@ const paint$6 = new Properties({
     "hillshade-highlight-color": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-highlight-color"]),
     "hillshade-accent-color": new DataConstantProperty(v8Spec["paint_hillshade"]["hillshade-accent-color"]),
 });
-var properties$6 = { paint: paint$6 };
+var properties$6 = ({ get paint() { return getPaint$6(); } });
 
 class HillshadeStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -22934,16 +23270,14 @@ const layout$4 = createLayout([
 ], 4);
 const { members: members$3, size: size$3, alignment: alignment$3 } = layout$4;
 
-var earcutExports = {};
-var earcut$1 = {
-  get exports(){ return earcutExports; },
-  set exports(v){ earcutExports = v; },
-};
+var earcut$2 = {exports: {}};
+
+var earcut_1 = earcut$2.exports;
 
 'use strict';
 
-earcut$1.exports = earcut;
-var _default = earcutExports.default = earcut;
+earcut$2.exports = earcut;
+var _default = earcut$2.exports.default = earcut;
 
 function earcut(data, holeIndices, dim) {
 
@@ -23622,6 +23956,9 @@ earcut.flatten = function (data) {
     return result;
 };
 
+var earcutExports = earcut$2.exports;
+var earcut$1 = /*@__PURE__*/getDefaultExportFromCjs(earcutExports);
+
 function quickselect(arr, k, left, right, compare) {
     quickselectStep(arr, k, left || 0, right || (arr.length - 1), compare || defaultCompare$1);
 }
@@ -23885,7 +24222,7 @@ class FillBucket {
                 lineSegment.vertexLength += ring.length;
                 lineSegment.primitiveLength += ring.length;
             }
-            const indices = earcutExports(flattened, holeIndices);
+            const indices = earcut$1(flattened, holeIndices);
             for (let i = 0; i < indices.length; i += 3) {
                 this.indexArray.emplaceBack(triangleIndex + indices[i], triangleIndex + indices[i + 1], triangleIndex + indices[i + 2]);
             }
@@ -23898,10 +24235,13 @@ class FillBucket {
 register('FillBucket', FillBucket, { omit: ['layers', 'patternFeatures'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$3 = new Properties({
+/* eslint-disable */
+let layout$3;
+const getLayout$2 = () => layout$3 = layout$3 || new Properties({
     "fill-sort-key": new DataDrivenProperty(v8Spec["layout_fill"]["fill-sort-key"]),
 });
-const paint$5 = new Properties({
+let paint$5;
+const getPaint$5 = () => paint$5 = paint$5 || new Properties({
     "fill-antialias": new DataConstantProperty(v8Spec["paint_fill"]["fill-antialias"]),
     "fill-opacity": new DataDrivenProperty(v8Spec["paint_fill"]["fill-opacity"]),
     "fill-color": new DataDrivenProperty(v8Spec["paint_fill"]["fill-color"]),
@@ -23910,7 +24250,7 @@ const paint$5 = new Properties({
     "fill-translate-anchor": new DataConstantProperty(v8Spec["paint_fill"]["fill-translate-anchor"]),
     "fill-pattern": new CrossFadedDataDrivenProperty(v8Spec["paint_fill"]["fill-pattern"]),
 });
-var properties$5 = { paint: paint$5, layout: layout$3 };
+var properties$5 = ({ get paint() { return getPaint$5(); }, get layout() { return getLayout$2(); } });
 
 class FillStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -24183,6 +24523,8 @@ function signedArea(ring) {
     return sum;
 }
 
+var vectortilefeature$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortilefeature);
+
 'use strict';
 
 var VectorTileFeature$1 = vectortilefeature;
@@ -24245,6 +24587,8 @@ VectorTileLayer$2.prototype.feature = function(i) {
     return new VectorTileFeature$1(this._pbf, end, this.extent, this._keys, this._values);
 };
 
+var vectortilelayer$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortilelayer);
+
 'use strict';
 
 var VectorTileLayer$1 = vectortilelayer;
@@ -24261,6 +24605,8 @@ function readTile(tag, layers, pbf) {
         if (layer.length) layers[layer.name] = layer;
     }
 }
+
+var vectortile$1 = /*@__PURE__*/getDefaultExportFromCjs(vectortile);
 
 var VectorTile = vectorTile.VectorTile = vectortile;
 var VectorTileFeature = vectorTile.VectorTileFeature = vectortilefeature;
@@ -24434,7 +24780,7 @@ class FillExtrusionBucket {
                     flattened.push(p.y);
                 }
             }
-            const indices = earcutExports(flattened, holeIndices);
+            const indices = earcut$1(flattened, holeIndices);
             for (let j = 0; j < indices.length; j += 3) {
                 // Counter-clockwise winding order.
                 this.indexArray.emplaceBack(triangleIndex + indices[j], triangleIndex + indices[j + 2], triangleIndex + indices[j + 1]);
@@ -24462,7 +24808,9 @@ function isEntirelyOutside(ring) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$4 = new Properties({
+/* eslint-disable */
+let paint$4;
+const getPaint$4 = () => paint$4 = paint$4 || new Properties({
     "fill-extrusion-opacity": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-opacity"]),
     "fill-extrusion-color": new DataDrivenProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-color"]),
     "fill-extrusion-translate": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-translate"]),
@@ -24472,9 +24820,9 @@ const paint$4 = new Properties({
     "fill-extrusion-base": new DataDrivenProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-base"]),
     "fill-extrusion-vertical-gradient": new DataConstantProperty(v8Spec["paint_fill-extrusion"]["fill-extrusion-vertical-gradient"]),
 });
-var properties$4 = { paint: paint$4 };
+var properties$4 = ({ get paint() { return getPaint$4(); } });
 
-class Point3D extends pointGeometry {
+class Point3D extends Point$2 {
 }
 class FillExtrusionStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -24614,10 +24962,10 @@ function projectExtrusion(geometry, zBase, zTop, m) {
             const topY = sY + topYZ;
             const topZ = sZ + topZZ;
             const topW = sW + topWZ;
-            const b = new pointGeometry(baseX / baseW, baseY / baseW);
+            const b = new Point$2(baseX / baseW, baseY / baseW);
             b.z = baseZ / baseW;
             ringBase.push(b);
-            const t = new pointGeometry(topX / topW, topY / topW);
+            const t = new Point$2(topX / topW, topY / topW);
             t.z = topZ / topW;
             ringTop.push(t);
         }
@@ -24631,7 +24979,7 @@ function projectQueryGeometry(queryGeometry, pixelPosMatrix, transform, z) {
     for (const p of queryGeometry) {
         const v = [p.x, p.y, z, 1];
         transformMat4$1(v, v, pixelPosMatrix);
-        projectedQueryGeometry.push(new pointGeometry(v[0] / v[3], v[1] / v[3]));
+        projectedQueryGeometry.push(new Point$2(v[0] / v[3], v[1] / v[3]));
     }
     return projectedQueryGeometry;
 }
@@ -24680,7 +25028,8 @@ const LINE_DISTANCE_SCALE = 1 / 2;
 // The maximum line distance, in tile units, that fits in the buffer.
 const MAX_LINE_DISTANCE = Math.pow(2, LINE_DISTANCE_BUFFER_BITS - 1) / LINE_DISTANCE_SCALE;
 /**
- * @private
+ * @internal
+ * Line bucket class
  */
 class LineBucket {
     constructor(options) {
@@ -25016,13 +25365,12 @@ class LineBucket {
     /**
      * Add two vertices to the buffers.
      *
-     * @param p the line vertex to add buffer vertices for
-     * @param normal vertex normal
-     * @param endLeft extrude to shift the left vertex along the line
-     * @param endRight extrude to shift the left vertex along the line
-     * @param segment the segment object to add the vertex to
-     * @param round whether this is a round cap
-     * @private
+     * @param p - the line vertex to add buffer vertices for
+     * @param normal - vertex normal
+     * @param endLeft - extrude to shift the left vertex along the line
+     * @param endRight - extrude to shift the left vertex along the line
+     * @param segment - the segment object to add the vertex to
+     * @param round - whether this is a round cap
      */
     addCurrentVertex(p, normal, endLeft, endRight, segment, round = false) {
         // left and right extrude vectors, perpendicularly shifted by endLeft/endRight
@@ -25038,6 +25386,7 @@ class LineBucket {
         // to `linesofar`.
         if (this.distance > MAX_LINE_DISTANCE / 2 && this.totalDistance === 0) {
             this.distance = 0;
+            this.updateScaledDistance();
             this.addCurrentVertex(p, normal, endLeft, endRight, segment, round);
         }
     }
@@ -25093,14 +25442,17 @@ class LineBucket {
 register('LineBucket', LineBucket, { omit: ['layers', 'patternFeatures'] });
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout$1 = new Properties({
+/* eslint-disable */
+let layout$1;
+const getLayout$1 = () => layout$1 = layout$1 || new Properties({
     "line-cap": new DataConstantProperty(v8Spec["layout_line"]["line-cap"]),
     "line-join": new DataDrivenProperty(v8Spec["layout_line"]["line-join"]),
     "line-miter-limit": new DataConstantProperty(v8Spec["layout_line"]["line-miter-limit"]),
     "line-round-limit": new DataConstantProperty(v8Spec["layout_line"]["line-round-limit"]),
     "line-sort-key": new DataDrivenProperty(v8Spec["layout_line"]["line-sort-key"]),
 });
-const paint$3 = new Properties({
+let paint$3;
+const getPaint$3 = () => paint$3 = paint$3 || new Properties({
     "line-opacity": new DataDrivenProperty(v8Spec["paint_line"]["line-opacity"]),
     "line-color": new DataDrivenProperty(v8Spec["paint_line"]["line-color"]),
     "line-translate": new DataConstantProperty(v8Spec["paint_line"]["line-translate"]),
@@ -25113,7 +25465,7 @@ const paint$3 = new Properties({
     "line-pattern": new CrossFadedDataDrivenProperty(v8Spec["paint_line"]["line-pattern"]),
     "line-gradient": new ColorRampProperty(v8Spec["paint_line"]["line-gradient"]),
 });
-var properties$3 = { paint: paint$3, layout: layout$1 };
+var properties$3 = ({ get paint() { return getPaint$3(); }, get layout() { return getLayout$1(); } });
 
 class LineFloorwidthProperty extends DataDrivenProperty {
     possiblyEvaluate(value, parameters) {
@@ -25130,17 +25482,26 @@ class LineFloorwidthProperty extends DataDrivenProperty {
         return super.evaluate(value, globals, feature, featureState);
     }
 }
-const lineFloorwidthProperty = new LineFloorwidthProperty(properties$3.paint.properties['line-width'].specification);
-lineFloorwidthProperty.useIntegerZoom = true;
+let lineFloorwidthProperty;
 class LineStyleLayer extends StyleLayer {
     constructor(layer) {
         super(layer, properties$3);
         this.gradientVersion = 0;
+        if (!lineFloorwidthProperty) {
+            lineFloorwidthProperty =
+                new LineFloorwidthProperty(properties$3.paint.properties['line-width'].specification);
+            lineFloorwidthProperty.useIntegerZoom = true;
+        }
     }
     _handleSpecialPaintPropertyUpdate(name) {
         if (name === 'line-gradient') {
-            const expression = this._transitionablePaint._values['line-gradient'].value.expression;
-            this.stepInterpolant = expression._styleExpression.expression instanceof Step;
+            const expression = this.gradientExpression();
+            if (isZoomExpression(expression)) {
+                this.stepInterpolant = expression._styleExpression.expression instanceof Step;
+            }
+            else {
+                this.stepInterpolant = false;
+            }
             this.gradientVersion = (this.gradientVersion + 1) % Number.MAX_SAFE_INTEGER;
         }
     }
@@ -25272,8 +25633,9 @@ const symbolInstance = createLayout([
     { type: 'Uint16', name: 'useRuntimeCollisionCircles' },
     { type: 'Uint32', name: 'crossTileID' },
     { type: 'Float32', name: 'textBoxScale' },
-    { type: 'Float32', components: 2, name: 'textOffset' },
     { type: 'Float32', name: 'collisionCircleDiameter' },
+    { type: 'Uint16', name: 'textAnchorOffsetStartIndex' },
+    { type: 'Uint16', name: 'textAnchorOffsetEndIndex' }
 ]);
 const glyphOffset = createLayout([
     { type: 'Float32', name: 'offsetX' }
@@ -25282,6 +25644,10 @@ const lineVertex = createLayout([
     { type: 'Int16', name: 'x' },
     { type: 'Int16', name: 'y' },
     { type: 'Int16', name: 'tileUnitDistanceFromAnchor' }
+]);
+const textAnchorOffset = createLayout([
+    { type: 'Uint16', name: 'textAnchor' },
+    { type: 'Float32', components: 2, name: 'textOffset' }
 ]);
 
 function transformTextInternal(text, layer, feature) {
@@ -26206,6 +26572,8 @@ function writeUtf8(buf, str, pos) {
     return pos;
 }
 
+var Protobuf = /*@__PURE__*/getDefaultExportFromCjs(pbf);
+
 const border$1 = 3;
 function readFontstacks(tag, glyphs, pbf) {
     if (tag === 1) {
@@ -26242,7 +26610,7 @@ function readGlyph(tag, glyph, pbf) {
         glyph.advance = pbf.readVarint();
 }
 function parseGlyphPbf(data) {
-    return new pbf(data).readFields(readFontstacks, []);
+    return new Protobuf(data).readFields(readFontstacks, []);
 }
 const GLYPH_PBF_BORDER = border$1;
 
@@ -26373,6 +26741,10 @@ class ImagePosition {
         ];
     }
 }
+/**
+ * @internal
+ * A class holding all the images
+ */
 class ImageAtlas {
     constructor(icons, patterns) {
         const iconPositions = {}, patternPositions = {};
@@ -27048,7 +27420,7 @@ function evaluateSizeForFeature(sizeData, { uSize, uSizeT }, { lowerSize, upperS
         return lowerSize / SIZE_PACK_FACTOR;
     }
     else if (sizeData.kind === 'composite') {
-        return interpolates.number(lowerSize / SIZE_PACK_FACTOR, upperSize / SIZE_PACK_FACTOR, uSizeT);
+        return interpolate.number(lowerSize / SIZE_PACK_FACTOR, upperSize / SIZE_PACK_FACTOR, uSizeT);
     }
     return uSize;
 }
@@ -27065,9 +27437,9 @@ function evaluateSizeForZoom(sizeData, zoom) {
         // between the camera function values at a pair of zoom stops covering
         // [tileZoom, tileZoom + 1] in order to be consistent with this
         // restriction on composite functions
-        const t = !interpolationType ? 0 : clamp(Interpolate.interpolationFactor(interpolationType, zoom, minZoom, maxZoom), 0, 1);
+        const t = !interpolationType ? 0 : clamp$1(Interpolate.interpolationFactor(interpolationType, zoom, minZoom, maxZoom), 0, 1);
         if (sizeData.kind === 'camera') {
-            uSize = interpolates.number(sizeData.minSize, sizeData.maxSize, t);
+            uSize = interpolate.number(sizeData.minSize, sizeData.maxSize, t);
         }
         else {
             uSizeT = t;
@@ -27196,6 +27568,7 @@ class CollisionBuffers {
 }
 register('CollisionBuffers', CollisionBuffers);
 /**
+ * @internal
  * Unlike other buckets, which simply implement #addFeature with type-specific
  * logic for (essentially) triangulating feature geometries, SymbolBucket
  * requires specialized behavior:
@@ -27224,8 +27597,6 @@ register('CollisionBuffers', CollisionBuffers);
  *    and uses the CollisionIndex along with current camera settings to determine
  *    which symbols can actually show on the map. Collided symbols are hidden
  *    using a dynamic "OpacityVertexArray".
- *
- * @private
  */
 class SymbolBucket {
     constructor(options) {
@@ -27270,6 +27641,7 @@ class SymbolBucket {
         this.glyphOffsetArray = new GlyphOffsetArray();
         this.lineVertexArray = new SymbolLineVertexArray();
         this.symbolInstances = new SymbolInstanceArray();
+        this.textAnchorOffsets = new TextAnchorOffsetArray();
     }
     calculateGlyphDependencies(text, stack, textAlongLine, allowVerticalPlacement, doesAllowVerticalWritingMode) {
         for (let i = 0; i < text.length; i++) {
@@ -27506,10 +27878,10 @@ class SymbolBucket {
         const collisionVertexArray = arrays.collisionVertexArray;
         const anchorX = symbolInstance.anchorX;
         const anchorY = symbolInstance.anchorY;
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x1, y1));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x2, y1));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x2, y2));
-        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new pointGeometry(x1, y2));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$2(x1, y1));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$2(x2, y1));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$2(x2, y2));
+        this._addCollisionDebugVertex(layoutVertexArray, collisionVertexArray, boxAnchorPoint, anchorX, anchorY, new Point$2(x1, y2));
         segment.vertexLength += 4;
         const indexArray = arrays.indexArray;
         indexArray.emplaceBack(index, index + 1);
@@ -27702,10 +28074,9 @@ SymbolBucket.addDynamicAttributes = addDynamicAttributes;
 /**
  * Replace tokens in a string template with values in an object
  *
- * @param properties a key/value relationship between tokens and replacements
- * @param text the template string
+ * @param properties - a key/value relationship between tokens and replacements
+ * @param text - the template string
  * @returns the template with tokens replaced
- * @private
  */
 function resolveTokens(properties, text) {
     return text.replace(/{([^{}]+)}/g, (match, key) => {
@@ -27714,7 +28085,9 @@ function resolveTokens(properties, text) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const layout = new Properties({
+/* eslint-disable */
+let layout;
+const getLayout = () => layout = layout || new Properties({
     "symbol-placement": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-placement"]),
     "symbol-spacing": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-spacing"]),
     "symbol-avoid-edges": new DataConstantProperty(v8Spec["layout_symbol"]["symbol-avoid-edges"]),
@@ -27746,6 +28119,7 @@ const layout = new Properties({
     "text-justify": new DataDrivenProperty(v8Spec["layout_symbol"]["text-justify"]),
     "text-radial-offset": new DataDrivenProperty(v8Spec["layout_symbol"]["text-radial-offset"]),
     "text-variable-anchor": new DataConstantProperty(v8Spec["layout_symbol"]["text-variable-anchor"]),
+    "text-variable-anchor-offset": new DataDrivenProperty(v8Spec["layout_symbol"]["text-variable-anchor-offset"]),
     "text-anchor": new DataDrivenProperty(v8Spec["layout_symbol"]["text-anchor"]),
     "text-max-angle": new DataConstantProperty(v8Spec["layout_symbol"]["text-max-angle"]),
     "text-writing-mode": new DataConstantProperty(v8Spec["layout_symbol"]["text-writing-mode"]),
@@ -27759,7 +28133,8 @@ const layout = new Properties({
     "text-ignore-placement": new DataConstantProperty(v8Spec["layout_symbol"]["text-ignore-placement"]),
     "text-optional": new DataConstantProperty(v8Spec["layout_symbol"]["text-optional"]),
 });
-const paint$2 = new Properties({
+let paint$2;
+const getPaint$2 = () => paint$2 = paint$2 || new Properties({
     "icon-opacity": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-opacity"]),
     "icon-color": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-color"]),
     "icon-halo-color": new DataDrivenProperty(v8Spec["paint_symbol"]["icon-halo-color"]),
@@ -27775,7 +28150,7 @@ const paint$2 = new Properties({
     "text-translate": new DataConstantProperty(v8Spec["paint_symbol"]["text-translate"]),
     "text-translate-anchor": new DataConstantProperty(v8Spec["paint_symbol"]["text-translate-anchor"]),
 });
-var properties$2 = { paint: paint$2, layout };
+var properties$2 = ({ get paint() { return getPaint$2(); }, get layout() { return getLayout(); } });
 
 // This is an internal expression class. It is only used in GL JS and
 // has GL JS dependencies which can break the standalone style-spec module
@@ -27952,12 +28327,14 @@ function getIconPadding(layout, feature, canonical, pixelRatio = 1) {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint$1 = new Properties({
+/* eslint-disable */
+let paint$1;
+const getPaint$1 = () => paint$1 = paint$1 || new Properties({
     "background-color": new DataConstantProperty(v8Spec["paint_background"]["background-color"]),
     "background-pattern": new CrossFadedProperty(v8Spec["paint_background"]["background-pattern"]),
     "background-opacity": new DataConstantProperty(v8Spec["paint_background"]["background-opacity"]),
 });
-var properties$1 = { paint: paint$1 };
+var properties$1 = ({ get paint() { return getPaint$1(); } });
 
 class BackgroundStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -27966,7 +28343,9 @@ class BackgroundStyleLayer extends StyleLayer {
 }
 
 // This file is generated. Edit build/generate-style-code.ts, then run 'npm run codegen'.
-const paint = new Properties({
+/* eslint-disable */
+let paint;
+const getPaint = () => paint = paint || new Properties({
     "raster-opacity": new DataConstantProperty(v8Spec["paint_raster"]["raster-opacity"]),
     "raster-hue-rotate": new DataConstantProperty(v8Spec["paint_raster"]["raster-hue-rotate"]),
     "raster-brightness-min": new DataConstantProperty(v8Spec["paint_raster"]["raster-brightness-min"]),
@@ -27976,7 +28355,7 @@ const paint = new Properties({
     "raster-resampling": new DataConstantProperty(v8Spec["paint_raster"]["raster-resampling"]),
     "raster-fade-duration": new DataConstantProperty(v8Spec["paint_raster"]["raster-fade-duration"]),
 });
-var properties = { paint };
+var properties = ({ get paint() { return getPaint(); } });
 
 class RasterStyleLayer extends StyleLayer {
     constructor(layer) {
@@ -28035,31 +28414,35 @@ class CustomStyleLayer extends StyleLayer {
     }
 }
 
-const subclasses = {
-    circle: CircleStyleLayer,
-    heatmap: HeatmapStyleLayer,
-    hillshade: HillshadeStyleLayer,
-    fill: FillStyleLayer,
-    'fill-extrusion': FillExtrusionStyleLayer,
-    line: LineStyleLayer,
-    symbol: SymbolStyleLayer,
-    background: BackgroundStyleLayer,
-    raster: RasterStyleLayer
-};
 function createStyleLayer(layer) {
     if (layer.type === 'custom') {
         return new CustomStyleLayer(layer);
     }
-    else {
-        return new subclasses[layer.type](layer);
+    switch (layer.type) {
+        case 'background':
+            return new BackgroundStyleLayer(layer);
+        case 'circle':
+            return new CircleStyleLayer(layer);
+        case 'fill':
+            return new FillStyleLayer(layer);
+        case 'fill-extrusion':
+            return new FillExtrusionStyleLayer(layer);
+        case 'heatmap':
+            return new HeatmapStyleLayer(layer);
+        case 'hillshade':
+            return new HillshadeStyleLayer(layer);
+        case 'line':
+            return new LineStyleLayer(layer);
+        case 'raster':
+            return new RasterStyleLayer(layer);
+        case 'symbol':
+            return new SymbolStyleLayer(layer);
     }
 }
 
 /**
  * Invokes the wrapped function in a non-blocking way when trigger() is called. Invocation requests
  * are ignored until the function was actually invoked.
- *
- * @private
  */
 class ThrottledInvoker {
     constructor(callback) {
@@ -28098,14 +28481,72 @@ class ThrottledInvoker {
  * that maintains the relationship between asynchronous tasks and the objects
  * that spin them off - in this case, tasks like parsing parts of styles,
  * owned by the styles
- *
- * @param {WebWorker} target
- * @param {WebWorker} parent
- * @param {string|number} mapId A unique identifier for the Map instance using this Actor.
- * @private
  */
 class Actor {
+    /**
+     * @param target - The target
+     * @param parent - The parent
+     * @param mapId - A unique identifier for the Map instance using this Actor.
+     */
     constructor(target, parent, mapId) {
+        this.receive = (message) => {
+            const data = message.data;
+            const id = data.id;
+            if (!id) {
+                return;
+            }
+            if (data.targetMapId && this.mapId !== data.targetMapId) {
+                return;
+            }
+            if (data.type === '<cancel>') {
+                // Remove the original request from the queue. This is only possible if it
+                // hasn't been kicked off yet. The id will remain in the queue, but because
+                // there is no associated task, it will be dropped once it's time to execute it.
+                delete this.tasks[id];
+                const cancel = this.cancelCallbacks[id];
+                delete this.cancelCallbacks[id];
+                if (cancel) {
+                    cancel();
+                }
+            }
+            else {
+                if (isWorker() || data.mustQueue) {
+                    // In workers, store the tasks that we need to process before actually processing them. This
+                    // is necessary because we want to keep receiving messages, and in particular,
+                    // <cancel> messages. Some tasks may take a while in the worker thread, so before
+                    // executing the next task in our queue, postMessage preempts this and <cancel>
+                    // messages can be processed. We're using a MessageChannel object to get throttle the
+                    // process() flow to one at a time.
+                    this.tasks[id] = data;
+                    this.taskQueue.push(id);
+                    this.invoker.trigger();
+                }
+                else {
+                    // In the main thread, process messages immediately so that other work does not slip in
+                    // between getting partial data back from workers.
+                    this.processTask(id, data);
+                }
+            }
+        };
+        this.process = () => {
+            if (!this.taskQueue.length) {
+                return;
+            }
+            const id = this.taskQueue.shift();
+            const task = this.tasks[id];
+            delete this.tasks[id];
+            // Schedule another process call if we know there's more to process _before_ invoking the
+            // current task. This is necessary so that processing continues even if the current task
+            // doesn't execute successfully.
+            if (this.taskQueue.length) {
+                this.invoker.trigger();
+            }
+            if (!task) {
+                // If the task ID doesn't have associated task data anymore, it was canceled.
+                return;
+            }
+            this.processTask(id, task);
+        };
         this.target = target;
         this.parent = parent;
         this.mapId = mapId;
@@ -28113,7 +28554,6 @@ class Actor {
         this.tasks = {};
         this.taskQueue = [];
         this.cancelCallbacks = {};
-        bindAll(['receive', 'process'], this);
         this.invoker = new ThrottledInvoker(this.process);
         this.target.addEventListener('message', this.receive, false);
         this.globalScope = isWorker() ? target : window;
@@ -28122,9 +28562,8 @@ class Actor {
      * Sends a message from a main-thread map to a Worker or from a Worker back to
      * a main-thread map instance.
      *
-     * @param type The name of the target method to invoke or '[source-type].[source-name].name' for a method on a WorkerSource.
-     * @param targetMapId A particular mapId to which to send this message.
-     * @private
+     * @param type - The name of the target method to invoke or '[source-type].[source-name].name' for a method on a WorkerSource.
+     * @param targetMapId - A particular mapId to which to send this message.
      */
     send(type, data, callback, targetMapId, mustQueue = false) {
         // We're using a string ID instead of numbers because they are being used as object keys
@@ -28159,63 +28598,6 @@ class Actor {
                 });
             }
         };
-    }
-    receive(message) {
-        const data = message.data, id = data.id;
-        if (!id) {
-            return;
-        }
-        if (data.targetMapId && this.mapId !== data.targetMapId) {
-            return;
-        }
-        if (data.type === '<cancel>') {
-            // Remove the original request from the queue. This is only possible if it
-            // hasn't been kicked off yet. The id will remain in the queue, but because
-            // there is no associated task, it will be dropped once it's time to execute it.
-            delete this.tasks[id];
-            const cancel = this.cancelCallbacks[id];
-            delete this.cancelCallbacks[id];
-            if (cancel) {
-                cancel();
-            }
-        }
-        else {
-            if (isWorker() || data.mustQueue) {
-                // In workers, store the tasks that we need to process before actually processing them. This
-                // is necessary because we want to keep receiving messages, and in particular,
-                // <cancel> messages. Some tasks may take a while in the worker thread, so before
-                // executing the next task in our queue, postMessage preempts this and <cancel>
-                // messages can be processed. We're using a MessageChannel object to get throttle the
-                // process() flow to one at a time.
-                this.tasks[id] = data;
-                this.taskQueue.push(id);
-                this.invoker.trigger();
-            }
-            else {
-                // In the main thread, process messages immediately so that other work does not slip in
-                // between getting partial data back from workers.
-                this.processTask(id, data);
-            }
-        }
-    }
-    process() {
-        if (!this.taskQueue.length) {
-            return;
-        }
-        const id = this.taskQueue.shift();
-        const task = this.tasks[id];
-        delete this.tasks[id];
-        // Schedule another process call if we know there's more to process _before_ invoking the
-        // current task. This is necessary so that processing continues even if the current task
-        // doesn't execute successfully.
-        if (this.taskQueue.length) {
-            this.invoker.trigger();
-        }
-        if (!task) {
-            // If the task ID doesn't have associated task data anymore, it was canceled.
-            return;
-        }
-        this.processTask(id, task);
     }
     processTask(id, task) {
         if (task.type === '<response>') {
@@ -28287,23 +28669,29 @@ const earthRadius = 6371008.8;
  * A `LngLat` object represents a given longitude and latitude coordinate, measured in degrees.
  * These coordinates are based on the [WGS84 (EPSG:4326) standard](https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84).
  *
- * MapLibre GL uses longitude, latitude coordinate order (as opposed to latitude, longitude) to match the
+ * MapLibre GL JS uses longitude, latitude coordinate order (as opposed to latitude, longitude) to match the
  * [GeoJSON specification](https://tools.ietf.org/html/rfc7946).
  *
- * Note that any MapLibre GL method that accepts a `LngLat` object as an argument or option
+ * Note that any MapLibre GL JS method that accepts a `LngLat` object as an argument or option
  * can also accept an `Array` of two numbers and will perform an implicit conversion.
  * This flexible type is documented as {@link LngLatLike}.
  *
- * @param {number} lng Longitude, measured in degrees.
- * @param {number} lat Latitude, measured in degrees.
+ * @group Geography and Geometry
+ *
  * @example
- * var ll = new maplibregl.LngLat(-123.9749, 40.7736);
+ * ```ts
+ * let ll = new maplibregl.LngLat(-123.9749, 40.7736);
  * ll.lng; // = -123.9749
- * @see [Get coordinates of the mouse pointer](https://maplibre.org/maplibre-gl-js-docs/example/mouse-position/)
- * @see [Display a popup](https://maplibre.org/maplibre-gl-js-docs/example/popup/)
- * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js-docs/example/timeline-animation/)
+ * ```
+ * @see [Get coordinates of the mouse pointer](https://maplibre.org/maplibre-gl-js/docs/examples/mouse-position/)
+ * @see [Display a popup](https://maplibre.org/maplibre-gl-js/docs/examples/popup/)
+ * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js/docs/examples/timeline-animation/)
  */
 class LngLat {
+    /**
+     * @param lng - Longitude, measured in degrees.
+     * @param lat - Latitude, measured in degrees.
+     */
     constructor(lng, lat) {
         if (isNaN(lng) || isNaN(lat)) {
             throw new Error(`Invalid LngLat object: (${lng}, ${lat})`);
@@ -28317,11 +28705,13 @@ class LngLat {
     /**
      * Returns a new `LngLat` object whose longitude is wrapped to the range (-180, 180).
      *
-     * @returns {LngLat} The wrapped `LngLat` object.
+     * @returns The wrapped `LngLat` object.
      * @example
-     * var ll = new maplibregl.LngLat(286.0251, 40.7736);
-     * var wrapped = ll.wrap();
+     * ```ts
+     * let ll = new maplibregl.LngLat(286.0251, 40.7736);
+     * let wrapped = ll.wrap();
      * wrapped.lng; // = -73.9749
+     * ```
      */
     wrap() {
         return new LngLat(wrap(this.lng, -180, 180), this.lat);
@@ -28329,10 +28719,12 @@ class LngLat {
     /**
      * Returns the coordinates represented as an array of two numbers.
      *
-     * @returns {[number,number]} The coordinates represented as an array of longitude and latitude.
+     * @returns The coordinates represented as an array of longitude and latitude.
      * @example
-     * var ll = new maplibregl.LngLat(-73.9749, 40.7736);
+     * ```ts
+     * let ll = new maplibregl.LngLat(-73.9749, 40.7736);
      * ll.toArray(); // = [-73.9749, 40.7736]
+     * ```
      */
     toArray() {
         return [this.lng, this.lat];
@@ -28340,10 +28732,12 @@ class LngLat {
     /**
      * Returns the coordinates represent as a string.
      *
-     * @returns {string} The coordinates represented as a string of the format `'LngLat(lng, lat)'`.
+     * @returns The coordinates represented as a string of the format `'LngLat(lng, lat)'`.
      * @example
-     * var ll = new maplibregl.LngLat(-73.9749, 40.7736);
+     * ```ts
+     * let ll = new maplibregl.LngLat(-73.9749, 40.7736);
      * ll.toString(); // = "LngLat(-73.9749, 40.7736)"
+     * ```
      */
     toString() {
         return `LngLat(${this.lng}, ${this.lat})`;
@@ -28352,12 +28746,14 @@ class LngLat {
      * Returns the approximate distance between a pair of coordinates in meters
      * Uses the Haversine Formula (from R.W. Sinnott, "Virtues of the Haversine", Sky and Telescope, vol. 68, no. 2, 1984, p. 159)
      *
-     * @param {LngLat} lngLat coordinates to compute the distance to
-     * @returns {number} Distance in meters between the two coordinates.
+     * @param lngLat - coordinates to compute the distance to
+     * @returns Distance in meters between the two coordinates.
      * @example
-     * var new_york = new maplibregl.LngLat(-74.0060, 40.7128);
-     * var los_angeles = new maplibregl.LngLat(-118.2437, 34.0522);
+     * ```ts
+     * let new_york = new maplibregl.LngLat(-74.0060, 40.7128);
+     * let los_angeles = new maplibregl.LngLat(-118.2437, 34.0522);
      * new_york.distanceTo(los_angeles); // = 3935751.690893987, "true distance" using a non-spherical approximation is ~3966km
+     * ```
      */
     distanceTo(lngLat) {
         const rad = Math.PI / 180;
@@ -28373,12 +28769,14 @@ class LngLat {
      *
      * If a `LngLat` object is passed in, the function returns it unchanged.
      *
-     * @param {LngLatLike} input An array of two numbers or object to convert, or a `LngLat` object to return.
-     * @returns {LngLat} A new `LngLat` object, if a conversion occurred, or the original `LngLat` object.
+     * @param input - An array of two numbers or object to convert, or a `LngLat` object to return.
+     * @returns A new `LngLat` object, if a conversion occurred, or the original `LngLat` object.
      * @example
-     * var arr = [-73.9749, 40.7736];
-     * var ll = maplibregl.LngLat.convert(arr);
+     * ```ts
+     * let arr = [-73.9749, 40.7736];
+     * let ll = maplibregl.LngLat.convert(arr);
      * ll;   // = LngLat {lng: -73.9749, lat: 40.7736}
+     * ```
      */
     static convert(input) {
         if (input instanceof LngLat) {
@@ -28431,9 +28829,8 @@ function altitudeFromMercatorZ(z, y) {
  *
  * At the equator the scale factor will be 1, which increases at higher latitudes.
  *
- * @param {number} lat Latitude
- * @returns {number} scale factor
- * @private
+ * @param lat - Latitude
+ * @returns scale factor
  */
 function mercatorScale(lat) {
     return 1 / Math.cos(lat * Math.PI / 180);
@@ -28452,15 +28849,20 @@ function mercatorScale(lat) {
  *
  * The `z` dimension of `MercatorCoordinate` is conformal. A cube in the mercator coordinate space would be rendered as a cube.
  *
- * @param {number} x The x component of the position.
- * @param {number} y The y component of the position.
- * @param {number} z The z component of the position.
- * @example
- * var nullIsland = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+ * @group Geography and Geometry
  *
- * @see [Add a custom style layer](https://maplibre.org/maplibre-gl-js-docs/example/custom-style-layer/)
+ * @example
+ * ```ts
+ * let nullIsland = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+ * ```
+ * @see [Add a custom style layer](https://maplibre.org/maplibre-gl-js/docs/examples/custom-style-layer/)
  */
 class MercatorCoordinate {
+    /**
+     * @param x - The x component of the position.
+     * @param y - The y component of the position.
+     * @param z - The z component of the position.
+     */
     constructor(x, y, z = 0) {
         this.x = +x;
         this.y = +y;
@@ -28469,12 +28871,14 @@ class MercatorCoordinate {
     /**
      * Project a `LngLat` to a `MercatorCoordinate`.
      *
-     * @param {LngLatLike} lngLatLike The location to project.
-     * @param {number} altitude The altitude in meters of the position.
-     * @returns {MercatorCoordinate} The projected mercator coordinate.
+     * @param lngLatLike - The location to project.
+     * @param altitude - The altitude in meters of the position.
+     * @returns The projected mercator coordinate.
      * @example
-     * var coord = maplibregl.MercatorCoordinate.fromLngLat({ lng: 0, lat: 0}, 0);
+     * ```ts
+     * let coord = maplibregl.MercatorCoordinate.fromLngLat({ lng: 0, lat: 0}, 0);
      * coord; // MercatorCoordinate(0.5, 0.5, 0)
+     * ```
      */
     static fromLngLat(lngLatLike, altitude = 0) {
         const lngLat = LngLat.convert(lngLatLike);
@@ -28483,10 +28887,12 @@ class MercatorCoordinate {
     /**
      * Returns the `LngLat` for the coordinate.
      *
-     * @returns {LngLat} The `LngLat` object.
+     * @returns The `LngLat` object.
      * @example
-     * var coord = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
-     * var lngLat = coord.toLngLat(); // LngLat(0, 0)
+     * ```ts
+     * let coord = new maplibregl.MercatorCoordinate(0.5, 0.5, 0);
+     * let lngLat = coord.toLngLat(); // LngLat(0, 0)
+     * ```
      */
     toLngLat() {
         return new LngLat(lngFromMercatorX(this.x), latFromMercatorY(this.y));
@@ -28494,10 +28900,12 @@ class MercatorCoordinate {
     /**
      * Returns the altitude in meters of the coordinate.
      *
-     * @returns {number} The altitude in meters.
+     * @returns The altitude in meters.
      * @example
-     * var coord = new maplibregl.MercatorCoordinate(0, 0, 0.02);
+     * ```ts
+     * let coord = new maplibregl.MercatorCoordinate(0, 0, 0.02);
      * coord.toAltitude(); // 6914.281956295339
+     * ```
      */
     toAltitude() {
         return altitudeFromMercatorZ(this.z, this.y);
@@ -28508,7 +28916,7 @@ class MercatorCoordinate {
      * For coordinates in real world units using meters, this naturally provides the scale
      * to transform into `MercatorCoordinate`s.
      *
-     * @returns {number} Distance of 1 meter in `MercatorCoordinate` units.
+     * @returns Distance of 1 meter in `MercatorCoordinate` units.
      */
     meterInMercatorCoordinateUnits() {
         // 1 meter / circumference at equator in meters * Mercator projection scale factor at this latitude
@@ -28592,6 +29000,9 @@ function getMercCoords(x, y, z) {
     return [merc_x, merc_y];
 }
 
+/**
+ * A canonical way to define a tile ID
+ */
 class CanonicalTileID {
     constructor(z, x, y) {
         if (z < 0 || z > 25 || y < 0 || y >= Math.pow(2, z) || x < 0 || x >= Math.pow(2, z)) {
@@ -28624,12 +29035,16 @@ class CanonicalTileID {
     }
     getTilePoint(coord) {
         const tilesAtZoom = Math.pow(2, this.z);
-        return new pointGeometry((coord.x * tilesAtZoom - this.x) * EXTENT, (coord.y * tilesAtZoom - this.y) * EXTENT);
+        return new Point$2((coord.x * tilesAtZoom - this.x) * EXTENT, (coord.y * tilesAtZoom - this.y) * EXTENT);
     }
     toString() {
         return `${this.z}/${this.x}/${this.y}`;
     }
 }
+/**
+ * @internal
+ * An unwrapped tile identifier
+ */
 class UnwrappedTileID {
     constructor(wrap, canonical) {
         this.wrap = wrap;
@@ -28637,6 +29052,9 @@ class UnwrappedTileID {
         this.key = calculateKey(wrap, canonical.z, canonical.z, canonical.x, canonical.y);
     }
 }
+/**
+ * An overscaled tile identifier
+ */
 class OverscaledTileID {
     constructor(overscaledZ, wrap, z, x, y) {
         if (overscaledZ < z)
@@ -28770,18 +29188,42 @@ register('OverscaledTileID', OverscaledTileID, { omit: ['posMatrix'] });
 class DEMData {
     // RGBAImage data has uniform 1px padding on all sides: square tile edge size defines stride
     // and dim is calculated as stride - 2.
-    constructor(uid, data, encoding) {
+    constructor(uid, data, encoding, redMix = 1.0, greenMix = 1.0, blueMix = 1.0, baseMix = 0.0) {
         this.uid = uid;
         if (data.height !== data.width)
             throw new RangeError('DEM tiles must be square');
-        if (encoding && encoding !== 'mapbox' && encoding !== 'terrarium') {
-            warnOnce(`"${encoding}" is not a valid encoding type. Valid types include "mapbox" and "terrarium".`);
+        if (encoding && !['mapbox', 'terrarium', 'custom'].includes(encoding)) {
+            warnOnce(`"${encoding}" is not a valid encoding type. Valid types include "mapbox", "terrarium" and "custom".`);
             return;
         }
         this.stride = data.height;
         const dim = this.dim = data.height - 2;
         this.data = new Uint32Array(data.data.buffer);
-        this.encoding = encoding || 'mapbox';
+        switch (encoding) {
+            case 'terrarium':
+                // unpacking formula for mapzen terrarium:
+                // https://aws.amazon.com/public-datasets/terrain/
+                this.redMix = 256.0;
+                this.greenMix = 1.0;
+                this.blueMix = 1.0 / 256.0;
+                this.baseMix = 32768.0;
+                break;
+            case 'custom':
+                this.redMix = redMix;
+                this.greenMix = greenMix;
+                this.blueMix = blueMix;
+                this.baseMix = baseMix;
+                break;
+            case 'mapbox':
+            default:
+                // unpacking formula for mapbox.terrain-rgb:
+                // https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
+                this.redMix = 6553.6;
+                this.greenMix = 25.6;
+                this.blueMix = 0.1;
+                this.baseMix = 10000.0;
+                break;
+        }
         // in order to avoid flashing seams between tiles, here we are initially populating a 1px border of pixels around the image
         // with the data of the nearest pixel from the image. this data is eventually replaced when the tile's neighboring
         // tiles are loaded and the accurate data can be backfilled using DEMData#backfillBorder
@@ -28816,26 +29258,18 @@ class DEMData {
     get(x, y) {
         const pixels = new Uint8Array(this.data.buffer);
         const index = this._idx(x, y) * 4;
-        const unpack = this.encoding === 'terrarium' ? this._unpackTerrarium : this._unpackMapbox;
-        return unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
+        return this.unpack(pixels[index], pixels[index + 1], pixels[index + 2]);
     }
     getUnpackVector() {
-        return this.encoding === 'terrarium' ? [256.0, 1.0, 1.0 / 256.0, 32768.0] : [6553.6, 25.6, 0.1, 10000.0];
+        return [this.redMix, this.greenMix, this.blueMix, this.baseMix];
     }
     _idx(x, y) {
         if (x < -1 || x >= this.dim + 1 || y < -1 || y >= this.dim + 1)
             throw new RangeError('out of range source coordinates for DEM data');
         return (y + 1) * this.stride + (x + 1);
     }
-    _unpackMapbox(r, g, b) {
-        // unpacking formula for mapbox.terrain-rgb:
-        // https://www.mapbox.com/help/access-elevation-data/#mapbox-terrain-rgb
-        return ((r * 256 * 256 + g * 256.0 + b) / 10.0 - 10000.0);
-    }
-    _unpackTerrarium(r, g, b) {
-        // unpacking formula for mapzen terrarium:
-        // https://aws.amazon.com/public-datasets/terrain/
-        return ((r * 256 + g + b / 256) - 32768.0);
+    unpack(r, g, b) {
+        return (r * this.redMix + g * this.greenMix + b * this.blueMix - this.baseMix);
     }
     getPixels() {
         return new RGBAImage({ width: this.stride, height: this.stride }, new Uint8Array(this.data.buffer));
@@ -28891,6 +29325,9 @@ class DictionaryCoder {
     }
 }
 
+/**
+ * A geojson feature
+ */
 class GeoJSONFeature {
     constructor(vectorTileFeature, z, x, y, id) {
         this.type = 'Feature';
@@ -28923,6 +29360,10 @@ class GeoJSONFeature {
     }
 }
 
+/**
+ * @internal
+ * An in memory index class to allow fast interaction with features
+ */
 class FeatureIndex {
     constructor(tileID, promoteId) {
         this.tileID = tileID;
@@ -28958,7 +29399,7 @@ class FeatureIndex {
     }
     loadVTLayers() {
         if (!this.vtLayers) {
-            this.vtLayers = new vectorTile.VectorTile(new pbf(this.rawTileData)).layers;
+            this.vtLayers = new vectorTile.VectorTile(new Protobuf(this.rawTileData)).layers;
             this.sourceLayerCoder = new DictionaryCoder(this.vtLayers ? Object.keys(this.vtLayers).sort() : ['_geojsonTileLayer']);
         }
         return this.vtLayers;
@@ -29103,13 +29544,12 @@ function topDownFeatureComparator(a, b) {
 /**
  * Returns the part of a multiline that intersects with the provided rectangular box.
  *
- * @param lines
- * @param x1 the left edge of the box
- * @param y1 the top edge of the box
- * @param x2 the right edge of the box
- * @param y2 the bottom edge of the box
+ * @param lines - the lines to check
+ * @param x1 - the left edge of the box
+ * @param y1 - the top edge of the box
+ * @param x2 - the right edge of the box
+ * @param y2 - the bottom edge of the box
  * @returns lines
- * @private
  */
 function clipLine(lines, x1, y1, x2, y2) {
     const clippedLines = [];
@@ -29123,37 +29563,37 @@ function clipLine(lines, x1, y1, x2, y2) {
                 continue;
             }
             else if (p0.x < x1) {
-                p0 = new pointGeometry(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
+                p0 = new Point$2(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
             }
             else if (p1.x < x1) {
-                p1 = new pointGeometry(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
+                p1 = new Point$2(x1, p0.y + (p1.y - p0.y) * ((x1 - p0.x) / (p1.x - p0.x)))._round();
             }
             if (p0.y < y1 && p1.y < y1) {
                 continue;
             }
             else if (p0.y < y1) {
-                p0 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
+                p0 = new Point$2(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
             }
             else if (p1.y < y1) {
-                p1 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
+                p1 = new Point$2(p0.x + (p1.x - p0.x) * ((y1 - p0.y) / (p1.y - p0.y)), y1)._round();
             }
             if (p0.x >= x2 && p1.x >= x2) {
                 continue;
             }
             else if (p0.x >= x2) {
-                p0 = new pointGeometry(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
+                p0 = new Point$2(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
             }
             else if (p1.x >= x2) {
-                p1 = new pointGeometry(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
+                p1 = new Point$2(x2, p0.y + (p1.y - p0.y) * ((x2 - p0.x) / (p1.x - p0.x)))._round();
             }
             if (p0.y >= y2 && p1.y >= y2) {
                 continue;
             }
             else if (p0.y >= y2) {
-                p0 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
+                p0 = new Point$2(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
             }
             else if (p1.y >= y2) {
-                p1 = new pointGeometry(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
+                p1 = new Point$2(p0.x + (p1.x - p0.x) * ((y2 - p0.y) / (p1.y - p0.y)), y2)._round();
             }
             if (!clippedLine || !p0.equals(clippedLine[clippedLine.length - 1])) {
                 clippedLine = [p0];
@@ -29165,7 +29605,7 @@ function clipLine(lines, x1, y1, x2, y2) {
     return clippedLines;
 }
 
-class Anchor extends pointGeometry {
+class Anchor extends Point$2 {
     constructor(x, y, angle, segment) {
         super(x, y);
         this.angle = angle;
@@ -29183,18 +29623,17 @@ register('Anchor', Anchor);
  * Labels placed around really sharp angles aren't readable. Check if any
  * part of the potential label has a combined angle that is too big.
  *
- * @param line
- * @param anchor The point on the line around which the label is anchored.
- * @param labelLength The length of the label in geometry units.
- * @param windowSize The check fails if the combined angles within a part of the line that is `windowSize` long is too big.
- * @param maxAngle The maximum combined angle that any window along the label is allowed to have.
+ * @param line - The line to check
+ * @param anchor - The point on the line around which the label is anchored.
+ * @param labelLength - The length of the label in geometry units.
+ * @param windowSize - The check fails if the combined angles within a part of the line that is `windowSize` long is too big.
+ * @param maxAngle - The maximum combined angle that any window along the label is allowed to have.
  *
- * @returns {boolean} whether the label should be placed
- * @private
+ * @returns whether the label should be placed
  */
 function checkMaxAngle(line, anchor, labelLength, windowSize, maxAngle) {
-    // horizontal labels always pass
-    if (anchor.segment === undefined)
+    // horizontal labels and labels with length 0 always pass
+    if (anchor.segment === undefined || labelLength === 0)
         return true;
     let p = anchor;
     let index = anchor.segment + 1;
@@ -29268,7 +29707,7 @@ function getCenterAnchor(line, maxAngle, shapedText, shapedIcon, glyphSize, boxS
         const segmentDistance = a.dist(b);
         if (prevDistance + segmentDistance > centerDistance) {
             // The center is on this segment
-            const t = (centerDistance - prevDistance) / segmentDistance, x = interpolates.number(a.x, b.x, t), y = interpolates.number(a.y, b.y, t);
+            const t = (centerDistance - prevDistance) / segmentDistance, x = interpolate.number(a.x, b.x, t), y = interpolate.number(a.y, b.y, t);
             const anchor = new Anchor(x, y, b.angleTo(a), i);
             anchor._round();
             if (!angleWindowSize || checkMaxAngle(line, anchor, labelLength, angleWindowSize, maxAngle)) {
@@ -29315,7 +29754,7 @@ function resample(line, offset, spacing, angleWindowSize, maxAngle, labelLength,
         const segmentDist = a.dist(b), angle = b.angleTo(a);
         while (markedDistance + spacing < distance + segmentDist) {
             markedDistance += spacing;
-            const t = (markedDistance - distance) / segmentDist, x = interpolates.number(a.x, b.x, t), y = interpolates.number(a.y, b.y, t);
+            const t = (markedDistance - distance) / segmentDist, x = interpolate.number(a.x, b.x, t), y = interpolate.number(a.y, b.y, t);
             // Check that the point is within the tile boundaries and that
             // the label would fit before the beginning and end of the line
             // if placed at this point.
@@ -29348,7 +29787,6 @@ function resample(line, offset, spacing, angleWindowSize, maxAngle, labelLength,
 const border = IMAGE_PADDING;
 /**
  * Create the quads used for rendering an icon.
- * @private
  */
 function getIconQuads(shapedIcon, iconRotate, isSDFIcon, hasIconTextFit) {
     const quads = [];
@@ -29393,12 +29831,12 @@ function getIconQuads(shapedIcon, iconRotate, isSDFIcon, hasIconTextFit) {
         const rightPx = getPxOffset(right.fixed - fixedOffsetX, fixedContentWidth, right.stretch, stretchWidth);
         const bottomEm = getEmOffset(bottom.stretch - stretchOffsetY, stretchContentHeight, iconHeight, shapedIcon.top);
         const bottomPx = getPxOffset(bottom.fixed - fixedOffsetY, fixedContentHeight, bottom.stretch, stretchHeight);
-        const tl = new pointGeometry(leftEm, topEm);
-        const tr = new pointGeometry(rightEm, topEm);
-        const br = new pointGeometry(rightEm, bottomEm);
-        const bl = new pointGeometry(leftEm, bottomEm);
-        const pixelOffsetTL = new pointGeometry(leftPx / pixelRatio, topPx / pixelRatio);
-        const pixelOffsetBR = new pointGeometry(rightPx / pixelRatio, bottomPx / pixelRatio);
+        const tl = new Point$2(leftEm, topEm);
+        const tr = new Point$2(rightEm, topEm);
+        const br = new Point$2(rightEm, bottomEm);
+        const bl = new Point$2(leftEm, bottomEm);
+        const pixelOffsetTL = new Point$2(leftPx / pixelRatio, topPx / pixelRatio);
+        const pixelOffsetBR = new Point$2(rightPx / pixelRatio, bottomPx / pixelRatio);
         const angle = iconRotate * Math.PI / 180;
         if (angle) {
             const sin = Math.sin(angle), cos = Math.cos(angle), matrix = [cos, -sin, sin, cos];
@@ -29474,7 +29912,6 @@ function getPxOffset(fixedOffset, fixedSize, stretchOffset, stretchSize) {
 }
 /**
  * Create the quads used for rendering a text label.
- * @private
  */
 function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, imageMap, allowVerticalPlacement) {
     const textRotate = layer.layout.get('text-rotate').evaluate(feature, {}) * Math.PI / 180;
@@ -29521,10 +29958,10 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
             const y1 = (-positionedGlyph.metrics.top - rectBuffer) * positionedGlyph.scale + builtInOffset[1];
             const x2 = x1 + textureRect.w * positionedGlyph.scale / pixelRatio;
             const y2 = y1 + textureRect.h * positionedGlyph.scale / pixelRatio;
-            const tl = new pointGeometry(x1, y1);
-            const tr = new pointGeometry(x2, y1);
-            const bl = new pointGeometry(x1, y2);
-            const br = new pointGeometry(x2, y2);
+            const tl = new Point$2(x1, y1);
+            const tr = new Point$2(x2, y1);
+            const bl = new Point$2(x1, y2);
+            const br = new Point$2(x2, y2);
             if (rotateVerticalGlyph) {
                 // Vertical-supporting glyphs are laid out in 24x24 point boxes (1 square em)
                 // In horizontal orientation, the y values for glyphs are below the midline
@@ -29535,14 +29972,14 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
                 // necessary, but we also pull the glyph to the left along the x axis.
                 // The y coordinate includes baseline yOffset, thus needs to be accounted
                 // for when glyph is rotated and translated.
-                const center = new pointGeometry(-halfAdvance, halfAdvance - SHAPING_DEFAULT_OFFSET);
+                const center = new Point$2(-halfAdvance, halfAdvance - SHAPING_DEFAULT_OFFSET);
                 const verticalRotation = -Math.PI / 2;
                 // xHalfWidthOffsetCorrection is a difference between full-width and half-width
                 // advance, should be 0 for full-width glyphs and will pull up half-width glyphs.
                 const xHalfWidthOffsetCorrection = ONE_EM / 2 - halfAdvance;
                 const yImageOffsetCorrection = positionedGlyph.imageName ? xHalfWidthOffsetCorrection : 0.0;
-                const halfWidthOffsetCorrection = new pointGeometry(5 - SHAPING_DEFAULT_OFFSET - xHalfWidthOffsetCorrection, -yImageOffsetCorrection);
-                const verticalOffsetCorrection = new pointGeometry(...verticalizedLabelOffset);
+                const halfWidthOffsetCorrection = new Point$2(5 - SHAPING_DEFAULT_OFFSET - xHalfWidthOffsetCorrection, -yImageOffsetCorrection);
+                const verticalOffsetCorrection = new Point$2(...verticalizedLabelOffset);
                 tl._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
                 tr._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
                 bl._rotateAround(verticalRotation, center)._add(halfWidthOffsetCorrection)._add(verticalOffsetCorrection);
@@ -29555,8 +29992,8 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
                 bl._matMult(matrix);
                 br._matMult(matrix);
             }
-            const pixelOffsetTL = new pointGeometry(0, 0);
-            const pixelOffsetBR = new pointGeometry(0, 0);
+            const pixelOffsetTL = new Point$2(0, 0);
+            const pixelOffsetBR = new Point$2(0, 0);
             const minFontScaleX = 0;
             const minFontScaleY = 0;
             quads.push({ tl, tr, bl, br, tex: textureRect, writingMode: shaping.writingMode, glyphOffset, sectionIndex: positionedGlyph.sectionIndex, isSDF, pixelOffsetTL, pixelOffsetBR, minFontScaleX, minFontScaleY });
@@ -29570,20 +30007,17 @@ function getGlyphQuads(anchor, shaping, textOffset, layer, alongLine, feature, i
  * It is used with CollisionIndex to check if the label overlaps with any
  * previous labels. A CollisionFeature is mostly just a set of CollisionBox
  * objects.
- *
- * @private
  */
 class CollisionFeature {
     /**
      * Create a CollisionFeature, adding its collision box data to the given collisionBoxArray in the process.
      * For line aligned labels a collision circle diameter is computed instead.
      *
-     * @param anchor The point along the line around which the label is anchored.
-     * @param shaped The text or icon shaping results.
-     * @param boxScale A magic number used to convert from glyph metrics units to geometry units.
-     * @param padding The amount of padding to add around the label edges.
-     * @param alignLine Whether the label is aligned with the line or the viewport.
-     * @private
+     * @param anchor - The point along the line around which the label is anchored.
+     * @param shaped - The text or icon shaping results.
+     * @param boxScale - A magic number used to convert from glyph metrics units to geometry units.
+     * @param padding - The amount of padding to add around the label edges.
+     * @param alignLine - Whether the label is aligned with the line or the viewport.
      */
     constructor(collisionBoxArray, anchor, featureIndex, sourceLayerIndex, bucketIndex, shaped, boxScale, padding, alignLine, rotate) {
         this.boxStartIndex = collisionBoxArray.length;
@@ -29621,10 +30055,10 @@ class CollisionFeature {
                 // Account for *-rotate in point collision boxes
                 // See https://github.com/mapbox/mapbox-gl-js/issues/6075
                 // Doesn't account for icon-text-fit
-                const tl = new pointGeometry(x1, y1);
-                const tr = new pointGeometry(x2, y1);
-                const bl = new pointGeometry(x1, y2);
-                const br = new pointGeometry(x2, y2);
+                const tl = new Point$2(x1, y1);
+                const tr = new Point$2(x2, y1);
+                const bl = new Point$2(x1, y2);
+                const br = new Point$2(x2, y2);
                 const rotateRadians = rotate * Math.PI / 180;
                 tl._rotate(rotateRadians);
                 tr._rotate(rotateRadians);
@@ -29727,11 +30161,10 @@ function defaultCompare(a, b) {
  * Finds an approximation of a polygon's Pole Of Inaccessibiliy https://en.wikipedia.org/wiki/Pole_of_inaccessibility
  * This is a copy of http://github.com/mapbox/polylabel adapted to use Points
  *
- * @param polygonRings first item in array is the outer ring followed optionally by the list of holes, should be an element of the result of util/classify_rings
- * @param precision Specified in input coordinate units. If 0 returns after first run, if > 0 repeatedly narrows the search space until the radius of the area searched for the best pole is less than precision
- * @param debug Print some statistics to the console during execution
+ * @param polygonRings - first item in array is the outer ring followed optionally by the list of holes, should be an element of the result of util/classify_rings
+ * @param precision - Specified in input coordinate units. If 0 returns after first run, if `> 0` repeatedly narrows the search space until the radius of the area searched for the best pole is less than precision
+ * @param debug - Print some statistics to the console during execution
  * @returns Pole of Inaccessibiliy.
- * @private
  */
 function findPoleOfInaccessibility(polygonRings, precision = 1, debug = false) {
     // find the bounding box of the outer ring
@@ -29755,7 +30188,7 @@ function findPoleOfInaccessibility(polygonRings, precision = 1, debug = false) {
     // a priority queue of cells in order of their "potential" (max distance to polygon)
     const cellQueue = new TinyQueue([], compareMax);
     if (cellSize === 0)
-        return new pointGeometry(minX, minY);
+        return new Point$2(minX, minY);
     // cover polygon with initial cells
     for (let x = minX; x < maxX; x += cellSize) {
         for (let y = minY; y < maxY; y += cellSize) {
@@ -29795,7 +30228,7 @@ function compareMax(a, b) {
     return b.max - a.max;
 }
 function Cell(x, y, h, polygon) {
-    this.p = new pointGeometry(x, y);
+    this.p = new Point$2(x, y);
     this.h = h; // half the cell size
     this.d = pointToPolygonDist(this.p, polygon); // distance from cell center to polygon
     this.max = this.d + this.h * Math.SQRT2; // max distance to polygon within a cell
@@ -29834,6 +30267,18 @@ function getCentroidCell(polygon) {
     return new Cell(x / area, y / area, 0, polygon);
 }
 
+exports.TextAnchorEnum = void 0;
+(function (TextAnchorEnum) {
+    TextAnchorEnum[TextAnchorEnum["center"] = 1] = "center";
+    TextAnchorEnum[TextAnchorEnum["left"] = 2] = "left";
+    TextAnchorEnum[TextAnchorEnum["right"] = 3] = "right";
+    TextAnchorEnum[TextAnchorEnum["top"] = 4] = "top";
+    TextAnchorEnum[TextAnchorEnum["bottom"] = 5] = "bottom";
+    TextAnchorEnum[TextAnchorEnum["top-left"] = 6] = "top-left";
+    TextAnchorEnum[TextAnchorEnum["top-right"] = 7] = "top-right";
+    TextAnchorEnum[TextAnchorEnum["bottom-left"] = 8] = "bottom-left";
+    TextAnchorEnum[TextAnchorEnum["bottom-right"] = 9] = "bottom-right";
+})(exports.TextAnchorEnum || (exports.TextAnchorEnum = {}));
 // The radial offset is to the edge of the text box
 // In the horizontal direction, the edge of the text box is where glyphs start
 // But in the vertical direction, the glyphs appear to "start" at the baseline
@@ -29847,7 +30292,7 @@ function evaluateVariableOffset(anchor, offset) {
         if (radialOffset < 0)
             radialOffset = 0; // Ignore negative offset.
         // solve for r where r^2 + r^2 = radialOffset^2
-        const hypotenuse = radialOffset / Math.sqrt(2);
+        const hypotenuse = radialOffset / Math.SQRT2;
         switch (anchor) {
             case 'top-right':
             case 'top-left':
@@ -29915,14 +30360,60 @@ function evaluateVariableOffset(anchor, offset) {
     }
     return (offset[1] !== INVALID_TEXT_OFFSET) ? fromTextOffset(anchor, offset[0], offset[1]) : fromRadialOffset(anchor, offset[0]);
 }
+// Helper to support both text-variable-anchor and text-variable-anchor-offset. Offset values converted from EMs to PXs
+function getTextVariableAnchorOffset(layer, feature, canonical) {
+    var _a;
+    const layout = layer.layout;
+    // If style specifies text-variable-anchor-offset, just return it
+    const variableAnchorOffset = (_a = layout.get('text-variable-anchor-offset')) === null || _a === void 0 ? void 0 : _a.evaluate(feature, {}, canonical);
+    if (variableAnchorOffset) {
+        const sourceValues = variableAnchorOffset.values;
+        const destValues = [];
+        // Convert offsets from EM to PX, and apply baseline shift
+        for (let i = 0; i < sourceValues.length; i += 2) {
+            const anchor = destValues[i] = sourceValues[i];
+            const offset = sourceValues[i + 1].map(t => t * ONE_EM);
+            if (anchor.startsWith('top')) {
+                offset[1] -= baselineOffset;
+            }
+            else if (anchor.startsWith('bottom')) {
+                offset[1] += baselineOffset;
+            }
+            destValues[i + 1] = offset;
+        }
+        return new VariableAnchorOffsetCollection(destValues);
+    }
+    // If style specifies text-variable-anchor, convert to the new format
+    const variableAnchor = layout.get('text-variable-anchor');
+    if (variableAnchor) {
+        let textOffset;
+        const unevaluatedLayout = layer._unevaluatedLayout;
+        // The style spec says don't use `text-offset` and `text-radial-offset` together
+        // but doesn't actually specify what happens if you use both. We go with the radial offset.
+        if (unevaluatedLayout.getValue('text-radial-offset') !== undefined) {
+            textOffset = [layout.get('text-radial-offset').evaluate(feature, {}, canonical) * ONE_EM, INVALID_TEXT_OFFSET];
+        }
+        else {
+            textOffset = layout.get('text-offset').evaluate(feature, {}, canonical).map(t => t * ONE_EM);
+        }
+        const anchorOffsets = [];
+        for (const anchor of variableAnchor) {
+            anchorOffsets.push(anchor, evaluateVariableOffset(anchor, textOffset));
+        }
+        return new VariableAnchorOffsetCollection(anchorOffsets);
+    }
+    return null;
+}
+
 function performSymbolLayout(args) {
     args.bucket.createArrays();
     const tileSize = 512 * args.bucket.overscaling;
     args.bucket.tilePixelRatio = EXTENT / tileSize;
     args.bucket.compareText = {};
     args.bucket.iconsNeedLinear = false;
-    const layout = args.bucket.layers[0].layout;
-    const unevaluatedLayoutValues = args.bucket.layers[0]._unevaluatedLayout._values;
+    const layer = args.bucket.layers[0];
+    const layout = layer.layout;
+    const unevaluatedLayoutValues = layer._unevaluatedLayout._values;
     const sizes = {
         // Filled in below, if *SizeData.kind is 'composite'
         // compositeIconSizes: undefined,
@@ -29965,8 +30456,8 @@ function performSymbolLayout(args) {
             const spacing = layout.get('text-letter-spacing').evaluate(feature, {}, args.canonical) * ONE_EM;
             const spacingIfAllowed = allowsLetterSpacing(unformattedText) ? spacing : 0;
             const textAnchor = layout.get('text-anchor').evaluate(feature, {}, args.canonical);
-            const variableTextAnchor = layout.get('text-variable-anchor');
-            if (!variableTextAnchor) {
+            const variableAnchorOffset = getTextVariableAnchorOffset(layer, feature, args.canonical);
+            if (!variableAnchorOffset) {
                 const radialOffset = layout.get('text-radial-offset').evaluate(feature, {}, args.canonical);
                 // Layers with variable anchors use the `text-radial-offset` property and the [x, y] offset vector
                 // is calculated at placement time instead of layout time
@@ -29995,13 +30486,18 @@ function performSymbolLayout(args) {
                 }
             };
             // If this layer uses text-variable-anchor, generate shapings for all justification possibilities.
-            if (!textAlongLine && variableTextAnchor) {
-                const justifications = textJustify === 'auto' ?
-                    variableTextAnchor.map(a => getAnchorJustification(a)) :
-                    [textJustify];
+            if (!textAlongLine && variableAnchorOffset) {
+                const justifications = new Set();
+                if (textJustify === 'auto') {
+                    for (let i = 0; i < variableAnchorOffset.values.length; i += 2) {
+                        justifications.add(getAnchorJustification(variableAnchorOffset.values[i]));
+                    }
+                }
+                else {
+                    justifications.add(textJustify);
+                }
                 let singleLine = false;
-                for (let i = 0; i < justifications.length; i++) {
-                    const justification = justifications[i];
+                for (const justification of justifications) {
                     if (shapedTextOrientations.horizontal[justification])
                         continue;
                     if (singleLine) {
@@ -30088,7 +30584,6 @@ function getAnchorJustification(anchor) {
  * instance' for each _possible_ placement of the symbol feature.
  * (At render timePlaceSymbols#place() selects which of these instances to
  * show or hide based on collisions with symbols in other layers.)
- * @private
  */
 function addFeature(bucket, feature, shapedTextOrientations, shapedIcon, imageMap, sizes, layoutTextSize, layoutIconSize, textOffset, isSDFIcon, canonical) {
     // To reduce the number of labels that jump around when zooming we need
@@ -30167,6 +30662,18 @@ function addFeature(bucket, feature, shapedTextOrientations, shapedIcon, imageMa
         }
     }
 }
+function addTextVariableAnchorOffsets(textAnchorOffsets, variableAnchorOffset) {
+    const startIndex = textAnchorOffsets.length;
+    const values = variableAnchorOffset === null || variableAnchorOffset === void 0 ? void 0 : variableAnchorOffset.values;
+    if ((values === null || values === void 0 ? void 0 : values.length) > 0) {
+        for (let i = 0; i < values.length; i += 2) {
+            const anchor = exports.TextAnchorEnum[values[i]];
+            const offset = values[i + 1];
+            textAnchorOffsets.emplaceBack(anchor, offset[0], offset[1]);
+        }
+    }
+    return [startIndex, textAnchorOffsets.length];
+}
 function addTextVertices(bucket, anchor, shapedText, imageMap, layer, textAlongLine, feature, textOffset, lineArray, writingMode, placementTypes, placedTextSymbolIndices, placedIconIndex, sizes, canonical) {
     const glyphQuads = getGlyphQuads(anchor, shapedText, textOffset, layer, textAlongLine, feature, imageMap, bucket.allowVerticalPlacement);
     const sizeData = bucket.textSizeData;
@@ -30206,8 +30713,6 @@ function getDefaultHorizontalShaping(horizontalShaping) {
 }
 /**
  * Add a single label & icon placement.
- *
- * @private
  */
 function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, imageMap, verticallyShapedIcon, layer, collisionBoxArray, featureIndex, sourceLayerIndex, bucketIndex, textBoxScale, textPadding, textAlongLine, textOffset, iconBoxScale, iconPadding, iconAlongLine, iconOffset, feature, sizes, isSDFIcon, canonical, layoutTextSize) {
     const lineArray = bucket.addToLineVertexArray(anchor, line);
@@ -30219,16 +30724,7 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     let placedIconSymbolIndex = -1;
     let verticalPlacedIconSymbolIndex = -1;
     const placedTextSymbolIndices = {};
-    let key = murmurhashJsExports('');
-    let textOffset0 = 0;
-    let textOffset1 = 0;
-    if (layer._unevaluatedLayout.getValue('text-radial-offset') === undefined) {
-        [textOffset0, textOffset1] = layer.layout.get('text-offset').evaluate(feature, {}, canonical).map(t => t * ONE_EM);
-    }
-    else {
-        textOffset0 = layer.layout.get('text-radial-offset').evaluate(feature, {}, canonical) * ONE_EM;
-        textOffset1 = INVALID_TEXT_OFFSET;
-    }
+    let key = murmur3$1('');
     if (bucket.allowVerticalPlacement && shapedTextOrientations.vertical) {
         const textRotation = layer.layout.get('text-rotate').evaluate(feature, {}, canonical);
         const verticalTextRotation = textRotation + 90.0;
@@ -30284,7 +30780,7 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     for (const justification of justifications) {
         const shaping = shapedTextOrientations.horizontal[justification];
         if (!textCollisionFeature) {
-            key = murmurhashJsExports(shaping.text);
+            key = murmur3$1(shaping.text);
             const textRotate = layer.layout.get('text-rotate').evaluate(feature, {}, canonical);
             // As a collision approximation, we can use either the vertical or any of the horizontal versions of the feature
             // We're counting on all versions having similar dimensions
@@ -30329,7 +30825,9 @@ function addSymbol(bucket, anchor, line, shapedTextOrientations, shapedIcon, ima
     if (feature.sortKey !== undefined) {
         bucket.addToSortKeyRanges(bucket.symbolInstances.length, feature.sortKey);
     }
-    bucket.symbolInstances.emplaceBack(anchor.x, anchor.y, placedTextSymbolIndices.right >= 0 ? placedTextSymbolIndices.right : -1, placedTextSymbolIndices.center >= 0 ? placedTextSymbolIndices.center : -1, placedTextSymbolIndices.left >= 0 ? placedTextSymbolIndices.left : -1, placedTextSymbolIndices.vertical || -1, placedIconSymbolIndex, verticalPlacedIconSymbolIndex, key, textBoxStartIndex, textBoxEndIndex, verticalTextBoxStartIndex, verticalTextBoxEndIndex, iconBoxStartIndex, iconBoxEndIndex, verticalIconBoxStartIndex, verticalIconBoxEndIndex, featureIndex, numHorizontalGlyphVertices, numVerticalGlyphVertices, numIconVertices, numVerticalIconVertices, useRuntimeCollisionCircles, 0, textBoxScale, textOffset0, textOffset1, collisionCircleDiameter);
+    const variableAnchorOffset = getTextVariableAnchorOffset(layer, feature, canonical);
+    const [textAnchorOffsetStartIndex, textAnchorOffsetEndIndex] = addTextVariableAnchorOffsets(bucket.textAnchorOffsets, variableAnchorOffset);
+    bucket.symbolInstances.emplaceBack(anchor.x, anchor.y, placedTextSymbolIndices.right >= 0 ? placedTextSymbolIndices.right : -1, placedTextSymbolIndices.center >= 0 ? placedTextSymbolIndices.center : -1, placedTextSymbolIndices.left >= 0 ? placedTextSymbolIndices.left : -1, placedTextSymbolIndices.vertical || -1, placedIconSymbolIndex, verticalPlacedIconSymbolIndex, key, textBoxStartIndex, textBoxEndIndex, verticalTextBoxStartIndex, verticalTextBoxEndIndex, iconBoxStartIndex, iconBoxEndIndex, verticalIconBoxStartIndex, verticalIconBoxEndIndex, featureIndex, numHorizontalGlyphVertices, numVerticalGlyphVertices, numIconVertices, numVerticalIconVertices, useRuntimeCollisionCircles, 0, textBoxScale, collisionCircleDiameter, textAnchorOffsetStartIndex, textAnchorOffsetEndIndex);
 }
 function anchorIsTooClose(bucket, text, repeatDistance, anchor) {
     const compareText = bucket.compareText;
@@ -30350,18 +30848,259 @@ function anchorIsTooClose(bucket, text, repeatDistance, anchor) {
     return false;
 }
 
-function sortKD(ids, coords, nodeSize, left, right, depth) {
-    if (right - left <= nodeSize) return;
+const ARRAY_TYPES = [
+    Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array,
+    Int32Array, Uint32Array, Float32Array, Float64Array
+];
 
-    const m = (left + right) >> 1;
+/** @typedef {Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor} TypedArrayConstructor */
 
-    select(ids, coords, m, left, right, depth % 2);
+const VERSION = 1; // serialized format version
+const HEADER_SIZE = 8;
 
-    sortKD(ids, coords, nodeSize, left, m - 1, depth + 1);
-    sortKD(ids, coords, nodeSize, m + 1, right, depth + 1);
+class KDBush {
+
+    /**
+     * Creates an index from raw `ArrayBuffer` data.
+     * @param {ArrayBuffer} data
+     */
+    static from(data) {
+        if (!(data instanceof ArrayBuffer)) {
+            throw new Error('Data must be an instance of ArrayBuffer.');
+        }
+        const [magic, versionAndType] = new Uint8Array(data, 0, 2);
+        if (magic !== 0xdb) {
+            throw new Error('Data does not appear to be in a KDBush format.');
+        }
+        const version = versionAndType >> 4;
+        if (version !== VERSION) {
+            throw new Error(`Got v${version} data when expected v${VERSION}.`);
+        }
+        const ArrayType = ARRAY_TYPES[versionAndType & 0x0f];
+        if (!ArrayType) {
+            throw new Error('Unrecognized array type.');
+        }
+        const [nodeSize] = new Uint16Array(data, 2, 1);
+        const [numItems] = new Uint32Array(data, 4, 1);
+
+        return new KDBush(numItems, nodeSize, ArrayType, data);
+    }
+
+    /**
+     * Creates an index that will hold a given number of items.
+     * @param {number} numItems
+     * @param {number} [nodeSize=64] Size of the KD-tree node (64 by default).
+     * @param {TypedArrayConstructor} [ArrayType=Float64Array] The array type used for coordinates storage (`Float64Array` by default).
+     * @param {ArrayBuffer} [data] (For internal use only)
+     */
+    constructor(numItems, nodeSize = 64, ArrayType = Float64Array, data) {
+        if (isNaN(numItems) || numItems < 0) throw new Error(`Unpexpected numItems value: ${numItems}.`);
+
+        this.numItems = +numItems;
+        this.nodeSize = Math.min(Math.max(+nodeSize, 2), 65535);
+        this.ArrayType = ArrayType;
+        this.IndexArrayType = numItems < 65536 ? Uint16Array : Uint32Array;
+
+        const arrayTypeIndex = ARRAY_TYPES.indexOf(this.ArrayType);
+        const coordsByteSize = numItems * 2 * this.ArrayType.BYTES_PER_ELEMENT;
+        const idsByteSize = numItems * this.IndexArrayType.BYTES_PER_ELEMENT;
+        const padCoords = (8 - idsByteSize % 8) % 8;
+
+        if (arrayTypeIndex < 0) {
+            throw new Error(`Unexpected typed array class: ${ArrayType}.`);
+        }
+
+        if (data && (data instanceof ArrayBuffer)) { // reconstruct an index from a buffer
+            this.data = data;
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+            this._pos = numItems * 2;
+            this._finished = true;
+        } else { // initialize a new index
+            this.data = new ArrayBuffer(HEADER_SIZE + coordsByteSize + idsByteSize + padCoords);
+            this.ids = new this.IndexArrayType(this.data, HEADER_SIZE, numItems);
+            this.coords = new this.ArrayType(this.data, HEADER_SIZE + idsByteSize + padCoords, numItems * 2);
+            this._pos = 0;
+            this._finished = false;
+
+            // set header
+            new Uint8Array(this.data, 0, 2).set([0xdb, (VERSION << 4) + arrayTypeIndex]);
+            new Uint16Array(this.data, 2, 1)[0] = nodeSize;
+            new Uint32Array(this.data, 4, 1)[0] = numItems;
+        }
+    }
+
+    /**
+     * Add a point to the index.
+     * @param {number} x
+     * @param {number} y
+     * @returns {number} An incremental index associated with the added item (starting from `0`).
+     */
+    add(x, y) {
+        const index = this._pos >> 1;
+        this.ids[index] = index;
+        this.coords[this._pos++] = x;
+        this.coords[this._pos++] = y;
+        return index;
+    }
+
+    /**
+     * Perform indexing of the added points.
+     */
+    finish() {
+        const numAdded = this._pos >> 1;
+        if (numAdded !== this.numItems) {
+            throw new Error(`Added ${numAdded} items when expected ${this.numItems}.`);
+        }
+        // kd-sort both arrays for efficient search
+        sort(this.ids, this.coords, this.nodeSize, 0, this.numItems - 1, 0);
+
+        this._finished = true;
+        return this;
+    }
+
+    /**
+     * Search the index for items within a given bounding box.
+     * @param {number} minX
+     * @param {number} minY
+     * @param {number} maxX
+     * @param {number} maxY
+     * @returns {number[]} An array of indices correponding to the found items.
+     */
+    range(minX, minY, maxX, maxY) {
+        if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
+
+        const {ids, coords, nodeSize} = this;
+        const stack = [0, ids.length - 1, 0];
+        const result = [];
+
+        // recursively search for items in range in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop() || 0;
+            const right = stack.pop() || 0;
+            const left = stack.pop() || 0;
+
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    const x = coords[2 * i];
+                    const y = coords[2 * i + 1];
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[i]);
+                }
+                continue;
+            }
+
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
+
+            // queue search in halves that intersect the query
+            if (axis === 0 ? minX <= x : minY <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? maxX >= x : maxY >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Search the index for items within a given radius.
+     * @param {number} qx
+     * @param {number} qy
+     * @param {number} r Query radius.
+     * @returns {number[]} An array of indices correponding to the found items.
+     */
+    within(qx, qy, r) {
+        if (!this._finished) throw new Error('Data not yet indexed - call index.finish().');
+
+        const {ids, coords, nodeSize} = this;
+        const stack = [0, ids.length - 1, 0];
+        const result = [];
+        const r2 = r * r;
+
+        // recursively search for items within radius in the kd-sorted arrays
+        while (stack.length) {
+            const axis = stack.pop() || 0;
+            const right = stack.pop() || 0;
+            const left = stack.pop() || 0;
+
+            // if we reached "tree node", search linearly
+            if (right - left <= nodeSize) {
+                for (let i = left; i <= right; i++) {
+                    if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
+                }
+                continue;
+            }
+
+            // otherwise find the middle index
+            const m = (left + right) >> 1;
+
+            // include the middle item if it's in range
+            const x = coords[2 * m];
+            const y = coords[2 * m + 1];
+            if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
+
+            // queue search in halves that intersect the query
+            if (axis === 0 ? qx - r <= x : qy - r <= y) {
+                stack.push(left);
+                stack.push(m - 1);
+                stack.push(1 - axis);
+            }
+            if (axis === 0 ? qx + r >= x : qy + r >= y) {
+                stack.push(m + 1);
+                stack.push(right);
+                stack.push(1 - axis);
+            }
+        }
+
+        return result;
+    }
 }
 
-function select(ids, coords, k, left, right, inc) {
+/**
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} nodeSize
+ * @param {number} left
+ * @param {number} right
+ * @param {number} axis
+ */
+function sort(ids, coords, nodeSize, left, right, axis) {
+    if (right - left <= nodeSize) return;
+
+    const m = (left + right) >> 1; // middle index
+
+    // sort ids and coords around the middle index so that the halves lie
+    // either left/right or top/bottom correspondingly (taking turns)
+    select(ids, coords, m, left, right, axis);
+
+    // recursively kd-sort first half and second half on the opposite axis
+    sort(ids, coords, nodeSize, left, m - 1, 1 - axis);
+    sort(ids, coords, nodeSize, m + 1, right, 1 - axis);
+}
+
+/**
+ * Custom Floyd-Rivest selection algorithm: sort ids and coords so that
+ * [left..k-1] items are smaller than k-th item (on either x or y axis)
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} k
+ * @param {number} left
+ * @param {number} right
+ * @param {number} axis
+ */
+function select(ids, coords, k, left, right, axis) {
 
     while (right > left) {
         if (right - left > 600) {
@@ -30372,25 +31111,25 @@ function select(ids, coords, k, left, right, inc) {
             const sd = 0.5 * Math.sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
             const newLeft = Math.max(left, Math.floor(k - m * s / n + sd));
             const newRight = Math.min(right, Math.floor(k + (n - m) * s / n + sd));
-            select(ids, coords, k, newLeft, newRight, inc);
+            select(ids, coords, k, newLeft, newRight, axis);
         }
 
-        const t = coords[2 * k + inc];
+        const t = coords[2 * k + axis];
         let i = left;
         let j = right;
 
         swapItem(ids, coords, left, k);
-        if (coords[2 * right + inc] > t) swapItem(ids, coords, left, right);
+        if (coords[2 * right + axis] > t) swapItem(ids, coords, left, right);
 
         while (i < j) {
             swapItem(ids, coords, i, j);
             i++;
             j--;
-            while (coords[2 * i + inc] < t) i++;
-            while (coords[2 * j + inc] > t) j--;
+            while (coords[2 * i + axis] < t) i++;
+            while (coords[2 * j + axis] > t) j--;
         }
 
-        if (coords[2 * left + inc] === t) swapItem(ids, coords, left, j);
+        if (coords[2 * left + axis] === t) swapItem(ids, coords, left, j);
         else {
             j++;
             swapItem(ids, coords, j, right);
@@ -30401,137 +31140,39 @@ function select(ids, coords, k, left, right, inc) {
     }
 }
 
+/**
+ * @param {Uint16Array | Uint32Array} ids
+ * @param {InstanceType<TypedArrayConstructor>} coords
+ * @param {number} i
+ * @param {number} j
+ */
 function swapItem(ids, coords, i, j) {
     swap(ids, i, j);
     swap(coords, 2 * i, 2 * j);
     swap(coords, 2 * i + 1, 2 * j + 1);
 }
 
+/**
+ * @param {InstanceType<TypedArrayConstructor>} arr
+ * @param {number} i
+ * @param {number} j
+ */
 function swap(arr, i, j) {
     const tmp = arr[i];
     arr[i] = arr[j];
     arr[j] = tmp;
 }
 
-function range(ids, coords, minX, minY, maxX, maxY, nodeSize) {
-    const stack = [0, ids.length - 1, 0];
-    const result = [];
-    let x, y;
-
-    while (stack.length) {
-        const axis = stack.pop();
-        const right = stack.pop();
-        const left = stack.pop();
-
-        if (right - left <= nodeSize) {
-            for (let i = left; i <= right; i++) {
-                x = coords[2 * i];
-                y = coords[2 * i + 1];
-                if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[i]);
-            }
-            continue;
-        }
-
-        const m = Math.floor((left + right) / 2);
-
-        x = coords[2 * m];
-        y = coords[2 * m + 1];
-
-        if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
-
-        const nextAxis = (axis + 1) % 2;
-
-        if (axis === 0 ? minX <= x : minY <= y) {
-            stack.push(left);
-            stack.push(m - 1);
-            stack.push(nextAxis);
-        }
-        if (axis === 0 ? maxX >= x : maxY >= y) {
-            stack.push(m + 1);
-            stack.push(right);
-            stack.push(nextAxis);
-        }
-    }
-
-    return result;
-}
-
-function within(ids, coords, qx, qy, r, nodeSize) {
-    const stack = [0, ids.length - 1, 0];
-    const result = [];
-    const r2 = r * r;
-
-    while (stack.length) {
-        const axis = stack.pop();
-        const right = stack.pop();
-        const left = stack.pop();
-
-        if (right - left <= nodeSize) {
-            for (let i = left; i <= right; i++) {
-                if (sqDist(coords[2 * i], coords[2 * i + 1], qx, qy) <= r2) result.push(ids[i]);
-            }
-            continue;
-        }
-
-        const m = Math.floor((left + right) / 2);
-
-        const x = coords[2 * m];
-        const y = coords[2 * m + 1];
-
-        if (sqDist(x, y, qx, qy) <= r2) result.push(ids[m]);
-
-        const nextAxis = (axis + 1) % 2;
-
-        if (axis === 0 ? qx - r <= x : qy - r <= y) {
-            stack.push(left);
-            stack.push(m - 1);
-            stack.push(nextAxis);
-        }
-        if (axis === 0 ? qx + r >= x : qy + r >= y) {
-            stack.push(m + 1);
-            stack.push(right);
-            stack.push(nextAxis);
-        }
-    }
-
-    return result;
-}
-
+/**
+ * @param {number} ax
+ * @param {number} ay
+ * @param {number} bx
+ * @param {number} by
+ */
 function sqDist(ax, ay, bx, by) {
     const dx = ax - bx;
     const dy = ay - by;
     return dx * dx + dy * dy;
-}
-
-const defaultGetX = p => p[0];
-const defaultGetY = p => p[1];
-
-class KDBush {
-    constructor(points, getX = defaultGetX, getY = defaultGetY, nodeSize = 64, ArrayType = Float64Array) {
-        this.nodeSize = nodeSize;
-        this.points = points;
-
-        const IndexArrayType = points.length < 65536 ? Uint16Array : Uint32Array;
-
-        const ids = this.ids = new IndexArrayType(points.length);
-        const coords = this.coords = new ArrayType(points.length * 2);
-
-        for (let i = 0; i < points.length; i++) {
-            ids[i] = i;
-            coords[2 * i] = getX(points[i]);
-            coords[2 * i + 1] = getY(points[i]);
-        }
-
-        sortKD(ids, coords, nodeSize, 0, ids.length - 1, 0);
-    }
-
-    range(minX, minY, maxX, maxY) {
-        return range(this.ids, this.coords, minX, minY, maxX, maxY, this.nodeSize);
-    }
-
-    within(x, y, r) {
-        return within(this.ids, this.coords, x, y, r, this.nodeSize);
-    }
 }
 
 exports.PerformanceMarkers = void 0;
@@ -30542,8 +31183,10 @@ exports.PerformanceMarkers = void 0;
 })(exports.PerformanceMarkers || (exports.PerformanceMarkers = {}));
 let lastFrameTime = null;
 let frameTimes = [];
-const minFramerateTarget = 30;
+const minFramerateTarget = 60;
 const frameTimeTarget = 1000 / minFramerateTarget;
+const loadTimeKey = 'loadTime';
+const fullLoadTimeKey = 'fullLoadTime';
 const PerformanceUtils = {
     mark(marker) {
         performance.mark(marker);
@@ -30559,17 +31202,17 @@ const PerformanceUtils = {
     clearMetrics() {
         lastFrameTime = null;
         frameTimes = [];
-        performance.clearMeasures('loadTime');
-        performance.clearMeasures('fullLoadTime');
+        performance.clearMeasures(loadTimeKey);
+        performance.clearMeasures(fullLoadTimeKey);
         for (const marker in exports.PerformanceMarkers) {
             performance.clearMarks(exports.PerformanceMarkers[marker]);
         }
     },
     getPerformanceMetrics() {
-        performance.measure('loadTime', exports.PerformanceMarkers.create, exports.PerformanceMarkers.load);
-        performance.measure('fullLoadTime', exports.PerformanceMarkers.create, exports.PerformanceMarkers.fullLoad);
-        const loadTime = performance.getEntriesByName('loadTime')[0].duration;
-        const fullLoadTime = performance.getEntriesByName('fullLoadTime')[0].duration;
+        performance.measure(loadTimeKey, exports.PerformanceMarkers.create, exports.PerformanceMarkers.load);
+        performance.measure(fullLoadTimeKey, exports.PerformanceMarkers.create, exports.PerformanceMarkers.fullLoad);
+        const loadTime = performance.getEntriesByName(loadTimeKey)[0].duration;
+        const fullLoadTime = performance.getEntriesByName(fullLoadTimeKey)[0].duration;
         const totalFrames = frameTimes.length;
         const avgFrameTime = frameTimes.reduce((prev, curr) => prev + curr, 0) / totalFrames / 1000;
         const fps = 1 / avgFrameTime;
@@ -30584,15 +31227,14 @@ const PerformanceUtils = {
             loadTime,
             fullLoadTime,
             fps,
-            percentDroppedFrames
+            percentDroppedFrames,
+            totalFrames
         };
     }
 };
 /**
+ * @internal
  * Safe wrapper for the performance resource timing API in web workers with graceful degradation
- *
- * @param {RequestParameters} request
- * @private
  */
 class RequestPerformance {
     constructor(request) {
@@ -30649,9 +31291,11 @@ exports.MercatorCoordinate = MercatorCoordinate;
 exports.ONE_EM = ONE_EM;
 exports.OverscaledTileID = OverscaledTileID;
 exports.PerformanceUtils = PerformanceUtils;
+exports.Point = Point$2;
 exports.Pos3dArray = Pos3dArray;
 exports.PosArray = PosArray;
 exports.Properties = Properties;
+exports.Protobuf = Protobuf;
 exports.QuadTriangleArray = QuadTriangleArray;
 exports.RGBAImage = RGBAImage;
 exports.RasterBoundsArray = RasterBoundsArray;
@@ -30676,8 +31320,8 @@ exports.arrayBufferToImage = arrayBufferToImage;
 exports.arrayBufferToImageBitmap = arrayBufferToImageBitmap;
 exports.asyncAll = asyncAll;
 exports.bezier = bezier$1;
-exports.bindAll = bindAll;
-exports.clamp = clamp;
+exports.browser = browser;
+exports.clamp = clamp$1;
 exports.clipLine = clipLine;
 exports.clone = clone$5;
 exports.clone$1 = clone$9;
@@ -30694,20 +31338,18 @@ exports.createLayout = createLayout;
 exports.createStyleLayer = createStyleLayer;
 exports.cross = cross$2;
 exports.deepEqual = deepEqual$1;
+exports.defaultEasing = defaultEasing;
 exports.derefLayers = derefLayers;
 exports.diffStyles = diffStyles;
 exports.dot = dot$5;
 exports.dot$1 = dot$4;
 exports.earthRadius = earthRadius;
-exports.ease = ease;
 exports.emitValidationErrors = emitValidationErrors;
 exports.emptyStyle = emptyStyle;
 exports.equals = equals$6;
 exports.evaluateSizeForFeature = evaluateSizeForFeature;
 exports.evaluateSizeForZoom = evaluateSizeForZoom;
-exports.evaluateVariableOffset = evaluateVariableOffset;
 exports.evented = evented;
-exports.exported = exported;
 exports.extend = extend;
 exports.filterObject = filterObject;
 exports.findLineIntersection = findLineIntersection;
@@ -30716,14 +31358,16 @@ exports.fromScaling = fromScaling;
 exports.getAnchorAlignment = getAnchorAlignment;
 exports.getAnchorJustification = getAnchorJustification;
 exports.getArrayBuffer = getArrayBuffer;
+exports.getDefaultExportFromCjs = getDefaultExportFromCjs;
 exports.getJSON = getJSON;
 exports.getOverlapMode = getOverlapMode;
+exports.getProtocolAction = getProtocolAction;
 exports.getRTLTextPluginStatus = getRTLTextPluginStatus;
 exports.getReferrer = getReferrer;
 exports.getVideo = getVideo;
 exports.groupByLayout = groupByLayout;
 exports.identity = identity$2;
-exports.interpolates = interpolates;
+exports.interpolate = interpolate;
 exports.invert = invert$2;
 exports.isImageBitmap = isImageBitmap;
 exports.isSafari = isSafari;
@@ -30758,6 +31402,7 @@ exports.renderColorRamp = renderColorRamp;
 exports.rotate = rotate$4;
 exports.rotateX = rotateX$3;
 exports.rotateZ = rotateZ$3;
+exports.sameOrigin = sameOrigin;
 exports.scale = scale$5;
 exports.scale$1 = scale$4;
 exports.setRTLTextPlugin = setRTLTextPlugin;
@@ -30885,6 +31530,8 @@ class WorkerTile {
         this.collectResourceTiming = !!params.collectResourceTiming;
         this.returnDependencies = !!params.returnDependencies;
         this.promoteId = params.promoteId;
+        this.inFlightDependencies = [];
+        this.dependencySentinel = -1;
     }
     parse(data, layerIndex, availableImages, actor, callback) {
         this.status = 'parsing';
@@ -30949,40 +31596,53 @@ class WorkerTile {
         let iconMap;
         let patternMap;
         const stacks = performance.mapObject(options.glyphDependencies, (glyphs) => Object.keys(glyphs).map(Number));
+        this.inFlightDependencies.forEach((request) => request === null || request === void 0 ? void 0 : request.cancel());
+        this.inFlightDependencies = [];
+        // cancelling seems to be not sufficient, we seems to still manage to get a callback hit, so use a sentinel to drop stale results
+        const dependencySentinel = ++this.dependencySentinel;
         if (Object.keys(stacks).length) {
-            actor.send('getGlyphs', { uid: this.uid, stacks, source: this.source, tileID: this.tileID, type: 'glyphs' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getGlyphs', { uid: this.uid, stacks, source: this.source, tileID: this.tileID, type: 'glyphs' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     glyphMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             glyphMap = {};
         }
         const icons = Object.keys(options.iconDependencies);
         if (icons.length) {
-            actor.send('getImages', { icons, source: this.source, tileID: this.tileID, type: 'icons' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getImages', { icons, source: this.source, tileID: this.tileID, type: 'icons' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     iconMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             iconMap = {};
         }
         const patterns = Object.keys(options.patternDependencies);
         if (patterns.length) {
-            actor.send('getImages', { icons: patterns, source: this.source, tileID: this.tileID, type: 'patterns' }, (err, result) => {
+            this.inFlightDependencies.push(actor.send('getImages', { icons: patterns, source: this.source, tileID: this.tileID, type: 'patterns' }, (err, result) => {
+                if (dependencySentinel !== this.dependencySentinel) {
+                    return;
+                }
                 if (!error) {
                     error = err;
                     patternMap = result;
                     maybePrepare.call(this);
                 }
-            });
+            }));
         }
         else {
             patternMap = {};
@@ -31042,7 +31702,7 @@ function recalculateLayers(layers, zoom, availableImages) {
 }
 
 /**
- * @private
+ * Loads a vector tile
  */
 function loadVectorTile(params, callback) {
     const request = performance.getArrayBuffer(params.request, (err, data, cacheControl, expires) => {
@@ -31051,7 +31711,7 @@ function loadVectorTile(params, callback) {
         }
         else if (data) {
             callback(null, {
-                vectorTile: new performance.vectorTile.VectorTile(new performance.pbf(data)),
+                vectorTile: new performance.vectorTile.VectorTile(new performance.Protobuf(data)),
                 rawData: data,
                 cacheControl,
                 expires
@@ -31069,22 +31729,20 @@ function loadVectorTile(params, callback) {
  * for data formats that can be parsed/converted into an in-memory VectorTile
  * representation.  To do so, create it with
  * `new VectorTileWorkerSource(actor, styleLayers, customLoadVectorDataFunction)`.
- *
- * @private
  */
 class VectorTileWorkerSource {
     /**
-     * @param [loadVectorData] Optional method for custom loading of a VectorTile
+     * @param loadVectorData - Optional method for custom loading of a VectorTile
      * object based on parameters passed from the main-thread Source. See
      * {@link VectorTileWorkerSource#loadTile}. The default implementation simply
      * loads the pbf at `params.url`.
-     * @private
      */
     constructor(actor, layerIndex, availableImages, loadVectorData) {
         this.actor = actor;
         this.layerIndex = layerIndex;
         this.availableImages = availableImages;
         this.loadVectorData = loadVectorData || loadVectorTile;
+        this.fetching = {};
         this.loading = {};
         this.loaded = {};
     }
@@ -31092,7 +31750,6 @@ class VectorTileWorkerSource {
      * Implements {@link WorkerSource#loadTile}. Delegates to
      * {@link VectorTileWorkerSource#loadVectorData} (which by default expects
      * a `params.url` property) for fetching and producing a VectorTile object.
-     * @private
      */
     loadTile(params, callback) {
         const uid = params.uid;
@@ -31124,6 +31781,7 @@ class VectorTileWorkerSource {
             }
             workerTile.vectorTile = response.vectorTile;
             workerTile.parse(response.vectorTile, this.layerIndex, this.availableImages, this.actor, (err, result) => {
+                delete this.fetching[uid];
                 if (err || !result)
                     return callback(err);
                 // Transferring a copy of rawTileData because the worker needs to retain its copy.
@@ -31131,35 +31789,43 @@ class VectorTileWorkerSource {
             });
             this.loaded = this.loaded || {};
             this.loaded[uid] = workerTile;
+            // keep the original fetching state so that reload tile can pick it up if the original parse is cancelled by reloads' parse
+            this.fetching[uid] = { rawTileData, cacheControl, resourceTiming };
         });
     }
     /**
      * Implements {@link WorkerSource#reloadTile}.
-     * @private
      */
     reloadTile(params, callback) {
-        const loaded = this.loaded, uid = params.uid, vtSource = this;
+        const loaded = this.loaded;
+        const uid = params.uid;
         if (loaded && loaded[uid]) {
             const workerTile = loaded[uid];
             workerTile.showCollisionBoxes = params.showCollisionBoxes;
-            const done = (err, data) => {
-                const reloadCallback = workerTile.reloadCallback;
-                if (reloadCallback) {
-                    delete workerTile.reloadCallback;
-                    workerTile.parse(workerTile.vectorTile, vtSource.layerIndex, this.availableImages, vtSource.actor, reloadCallback);
-                }
-                callback(err, data);
-            };
             if (workerTile.status === 'parsing') {
-                workerTile.reloadCallback = done;
+                workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, (err, result) => {
+                    if (err || !result)
+                        return callback(err, result);
+                    // if we have cancelled the original parse, make sure to pass the rawTileData from the original fetch
+                    let parseResult;
+                    if (this.fetching[uid]) {
+                        const { rawTileData, cacheControl, resourceTiming } = this.fetching[uid];
+                        delete this.fetching[uid];
+                        parseResult = performance.extend({ rawTileData: rawTileData.slice(0) }, result, cacheControl, resourceTiming);
+                    }
+                    else {
+                        parseResult = result;
+                    }
+                    callback(null, parseResult);
+                });
             }
             else if (workerTile.status === 'done') {
                 // if there was no vector tile data on the initial load, don't try and re-parse tile
                 if (workerTile.vectorTile) {
-                    workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, done);
+                    workerTile.parse(workerTile.vectorTile, this.layerIndex, this.availableImages, this.actor, callback);
                 }
                 else {
-                    done();
+                    callback();
                 }
             }
         }
@@ -31167,9 +31833,8 @@ class VectorTileWorkerSource {
     /**
      * Implements {@link WorkerSource#abortTile}.
      *
-     * @param params
-     * @param params.uid The UID for this tile.
-     * @private
+     * @param params - The tile parameters
+     * @param callback - The callback
      */
     abortTile(params, callback) {
         const loading = this.loading, uid = params.uid;
@@ -31182,9 +31847,8 @@ class VectorTileWorkerSource {
     /**
      * Implements {@link WorkerSource#removeTile}.
      *
-     * @param params
-     * @param params.uid The UID for this tile.
-     * @private
+     * @param params - The tile parameters
+     * @param callback - The callback
      */
     removeTile(params, callback) {
         const loaded = this.loaded, uid = params.uid;
@@ -31275,6 +31939,8 @@ function rewindRing(ring, dir) {
     if (area + err >= 0 !== !!dir) ring.reverse();
 }
 
+var rewind$2 = /*@__PURE__*/performance.getDefaultExportFromCjs(geojsonRewind);
+
 const toGeoJSON = performance.vectorTile.VectorTileFeature.prototype.toGeoJSON;
 let FeatureWrapper$1 = class FeatureWrapper {
     constructor(feature) {
@@ -31296,7 +31962,7 @@ let FeatureWrapper$1 = class FeatureWrapper {
         if (this._feature.type === 1) {
             const geometry = [];
             for (const point of this._feature.geometry) {
-                geometry.push([new performance.pointGeometry(point[0], point[1])]);
+                geometry.push([new performance.Point(point[0], point[1])]);
             }
             return geometry;
         }
@@ -31305,7 +31971,7 @@ let FeatureWrapper$1 = class FeatureWrapper {
             for (const ring of this._feature.geometry) {
                 const newRing = [];
                 for (const point of ring) {
-                    newRing.push(new performance.pointGeometry(point[0], point[1]));
+                    newRing.push(new performance.Point(point[0], point[1]));
                 }
                 geometry.push(newRing);
             }
@@ -31329,11 +31995,7 @@ let GeoJSONWrapper$2 = class GeoJSONWrapper {
     }
 };
 
-var vtPbfExports = {};
-var vtPbf = {
-  get exports(){ return vtPbfExports; },
-  set exports(v){ vtPbfExports = v; },
-};
+var vtPbf$1 = {exports: {}};
 
 'use strict';
 
@@ -31403,13 +32065,17 @@ FeatureWrapper.prototype.bbox = function () {
 
 FeatureWrapper.prototype.toGeoJSON = VectorTileFeature.prototype.toGeoJSON;
 
+var geojson_wrapper$1 = /*@__PURE__*/performance.getDefaultExportFromCjs(geojson_wrapper);
+
+var vtPbf = vtPbf$1.exports;
+
 var Pbf = performance.pbf;
 var GeoJSONWrapper = geojson_wrapper;
 
-vtPbf.exports = fromVectorTileJs;
-var fromVectorTileJs_1 = vtPbfExports.fromVectorTileJs = fromVectorTileJs;
-var fromGeojsonVt_1 = vtPbfExports.fromGeojsonVt = fromGeojsonVt;
-var GeoJSONWrapper_1 = vtPbfExports.GeoJSONWrapper = GeoJSONWrapper;
+vtPbf$1.exports = fromVectorTileJs;
+var fromVectorTileJs_1 = vtPbf$1.exports.fromVectorTileJs = fromVectorTileJs;
+var fromGeojsonVt_1 = vtPbf$1.exports.fromGeojsonVt = fromGeojsonVt;
+var GeoJSONWrapper_1 = vtPbf$1.exports.GeoJSONWrapper = GeoJSONWrapper;
 
 /**
  * Serialize a vector-tile-js-created tile to pbf
@@ -31583,6 +32249,9 @@ function writeValue (value, pbf) {
   }
 }
 
+var vtPbfExports = vtPbf$1.exports;
+var vtpbf = /*@__PURE__*/performance.getDefaultExportFromCjs(vtPbfExports);
+
 const defaultOptions = {
     minZoom: 0,   // min zoom to generate clusters on
     maxZoom: 16,  // max zoom level to cluster the points on
@@ -31604,14 +32273,22 @@ const defaultOptions = {
 
 const fround = Math.fround || (tmp => ((x) => { tmp[0] = +x; return tmp[0]; }))(new Float32Array(1));
 
+const OFFSET_ZOOM = 2;
+const OFFSET_ID = 3;
+const OFFSET_PARENT = 4;
+const OFFSET_NUM = 5;
+const OFFSET_PROP = 6;
+
 class Supercluster {
     constructor(options) {
-        this.options = extend$1(Object.create(defaultOptions), options);
+        this.options = Object.assign(Object.create(defaultOptions), options);
         this.trees = new Array(this.options.maxZoom + 1);
+        this.stride = this.options.reduce ? 7 : 6;
+        this.clusterProps = [];
     }
 
     load(points) {
-        const {log, minZoom, maxZoom, nodeSize} = this.options;
+        const {log, minZoom, maxZoom} = this.options;
 
         if (log) console.time('total time');
 
@@ -31621,12 +32298,26 @@ class Supercluster {
         this.points = points;
 
         // generate a cluster object for each point and index input points into a KD-tree
-        let clusters = [];
+        const data = [];
+
         for (let i = 0; i < points.length; i++) {
-            if (!points[i].geometry) continue;
-            clusters.push(createPointCluster(points[i], i));
+            const p = points[i];
+            if (!p.geometry) continue;
+
+            const [lng, lat] = p.geometry.coordinates;
+            const x = fround(lngX(lng));
+            const y = fround(latY(lat));
+            // store internal point/cluster data in flat numeric arrays for performance
+            data.push(
+                x, y, // projected point coordinates
+                Infinity, // the last zoom the point was processed at
+                i, // index of the source feature in the original input array
+                -1, // parent cluster id
+                1 // number of points in a cluster
+            );
+            if (this.options.reduce) data.push(0); // noop
         }
-        this.trees[maxZoom + 1] = new performance.KDBush(clusters, getX, getY, nodeSize, Float32Array);
+        let tree = this.trees[maxZoom + 1] = this._createTree(data);
 
         if (log) console.timeEnd(timerId);
 
@@ -31636,10 +32327,9 @@ class Supercluster {
             const now = +Date.now();
 
             // create a new set of clusters for the zoom and index them with a KD-tree
-            clusters = this._cluster(clusters, z);
-            this.trees[z] = new performance.KDBush(clusters, getX, getY, nodeSize, Float32Array);
+            tree = this.trees[z] = this._createTree(this._cluster(tree, z));
 
-            if (log) console.log('z%d: %d clusters in %dms', z, clusters.length, +Date.now() - now);
+            if (log) console.log('z%d: %d clusters in %dms', z, tree.numItems, +Date.now() - now);
         }
 
         if (log) console.timeEnd('total time');
@@ -31664,10 +32354,11 @@ class Supercluster {
 
         const tree = this.trees[this._limitZoom(zoom)];
         const ids = tree.range(lngX(minLng), latY(maxLat), lngX(maxLng), latY(minLat));
+        const data = tree.data;
         const clusters = [];
         for (const id of ids) {
-            const c = tree.points[id];
-            clusters.push(c.numPoints ? getClusterJSON(c) : this.points[c.index]);
+            const k = this.stride * id;
+            clusters.push(data[k + OFFSET_NUM] > 1 ? getClusterJSON(data, k, this.clusterProps) : this.points[data[k + OFFSET_ID]]);
         }
         return clusters;
     }
@@ -31677,19 +32368,21 @@ class Supercluster {
         const originZoom = this._getOriginZoom(clusterId);
         const errorMsg = 'No cluster with the specified id.';
 
-        const index = this.trees[originZoom];
-        if (!index) throw new Error(errorMsg);
+        const tree = this.trees[originZoom];
+        if (!tree) throw new Error(errorMsg);
 
-        const origin = index.points[originId];
-        if (!origin) throw new Error(errorMsg);
+        const data = tree.data;
+        if (originId * this.stride >= data.length) throw new Error(errorMsg);
 
         const r = this.options.radius / (this.options.extent * Math.pow(2, originZoom - 1));
-        const ids = index.within(origin.x, origin.y, r);
+        const x = data[originId * this.stride];
+        const y = data[originId * this.stride + 1];
+        const ids = tree.within(x, y, r);
         const children = [];
         for (const id of ids) {
-            const c = index.points[id];
-            if (c.parentId === clusterId) {
-                children.push(c.numPoints ? getClusterJSON(c) : this.points[c.index]);
+            const k = id * this.stride;
+            if (data[k + OFFSET_PARENT] === clusterId) {
+                children.push(data[k + OFFSET_NUM] > 1 ? getClusterJSON(data, k, this.clusterProps) : this.points[data[k + OFFSET_ID]]);
             }
         }
 
@@ -31722,17 +32415,17 @@ class Supercluster {
 
         this._addTileFeatures(
             tree.range((x - p) / z2, top, (x + 1 + p) / z2, bottom),
-            tree.points, x, y, z2, tile);
+            tree.data, x, y, z2, tile);
 
         if (x === 0) {
             this._addTileFeatures(
                 tree.range(1 - p / z2, top, 1, bottom),
-                tree.points, z2, y, z2, tile);
+                tree.data, z2, y, z2, tile);
         }
         if (x === z2 - 1) {
             this._addTileFeatures(
                 tree.range(0, top, p / z2, bottom),
-                tree.points, -1, y, z2, tile);
+                tree.data, -1, y, z2, tile);
         }
 
         return tile.features.length ? tile : null;
@@ -31777,21 +32470,30 @@ class Supercluster {
         return skipped;
     }
 
-    _addTileFeatures(ids, points, x, y, z2, tile) {
+    _createTree(data) {
+        const tree = new performance.KDBush(data.length / this.stride | 0, this.options.nodeSize, Float32Array);
+        for (let i = 0; i < data.length; i += this.stride) tree.add(data[i], data[i + 1]);
+        tree.finish();
+        tree.data = data;
+        return tree;
+    }
+
+    _addTileFeatures(ids, data, x, y, z2, tile) {
         for (const i of ids) {
-            const c = points[i];
-            const isCluster = c.numPoints;
+            const k = i * this.stride;
+            const isCluster = data[k + OFFSET_NUM] > 1;
 
             let tags, px, py;
             if (isCluster) {
-                tags = getClusterProperties(c);
-                px = c.x;
-                py = c.y;
+                tags = getClusterProperties(data, k, this.clusterProps);
+                px = data[k];
+                py = data[k + 1];
             } else {
-                const p = this.points[c.index];
+                const p = this.points[data[k + OFFSET_ID]];
                 tags = p.properties;
-                px = lngX(p.geometry.coordinates[0]);
-                py = latY(p.geometry.coordinates[1]);
+                const [lng, lat] = p.geometry.coordinates;
+                px = lngX(lng);
+                py = latY(lat);
             }
 
             const f = {
@@ -31805,14 +32507,12 @@ class Supercluster {
 
             // assign id
             let id;
-            if (isCluster) {
-                id = c.id;
-            } else if (this.options.generateId) {
-                // optionally generate id
-                id = c.index;
-            } else if (this.points[c.index].id) {
+            if (isCluster || this.options.generateId) {
+                // optionally generate id for points
+                id = data[k + OFFSET_ID];
+            } else {
                 // keep id if already assigned
-                id = this.points[c.index].id;
+                id = this.points[data[k + OFFSET_ID]].id;
             }
 
             if (id !== undefined) f.id = id;
@@ -31825,78 +32525,86 @@ class Supercluster {
         return Math.max(this.options.minZoom, Math.min(Math.floor(+z), this.options.maxZoom + 1));
     }
 
-    _cluster(points, zoom) {
-        const clusters = [];
+    _cluster(tree, zoom) {
         const {radius, extent, reduce, minPoints} = this.options;
         const r = radius / (extent * Math.pow(2, zoom));
+        const data = tree.data;
+        const nextData = [];
+        const stride = this.stride;
 
         // loop through each point
-        for (let i = 0; i < points.length; i++) {
-            const p = points[i];
+        for (let i = 0; i < data.length; i += stride) {
             // if we've already visited the point at this zoom level, skip it
-            if (p.zoom <= zoom) continue;
-            p.zoom = zoom;
+            if (data[i + OFFSET_ZOOM] <= zoom) continue;
+            data[i + OFFSET_ZOOM] = zoom;
 
             // find all nearby points
-            const tree = this.trees[zoom + 1];
-            const neighborIds = tree.within(p.x, p.y, r);
+            const x = data[i];
+            const y = data[i + 1];
+            const neighborIds = tree.within(data[i], data[i + 1], r);
 
-            const numPointsOrigin = p.numPoints || 1;
+            const numPointsOrigin = data[i + OFFSET_NUM];
             let numPoints = numPointsOrigin;
 
             // count the number of points in a potential cluster
             for (const neighborId of neighborIds) {
-                const b = tree.points[neighborId];
+                const k = neighborId * stride;
                 // filter out neighbors that are already processed
-                if (b.zoom > zoom) numPoints += b.numPoints || 1;
+                if (data[k + OFFSET_ZOOM] > zoom) numPoints += data[k + OFFSET_NUM];
             }
 
             // if there were neighbors to merge, and there are enough points to form a cluster
             if (numPoints > numPointsOrigin && numPoints >= minPoints) {
-                let wx = p.x * numPointsOrigin;
-                let wy = p.y * numPointsOrigin;
+                let wx = x * numPointsOrigin;
+                let wy = y * numPointsOrigin;
 
-                let clusterProperties = reduce && numPointsOrigin > 1 ? this._map(p, true) : null;
+                let clusterProperties;
+                let clusterPropIndex = -1;
 
                 // encode both zoom and point index on which the cluster originated -- offset by total length of features
-                const id = (i << 5) + (zoom + 1) + this.points.length;
+                const id = ((i / stride | 0) << 5) + (zoom + 1) + this.points.length;
 
                 for (const neighborId of neighborIds) {
-                    const b = tree.points[neighborId];
+                    const k = neighborId * stride;
 
-                    if (b.zoom <= zoom) continue;
-                    b.zoom = zoom; // save the zoom (so it doesn't get processed twice)
+                    if (data[k + OFFSET_ZOOM] <= zoom) continue;
+                    data[k + OFFSET_ZOOM] = zoom; // save the zoom (so it doesn't get processed twice)
 
-                    const numPoints2 = b.numPoints || 1;
-                    wx += b.x * numPoints2; // accumulate coordinates for calculating weighted center
-                    wy += b.y * numPoints2;
+                    const numPoints2 = data[k + OFFSET_NUM];
+                    wx += data[k] * numPoints2; // accumulate coordinates for calculating weighted center
+                    wy += data[k + 1] * numPoints2;
 
-                    b.parentId = id;
+                    data[k + OFFSET_PARENT] = id;
 
                     if (reduce) {
-                        if (!clusterProperties) clusterProperties = this._map(p, true);
-                        reduce(clusterProperties, this._map(b));
+                        if (!clusterProperties) {
+                            clusterProperties = this._map(data, i, true);
+                            clusterPropIndex = this.clusterProps.length;
+                            this.clusterProps.push(clusterProperties);
+                        }
+                        reduce(clusterProperties, this._map(data, k));
                     }
                 }
 
-                p.parentId = id;
-                clusters.push(createCluster(wx / numPoints, wy / numPoints, id, numPoints, clusterProperties));
+                data[i + OFFSET_PARENT] = id;
+                nextData.push(wx / numPoints, wy / numPoints, Infinity, id, -1, numPoints);
+                if (reduce) nextData.push(clusterPropIndex);
 
             } else { // left points as unclustered
-                clusters.push(p);
+                for (let j = 0; j < stride; j++) nextData.push(data[i + j]);
 
                 if (numPoints > 1) {
                     for (const neighborId of neighborIds) {
-                        const b = tree.points[neighborId];
-                        if (b.zoom <= zoom) continue;
-                        b.zoom = zoom;
-                        clusters.push(b);
+                        const k = neighborId * stride;
+                        if (data[k + OFFSET_ZOOM] <= zoom) continue;
+                        data[k + OFFSET_ZOOM] = zoom;
+                        for (let j = 0; j < stride; j++) nextData.push(data[k + j]);
                     }
                 }
             }
         }
 
-        return clusters;
+        return nextData;
     }
 
     // get index of the point from which the cluster originated
@@ -31909,59 +32617,39 @@ class Supercluster {
         return (clusterId - this.points.length) % 32;
     }
 
-    _map(point, clone) {
-        if (point.numPoints) {
-            return clone ? extend$1({}, point.properties) : point.properties;
+    _map(data, i, clone) {
+        if (data[i + OFFSET_NUM] > 1) {
+            const props = this.clusterProps[data[i + OFFSET_PROP]];
+            return clone ? Object.assign({}, props) : props;
         }
-        const original = this.points[point.index].properties;
+        const original = this.points[data[i + OFFSET_ID]].properties;
         const result = this.options.map(original);
-        return clone && result === original ? extend$1({}, result) : result;
+        return clone && result === original ? Object.assign({}, result) : result;
     }
 }
 
-function createCluster(x, y, id, numPoints, properties) {
-    return {
-        x: fround(x), // weighted cluster center; round for consistency with Float32Array index
-        y: fround(y),
-        zoom: Infinity, // the last zoom the cluster was processed at
-        id, // encodes index of the first child of the cluster and its zoom level
-        parentId: -1, // parent cluster id
-        numPoints,
-        properties
-    };
-}
-
-function createPointCluster(p, id) {
-    const [x, y] = p.geometry.coordinates;
-    return {
-        x: fround(lngX(x)), // projected point coordinates
-        y: fround(latY(y)),
-        zoom: Infinity, // the last zoom the point was processed at
-        index: id, // index of the source feature in the original input array,
-        parentId: -1 // parent cluster id
-    };
-}
-
-function getClusterJSON(cluster) {
+function getClusterJSON(data, i, clusterProps) {
     return {
         type: 'Feature',
-        id: cluster.id,
-        properties: getClusterProperties(cluster),
+        id: data[i + OFFSET_ID],
+        properties: getClusterProperties(data, i, clusterProps),
         geometry: {
             type: 'Point',
-            coordinates: [xLng(cluster.x), yLat(cluster.y)]
+            coordinates: [xLng(data[i]), yLat(data[i + 1])]
         }
     };
 }
 
-function getClusterProperties(cluster) {
-    const count = cluster.numPoints;
+function getClusterProperties(data, i, clusterProps) {
+    const count = data[i + OFFSET_NUM];
     const abbrev =
         count >= 10000 ? `${Math.round(count / 1000)  }k` :
         count >= 1000 ? `${Math.round(count / 100) / 10  }k` : count;
-    return extend$1(extend$1({}, cluster.properties), {
+    const propIndex = data[i + OFFSET_PROP];
+    const properties = propIndex === -1 ? {} : Object.assign({}, clusterProps[propIndex]);
+    return Object.assign(properties, {
         cluster: true,
-        cluster_id: cluster.id,
+        cluster_id: data[i + OFFSET_ID],
         point_count: count,
         point_count_abbreviated: abbrev
     });
@@ -31984,18 +32672,6 @@ function xLng(x) {
 function yLat(y) {
     const y2 = (180 - y * 360) * Math.PI / 180;
     return 360 * Math.atan(Math.exp(y2)) / Math.PI - 90;
-}
-
-function extend$1(dest, src) {
-    for (const id in src) dest[id] = src[id];
-    return dest;
-}
-
-function getX(p) {
-    return p.x;
-}
-function getY(p) {
-    return p.y;
 }
 
 // calculate simplification data using optimized Douglas-Peucker algorithm
@@ -32999,7 +33675,7 @@ function loadGeoJSONTile(params, callback) {
     // Encode the geojson-vt tile into binary vector tile form.  This
     // is a convenience that allows `FeatureIndex` to operate the same way
     // across `VectorTileSource` and `GeoJSONSource` data.
-    let pbf = vtPbfExports(geojsonWrapper);
+    let pbf = vtpbf(geojsonWrapper);
     if (pbf.byteOffset !== 0 || pbf.byteLength !== pbf.buffer.byteLength) {
         // Compatibility with node Buffer (https://github.com/mapbox/pbf/issues/35)
         pbf = new Uint8Array(pbf);
@@ -33016,15 +33692,12 @@ function loadGeoJSONTile(params, callback) {
  * representation.  To do so, create it with
  * `new GeoJSONWorkerSource(actor, layerIndex, customLoadGeoJSONFunction)`.
  * For a full example, see [mapbox-gl-topojson](https://github.com/developmentseed/mapbox-gl-topojson).
- *
- * @private
  */
 class GeoJSONWorkerSource extends VectorTileWorkerSource {
     /**
-     * @param [loadGeoJSON] Optional method for custom loading/parsing of
+     * @param loadGeoJSON - Optional method for custom loading/parsing of
      * GeoJSON based on parameters passed from the main-thread Source.
      * See {@link GeoJSONWorkerSource#loadGeoJSON}.
-     * @private
      */
     constructor(actor, layerIndex, availableImages, loadGeoJSON) {
         super(actor, layerIndex, availableImages, loadGeoJSONTile);
@@ -33036,11 +33709,9 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
          * GeoJSON is loaded and parsed from `params.url` if it exists, or else
          * expected as a literal (string or object) `params.data`.
          *
-         * @param params
-         * @param [params.url] A URL to the remote GeoJSON data.
-         * @param [params.data] Literal GeoJSON data. Must be provided if `params.url` is not.
-         * @returns {Cancelable} A Cancelable object.
-         * @private
+         * @param params - the parameters
+         * @param callback - the callback for completion or error
+         * @returns A Cancelable object.
          */
         this.loadGeoJSON = (params, callback) => {
             const { promoteId } = params;
@@ -33094,9 +33765,8 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
      * When a `loadData` request comes in while a previous one is being processed,
      * the previous one is aborted.
      *
-     * @param params
-     * @param callback
-     * @private
+     * @param params - the parameters
+     * @param callback - the callback for completion or error
      */
     loadData(params, callback) {
         var _a;
@@ -33118,7 +33788,7 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
                 return callback(new Error(`Input data given to '${params.source}' is not a valid GeoJSON object.`));
             }
             else {
-                geojsonRewind(data, true);
+                rewind$2(data, true);
                 try {
                     if (params.filter) {
                         const compiled = performance.createExpression(params.filter, { type: 'boolean', 'property-type': 'data-driven', overridable: false, transition: false });
@@ -33155,9 +33825,8 @@ class GeoJSONWorkerSource extends VectorTileWorkerSource {
     * If the tile is loaded, uses the implementation in VectorTileWorkerSource.
     * Otherwise, such as after a setData() call, we load the tile fresh.
     *
-    * @param params
-    * @param params.uid The UID for this tile.
-    * @private
+    * @param params - the parameters
+    * @param callback - the callback for completion or error
     */
     reloadTile(params, callback) {
         const loaded = this.loaded, uid = params.uid;
@@ -33234,7 +33903,7 @@ function getSuperclusterOptions({ superclusterOptions, clusterProperties }) {
 }
 
 /**
- * @private
+ * The Worker class responsidble for background thread related execution
  */
 class Worker {
     constructor(self) {
@@ -33323,7 +33992,6 @@ class Worker {
      * Load a {@link WorkerSource} script at params.url.  The script is run
      * (using importScripts) with `registerWorkerSource` in scope, which is a
      * function taking `(name, workerSourceObject)`.
-     *  @private
      */
     loadWorkerSource(map, params, callback) {
         try {
@@ -33402,196 +34070,9 @@ return Worker;
 
 define(['./shared'], (function (performance) { 'use strict';
 
-var mapboxGlSupported = {};
-
-'use strict';
-
-var supported = mapboxGlSupported.supported = isSupported;
-var notSupportedReason_1 = mapboxGlSupported.notSupportedReason = notSupportedReason;
-
-/**
- * Test whether the current browser supports Mapbox GL JS
- * @param {Object} options
- * @param {boolean} [options.failIfMajorPerformanceCaveat=false] Return `false`
- *   if the performance of Mapbox GL JS would be dramatically worse than
- *   expected (i.e. a software renderer is would be used)
- * @return {boolean}
- */
-function isSupported(options) {
-    return !notSupportedReason(options);
-}
-
-function notSupportedReason(options) {
-    if (!isBrowser()) return 'not a browser';
-    if (!isArraySupported()) return 'insufficent Array support';
-    if (!isFunctionSupported()) return 'insufficient Function support';
-    if (!isObjectSupported()) return 'insufficient Object support';
-    if (!isJSONSupported()) return 'insufficient JSON support';
-    if (!isWorkerSupported()) return 'insufficient worker support';
-    if (!isUint8ClampedArraySupported()) return 'insufficient Uint8ClampedArray support';
-    if (!isArrayBufferSupported()) return 'insufficient ArrayBuffer support';
-    if (!isCanvasGetImageDataSupported()) return 'insufficient Canvas/getImageData support';
-    if (!isWebGLSupportedCached(options && options.failIfMajorPerformanceCaveat)) return 'insufficient WebGL support';
-    if (!isNotIE()) return 'insufficient ECMAScript 6 support';
-}
-
-function isBrowser() {
-    return typeof window !== 'undefined' && typeof document !== 'undefined';
-}
-
-function isArraySupported() {
-    return (
-        Array.prototype &&
-        Array.prototype.every &&
-        Array.prototype.filter &&
-        Array.prototype.forEach &&
-        Array.prototype.indexOf &&
-        Array.prototype.lastIndexOf &&
-        Array.prototype.map &&
-        Array.prototype.some &&
-        Array.prototype.reduce &&
-        Array.prototype.reduceRight &&
-        Array.isArray
-    );
-}
-
-function isFunctionSupported() {
-    return Function.prototype && Function.prototype.bind;
-}
-
-function isObjectSupported() {
-    return (
-        Object.keys &&
-        Object.create &&
-        Object.getPrototypeOf &&
-        Object.getOwnPropertyNames &&
-        Object.isSealed &&
-        Object.isFrozen &&
-        Object.isExtensible &&
-        Object.getOwnPropertyDescriptor &&
-        Object.defineProperty &&
-        Object.defineProperties &&
-        Object.seal &&
-        Object.freeze &&
-        Object.preventExtensions
-    );
-}
-
-function isJSONSupported() {
-    return 'JSON' in window && 'parse' in JSON && 'stringify' in JSON;
-}
-
-function isWorkerSupported() {
-    if (!('Worker' in window && 'Blob' in window && 'URL' in window)) {
-        return false;
-    }
-
-    var blob = new Blob([''], { type: 'text/javascript' });
-    var workerURL = URL.createObjectURL(blob);
-    var supported;
-    var worker;
-
-    try {
-        worker = new Worker(workerURL);
-        supported = true;
-    } catch (e) {
-        supported = false;
-    }
-
-    if (worker) {
-        worker.terminate();
-    }
-    URL.revokeObjectURL(workerURL);
-
-    return supported;
-}
-
-// IE11 only supports `Uint8ClampedArray` as of version
-// [KB2929437](https://support.microsoft.com/en-us/kb/2929437)
-function isUint8ClampedArraySupported() {
-    return 'Uint8ClampedArray' in window;
-}
-
-// https://github.com/mapbox/mapbox-gl-supported/issues/19
-function isArrayBufferSupported() {
-    return ArrayBuffer.isView;
-}
-
-// Some browsers or browser extensions block access to canvas data to prevent fingerprinting.
-// Mapbox GL uses this API to load sprites and images in general.
-function isCanvasGetImageDataSupported() {
-    var canvas = document.createElement('canvas');
-    canvas.width = canvas.height = 1;
-    var context = canvas.getContext('2d');
-    if (!context) {
-        return false;
-    }
-    var imageData = context.getImageData(0, 0, 1, 1);
-    return imageData && imageData.width === canvas.width;
-}
-
-var isWebGLSupportedCache = {};
-function isWebGLSupportedCached(failIfMajorPerformanceCaveat) {
-
-    if (isWebGLSupportedCache[failIfMajorPerformanceCaveat] === undefined) {
-        isWebGLSupportedCache[failIfMajorPerformanceCaveat] = isWebGLSupported(failIfMajorPerformanceCaveat);
-    }
-
-    return isWebGLSupportedCache[failIfMajorPerformanceCaveat];
-}
-
-isSupported.webGLContextAttributes = {
-    antialias: false,
-    alpha: true,
-    stencil: true,
-    depth: true
-};
-
-function getWebGLContext(failIfMajorPerformanceCaveat) {
-    var canvas = document.createElement('canvas');
-
-    var attributes = Object.create(isSupported.webGLContextAttributes);
-    attributes.failIfMajorPerformanceCaveat = failIfMajorPerformanceCaveat;
-
-    return (
-        canvas.getContext('webgl', attributes) ||
-        canvas.getContext('experimental-webgl', attributes)
-    );
-}
-
-function isWebGLSupported(failIfMajorPerformanceCaveat) {
-    var gl = getWebGLContext(failIfMajorPerformanceCaveat);
-    if (!gl) {
-        return false;
-    }
-
-    // Try compiling a shader and get its compile status. Some browsers like Brave block this API
-    // to prevent fingerprinting. Unfortunately, this also means that Mapbox GL won't work.
-    var shader;
-    try {
-        shader = gl.createShader(gl.VERTEX_SHADER);
-    } catch (e) {
-        // some older browsers throw an exception that `createShader` is not defined
-        // so handle this separately from the case where browsers block `createShader`
-        // for security reasons
-        return false;
-    }
-
-    if (!shader || gl.isContextLost()) {
-        return false;
-    }
-    gl.shaderSource(shader, 'void main() {}');
-    gl.compileShader(shader);
-    return gl.getShaderParameter(shader, gl.COMPILE_STATUS) === true;
-}
-
-function isNotIE() {
-    return !document.documentMode;
-}
-
 var name = "maplibre-gl";
 var description = "BSD licensed community fork of mapbox-gl, a WebGL interactive maps library";
-var version$2 = "3.0.0-pre.4";
+var version$2 = "3.3.1";
 var main = "dist/maplibre-gl.js";
 var style = "dist/maplibre-gl.css";
 var license = "BSD-3-Clause";
@@ -33605,90 +34086,88 @@ var type = "module";
 var dependencies = {
 	"@mapbox/geojson-rewind": "^0.5.2",
 	"@mapbox/jsonlint-lines-primitives": "^2.0.2",
-	"@mapbox/mapbox-gl-supported": "^2.0.1",
 	"@mapbox/point-geometry": "^0.1.0",
 	"@mapbox/tiny-sdf": "^2.0.6",
 	"@mapbox/unitbezier": "^0.0.1",
 	"@mapbox/vector-tile": "^1.3.1",
 	"@mapbox/whoots-js": "^3.1.0",
-	"@maplibre/maplibre-gl-style-spec": "^18.0.1",
+	"@maplibre/maplibre-gl-style-spec": "felt/maplibre-style-spec#ib/raster-dem-encoding-properties",
 	"@types/geojson": "^7946.0.10",
-	"@types/kdbush": "^3.0.2",
 	"@types/mapbox__point-geometry": "^0.1.2",
 	"@types/mapbox__vector-tile": "^1.3.0",
 	"@types/pbf": "^3.0.2",
-	csscolorparser: "~1.0.3",
+	"@types/supercluster": "^7.1.0",
 	earcut: "^2.2.4",
 	"geojson-vt": "^3.2.1",
 	"gl-matrix": "^3.4.3",
 	"global-prefix": "^3.0.0",
-	kdbush: "3.0.0",
+	kdbush: "^4.0.2",
 	"murmurhash-js": "^1.0.0",
 	pbf: "^3.2.1",
 	potpack: "^2.0.0",
 	quickselect: "^2.0.0",
-	supercluster: "^7.1.5",
+	supercluster: "^8.0.1",
 	tinyqueue: "^2.0.3",
 	"vt-pbf": "^3.1.3"
 };
 var devDependencies = {
 	"@mapbox/mapbox-gl-rtl-text": "^0.2.3",
 	"@mapbox/mvt-fixtures": "^3.10.0",
-	"@rollup/plugin-commonjs": "^24.0.1",
+	"@rollup/plugin-commonjs": "^25.0.4",
 	"@rollup/plugin-json": "^6.0.0",
-	"@rollup/plugin-node-resolve": "^15.0.1",
+	"@rollup/plugin-node-resolve": "^15.2.1",
 	"@rollup/plugin-replace": "^5.0.2",
 	"@rollup/plugin-strip": "^3.0.2",
-	"@rollup/plugin-terser": "^0.4.0",
-	"@rollup/plugin-typescript": "^11.0.0",
+	"@rollup/plugin-terser": "^0.4.3",
+	"@rollup/plugin-typescript": "^11.1.3",
 	"@types/benchmark": "^2.1.2",
 	"@types/cssnano": "^5.0.0",
 	"@types/d3": "^7.4.0",
-	"@types/diff": "^5.0.2",
+	"@types/diff": "^5.0.3",
 	"@types/earcut": "^2.1.1",
-	"@types/eslint": "^8.21.1",
+	"@types/eslint": "^8.44.2",
 	"@types/gl": "^6.0.2",
 	"@types/glob": "^8.1.0",
-	"@types/jest": "^29.4.0",
-	"@types/jsdom": "^21.1.0",
+	"@types/jest": "^29.5.3",
+	"@types/jsdom": "^21.1.2",
 	"@types/minimist": "^1.2.2",
-	"@types/murmurhash-js": "^1.0.3",
+	"@types/murmurhash-js": "^1.0.4",
 	"@types/nise": "^1.4.1",
-	"@types/node": "^18.14.2",
-	"@types/offscreencanvas": "^2019.7.0",
+	"@types/node": "^20.5.9",
+	"@types/offscreencanvas": "^2019.7.1",
 	"@types/pixelmatch": "^5.2.4",
 	"@types/pngjs": "^6.0.1",
-	"@types/react": "^18.0.28",
-	"@types/react-dom": "^18.0.11",
+	"@types/react": "^18.2.21",
+	"@types/react-dom": "^18.2.7",
 	"@types/request": "^2.48.8",
 	"@types/shuffle-seed": "^1.1.0",
-	"@types/supercluster": "^7.1.0",
 	"@types/window-or-global": "^1.0.4",
-	"@typescript-eslint/eslint-plugin": "^5.53.0",
-	"@typescript-eslint/parser": "^5.53.0",
+	"@typescript-eslint/eslint-plugin": "^6.6.0",
+	"@typescript-eslint/parser": "^6.6.0",
 	address: "^1.2.2",
 	benchmark: "^2.1.4",
-	canvas: "^2.10.2",
-	cssnano: "^5.1.15",
-	d3: "^7.8.1",
+	canvas: "^2.11.2",
+	cssnano: "^6.0.1",
+	d3: "^7.8.5",
 	"d3-queue": "^3.0.7",
+	"devtools-protocol": "^0.0.1193409",
 	diff: "^5.1.0",
-	documentation: "14.0.1",
-	"dts-bundle-generator": "^7.2.0",
-	eslint: "^8.35.0",
+	"dts-bundle-generator": "^8.0.1",
+	eslint: "^8.49.0",
 	"eslint-config-mourner": "^3.0.0",
 	"eslint-plugin-html": "^7.1.0",
-	"eslint-plugin-import": "^2.27.4",
-	"eslint-plugin-jest": "^27.2.1",
-	"eslint-plugin-jsdoc": "^39.6.4",
-	"eslint-plugin-react": "^7.32.2",
+	"eslint-plugin-import": "^2.28.1",
+	"eslint-plugin-jest": "^27.2.3",
+	"eslint-plugin-react": "^7.33.2",
+	"eslint-plugin-tsdoc": "0.2.17",
+	expect: "^29.6.4",
 	gl: "^6.0.2",
-	glob: "^8.1.0",
+	glob: "^10.3.4",
 	"is-builtin-module": "^3.2.1",
-	jest: "^29.4.3",
-	"jest-canvas-mock": "^2.4.0",
-	"jest-environment-jsdom": "^29.4.3",
-	jsdom: "^21.1.0",
+	jest: "^29.6.2",
+	"jest-canvas-mock": "^2.5.2",
+	"jest-environment-jsdom": "^29.6.2",
+	jsdom: "^22.1.0",
 	"json-stringify-pretty-compact": "^4.0.0",
 	minimist: "^1.2.8",
 	"mock-geolocation": "^1.0.11",
@@ -33696,28 +34175,32 @@ var devDependencies = {
 	"node-plantuml": "^0.9.0",
 	"npm-font-open-sans": "^1.1.0",
 	"npm-run-all": "^4.1.5",
-	"pdf-merger-js": "^4.2.0",
+	"pdf-merger-js": "^4.3.0",
 	pixelmatch: "^5.3.0",
-	playwright: "^1.31.2",
 	pngjs: "^7.0.0",
-	postcss: "^8.4.21",
+	postcss: "^8.4.29",
 	"postcss-cli": "^10.1.0",
 	"postcss-inline-svg": "^6.0.0",
-	"pretty-bytes": "^6.1.0",
+	"pretty-bytes": "^6.1.1",
+	puppeteer: "^21.1.1",
 	react: "^18.2.0",
 	"react-dom": "^18.2.0",
-	rollup: "^3.17.3",
+	rollup: "^3.29.1",
 	"rollup-plugin-sourcemaps": "^0.6.3",
 	rw: "^1.3.3",
-	semver: "^7.3.8",
+	semver: "^7.5.4",
 	"shuffle-seed": "^1.1.6",
 	"source-map-explorer": "^2.5.3",
 	st: "^3.0.0",
-	stylelint: "^15.2.0",
-	"stylelint-config-standard": "^30.0.1",
-	"ts-jest": "^29.0.5",
+	stylelint: "^15.10.3",
+	"stylelint-config-standard": "^34.0.0",
+	"ts-jest": "^29.1.1",
 	"ts-node": "^10.9.1",
-	typescript: "^4.9.5"
+	tslib: "^2.6.2",
+	typedoc: "^0.25.1",
+	"typedoc-plugin-markdown": "^3.16.0",
+	"typedoc-plugin-missing-exports": "^2.1.0",
+	typescript: "^5.2.2"
 };
 var overrides = {
 	"postcss-inline-svg": {
@@ -33728,12 +34211,14 @@ var overrides = {
 	}
 };
 var scripts = {
-	"generate-dist-package": "ts-node build/generate-dist-package",
-	"generate-shaders": "ts-node build/generate-shaders.ts",
-	"generate-struct-arrays": "ts-node build/generate-struct-arrays.ts",
-	"generate-style-code": "ts-node build/generate-style-code.ts",
-	"generate-typings": "ts-node build/generate-typings.ts",
-	"build-dist": "npm run generate-typings && npm run build-dev && npm run build-prod && npm run build-csp && npm run build-csp-dev && npm run build-css",
+	"generate-dist-package": "npm run tsnode build/generate-dist-package.js",
+	"generate-shaders": "npm run tsnode build/generate-shaders.ts",
+	"generate-struct-arrays": "npm run tsnode build/generate-struct-arrays.ts",
+	"generate-style-code": "npm run tsnode build/generate-style-code.ts",
+	"generate-typings": "npm run tsnode build/generate-typings.ts",
+	"generate-docs": "typedoc && npm run tsnode build/generate-docs.ts",
+	"generate-images": "npm run tsnode build/generate-doc-images.ts",
+	"build-dist": "run-p --print-label generate-typings build-dev build-prod build-csp build-csp-dev build-css",
 	"build-dev": "rollup --configPlugin @rollup/plugin-typescript -c --environment BUILD:dev",
 	"watch-dev": "rollup --configPlugin @rollup/plugin-typescript -c --environment BUILD:dev --watch",
 	"build-prod": "rollup --configPlugin @rollup/plugin-typescript -c --environment BUILD:production",
@@ -33745,24 +34230,25 @@ var scripts = {
 	"build-benchmarks": "npm run build-dev && rollup --configPlugin @rollup/plugin-typescript -c test/bench/rollup_config_benchmarks.ts",
 	"watch-benchmarks": "rollup --configPlugin @rollup/plugin-typescript -c test/bench/rollup_config_benchmarks.ts --watch",
 	"start-server": "st --no-cache -H 0.0.0.0 --port 9966 .",
+	"start-docs": "docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material",
 	start: "run-p watch-css watch-dev start-server",
 	"start-bench": "run-p watch-css watch-benchmarks start-server",
 	lint: "eslint --cache --ext .ts,.tsx,.js,.html --ignore-path .gitignore .",
-	"lint-docs": "documentation lint src/index.ts",
 	"lint-css": "stylelint src/css/maplibre-gl.css",
-	test: "run-p lint lint-css lint-docs test-render jest",
+	test: "run-p lint lint-css test-render jest",
 	jest: "jest",
 	"jest-ci": "jest --reporters=github-actions --reporters=summary",
 	"test-build": "jest --selectProjects=build",
 	"test-integration": "jest --selectProjects=integration",
-	"test-render": "ts-node test/integration/render/run_render_tests.ts",
+	"test-render": "npm run tsnode test/integration/render/run_render_tests.ts",
 	"test-unit": "jest --selectProjects=unit",
 	"test-watch-roots": "jest --watch",
-	codegen: "npm run generate-style-code && npm run generate-struct-arrays && npm run generate-shaders",
-	benchmark: "ts-node test/bench/run-benchmarks.ts",
-	"gl-stats": "ts-node test/bench/gl-stats.ts",
-	prepare: "npm run generate-dist-package && npm run codegen",
-	typecheck: "tsc --noEmit"
+	codegen: "run-p generate-dist-package generate-style-code generate-struct-arrays generate-shaders",
+	benchmark: "npm run tsnode test/bench/run-benchmarks.ts",
+	"gl-stats": "npm run tsnode test/bench/gl-stats.ts",
+	prepare: "npm run codegen",
+	typecheck: "tsc --noEmit && tsc --project tsconfig.dist.json",
+	tsnode: "node --experimental-loader=ts-node/esm --no-warnings"
 };
 var files = [
 	"build/",
@@ -33859,13 +34345,13 @@ class DOM {
     }
     static mousePos(el, e) {
         const rect = el.getBoundingClientRect();
-        return new performance.pointGeometry(e.clientX - rect.left - el.clientLeft, e.clientY - rect.top - el.clientTop);
+        return new performance.Point(e.clientX - rect.left - el.clientLeft, e.clientY - rect.top - el.clientTop);
     }
     static touchPos(el, touches) {
         const rect = el.getBoundingClientRect();
         const points = [];
         for (let i = 0; i < touches.length; i++) {
-            points.push(new performance.pointGeometry(touches[i].clientX - rect.left - el.clientLeft, touches[i].clientY - rect.top - el.clientTop));
+            points.push(new performance.Point(touches[i].clientX - rect.left - el.clientLeft, touches[i].clientY - rect.top - el.clientTop));
         }
         return points;
     }
@@ -33882,7 +34368,7 @@ DOM.docStyle = typeof window !== 'undefined' && window.document && window.docume
 DOM.selectProp = DOM.testProp(['userSelect', 'MozUserSelect', 'WebkitUserSelect', 'msUserSelect']);
 DOM.transformProp = DOM.testProp(['transform', 'WebkitTransform']);
 
-const exported$1 = {
+const webpSupported = {
     supported: false,
     testSupport
 };
@@ -33931,7 +34417,7 @@ function testWebpTextureUpload(gl) {
         // The error does not get triggered in Edge if the context is lost
         if (gl.isContextLost())
             return;
-        exported$1.supported = true;
+        webpSupported.supported = true;
     }
     catch (e) {
         // Catch "Unspecified Error." in Edge 18.
@@ -33973,8 +34459,8 @@ var ImageRequest;
     /**
      * Install a callback to control when image queue throttling is desired.
      * (e.g. when the map view is moving)
-     * @param {ImageQueueThrottleControlCallback} callback The callback function to install
-     * @returns {number} handle that identifies the installed callback.
+     * @param callback - The callback function to install
+     * @returns handle that identifies the installed callback.
      */
     ImageRequest.addThrottleControl = (callback) => {
         const handle = throttleControlCallbackHandleCounter++;
@@ -33984,15 +34470,17 @@ var ImageRequest;
     /**
      * Remove a previously installed callback by passing in the handle returned
      * by {@link addThrottleControl}.
-     * @param {number} callbackHandle The handle for the callback to remove.
+     * @param callbackHandle - The handle for the callback to remove.
      */
     ImageRequest.removeThrottleControl = (callbackHandle) => {
         delete throttleControlCallbacks[callbackHandle];
+        // Try updating the queue
+        processQueue();
     };
     /**
      * Check to see if any of the installed callbacks are requesting the queue
      * to be throttled.
-     * @returns {boolean} true if any callback is causing the queue to be throttled.
+     * @returns `true` if any callback is causing the queue to be throttled.
      */
     const isThrottled = () => {
         const allControlKeys = Object.keys(throttleControlCallbacks);
@@ -34009,30 +34497,40 @@ var ImageRequest;
     };
     /**
      * Request to load an image.
-     * @param {RequestParameters} requestParameters Request parameters.
-     * @param {GetImageCallback} callback Callback to issue when the request completes.
-     * @returns {Cancelable} Cancelable request.
+     * @param requestParameters - Request parameters.
+     * @param callback - Callback to issue when the request completes.
+     * @param supportImageRefresh - `true`, if the image request need to support refresh based on cache headers.
+     * @returns Cancelable request.
      */
-    ImageRequest.getImage = (requestParameters, callback) => {
-        if (exported$1.supported) {
+    ImageRequest.getImage = (requestParameters, callback, supportImageRefresh = true) => {
+        if (webpSupported.supported) {
             if (!requestParameters.headers) {
                 requestParameters.headers = {};
             }
             requestParameters.headers.accept = 'image/webp,*/*';
         }
-        const queued = {
+        const request = {
             requestParameters,
+            supportImageRefresh,
             callback,
             cancelled: false,
             completed: false,
-            // Just a place holder. The real one will be assigned during processQueue()
-            cancel: () => { }
+            cancel: () => {
+                if (!request.completed && !request.cancelled) {
+                    request.cancelled = true;
+                    // Only reduce currentParallelImageRequests, if the image request was issued.
+                    if (request.innerRequest) {
+                        request.innerRequest.cancel();
+                        currentParallelImageRequests--;
+                    }
+                    // in the case of cancelling, it WILL move on
+                    processQueue();
+                }
+            }
         };
-        imageRequestQueue.push(queued);
-        if (!isThrottled()) {
-            ImageRequest.processQueue();
-        }
-        return queued;
+        imageRequestQueue.push(request);
+        processQueue();
+        return request;
     };
     const arrayBufferToCanvasImageSource = (data, callback) => {
         const imageBitmapSupported = typeof createImageBitmap === 'function';
@@ -34043,68 +34541,106 @@ var ImageRequest;
             performance.arrayBufferToImage(data, callback);
         }
     };
-    const doArrayRequest = (itemInQueue) => {
-        const { requestParameters, callback } = itemInQueue;
-        // request the image with XHR to work around caching issues
-        // see https://github.com/mapbox/mapbox-gl-js/issues/1470
-        return performance.getArrayBuffer(requestParameters, (err, data, cacheControl, expires) => {
-            if (err) {
-                callback(err);
-            }
-            else if (data) {
-                const decoratedCallback = (imgErr, imgResult) => {
-                    if (imgErr != null) {
-                        callback(imgErr);
-                    }
-                    else if (imgResult != null) {
-                        callback(null, imgResult, { cacheControl, expires });
-                    }
-                };
-                arrayBufferToCanvasImageSource(data, decoratedCallback);
-            }
-            if (!itemInQueue.cancelled) {
-                itemInQueue.completed = true;
-                currentParallelImageRequests--;
-                if (!isThrottled()) {
-                    ImageRequest.processQueue();
-                }
-            }
+    const doImageRequest = (itemInQueue) => {
+        const { requestParameters, supportImageRefresh, callback } = itemInQueue;
+        performance.extend(requestParameters, { type: 'image' });
+        // - If refreshExpiredTiles is false, then we can use HTMLImageElement to download raster images.
+        // - Fetch/XHR (via MakeRequest API) will be used to download images for following scenarios:
+        //      1. Style image sprite will had a issue with HTMLImageElement as described
+        //          here: https://github.com/mapbox/mapbox-gl-js/issues/1470
+        //      2. If refreshExpiredTiles is true (default), then in order to read the image cache header,
+        //          fetch/XHR request will be required
+        // - For any special case handling like use of AddProtocol, worker initiated request or additional headers
+        //      let makeRequest handle it.
+        // - HtmlImageElement request automatically adds accept header for all the browser supported images
+        const canUseHTMLImageElement = supportImageRefresh === false &&
+            !performance.isWorker() &&
+            !performance.getProtocolAction(requestParameters.url) &&
+            (!requestParameters.headers ||
+                Object.keys(requestParameters.headers).reduce((acc, item) => acc && item === 'accept', true));
+        const action = canUseHTMLImageElement ? getImageUsingHtmlImage : performance.makeRequest;
+        return action(requestParameters, (err, data, cacheControl, expires) => {
+            onImageResponse(itemInQueue, callback, err, data, cacheControl, expires);
         });
+    };
+    const onImageResponse = (itemInQueue, callback, err, data, cacheControl, expires) => {
+        if (err) {
+            callback(err);
+        }
+        else if (data instanceof HTMLImageElement || performance.isImageBitmap(data)) {
+            // User using addProtocol can directly return HTMLImageElement/ImageBitmap type
+            // If HtmlImageElement is used to get image then response type will be HTMLImageElement
+            callback(null, data);
+        }
+        else if (data) {
+            const decoratedCallback = (imgErr, imgResult) => {
+                if (imgErr != null) {
+                    callback(imgErr);
+                }
+                else if (imgResult != null) {
+                    callback(null, imgResult, { cacheControl, expires });
+                }
+            };
+            arrayBufferToCanvasImageSource(data, decoratedCallback);
+        }
+        if (!itemInQueue.cancelled) {
+            itemInQueue.completed = true;
+            currentParallelImageRequests--;
+            processQueue();
+        }
     };
     /**
      * Process some number of items in the image request queue.
-     * @param {number} maxImageRequests The maximum number of request items to process. By default, up to {@link Config.MAX_PARALLEL_IMAGE_REQUESTS} will be procesed.
-     * @returns {number} The number of items remaining in the queue.
      */
-    ImageRequest.processQueue = (maxImageRequests = 0) => {
-        if (maxImageRequests <= 0) {
-            maxImageRequests = isThrottled() ? performance.config.MAX_PARALLEL_IMAGE_REQUESTS_PER_FRAME : performance.config.MAX_PARALLEL_IMAGE_REQUESTS;
-        }
-        const cancelRequest = (request) => {
-            if (!request.completed && !request.cancelled) {
-                currentParallelImageRequests--;
-                request.cancelled = true;
-                request.innerRequest.cancel();
-                // in the case of cancelling, it WILL move on
-                ImageRequest.processQueue();
-            }
-        };
+    const processQueue = () => {
+        const maxImageRequests = isThrottled() ?
+            performance.config.MAX_PARALLEL_IMAGE_REQUESTS_PER_FRAME :
+            performance.config.MAX_PARALLEL_IMAGE_REQUESTS;
         // limit concurrent image loads to help with raster sources performance on big screens
         for (let numImageRequests = currentParallelImageRequests; numImageRequests < maxImageRequests && imageRequestQueue.length > 0; numImageRequests++) {
             const topItemInQueue = imageRequestQueue.shift();
             if (topItemInQueue.cancelled) {
+                numImageRequests--;
                 continue;
             }
-            const innerRequest = doArrayRequest(topItemInQueue);
+            const innerRequest = doImageRequest(topItemInQueue);
             currentParallelImageRequests++;
             topItemInQueue.innerRequest = innerRequest;
-            topItemInQueue.cancel = () => cancelRequest(topItemInQueue);
         }
-        return imageRequestQueue.length;
+    };
+    const getImageUsingHtmlImage = (requestParameters, callback) => {
+        const image = new Image();
+        const url = requestParameters.url;
+        let requestCancelled = false;
+        const credentials = requestParameters.credentials;
+        if (credentials && credentials === 'include') {
+            image.crossOrigin = 'use-credentials';
+        }
+        else if ((credentials && credentials === 'same-origin') || !performance.sameOrigin(url)) {
+            image.crossOrigin = 'anonymous';
+        }
+        image.fetchPriority = 'high';
+        image.onload = () => {
+            callback(null, image);
+            image.onerror = image.onload = null;
+        };
+        image.onerror = () => {
+            if (!requestCancelled) {
+                callback(new Error('Could not load image. Please make sure to use a supported image type such as PNG or JPEG. Note that SVGs are not supported.'));
+            }
+            image.onerror = image.onload = null;
+        };
+        image.src = url;
+        return {
+            cancel: () => {
+                requestCancelled = true;
+                // Set src to '' to actually cancel the request
+                image.src = '';
+            }
+        };
     };
 })(ImageRequest || (ImageRequest = {}));
 ImageRequest.resetRequestQueue();
-var ImageRequest$1 = ImageRequest;
 
 /**
  * A type of MapLibre resource.
@@ -34160,81 +34696,93 @@ function formatUrl(obj) {
 /**
  * Takes a SpriteSpecification value and returns it in its array form. If `undefined` is passed as an input value, an
  * empty array is returned.
- *
- * @param [sprite] {SpriteSpecification} optional sprite to coerce
- * @returns {Array} an empty array in case `undefined` is passed; id-url pairs otherwise
+ * duplicated entries with identical id/url will be removed in returned array
+ * @param sprite - optional sprite to coerce
+ * @returns an empty array in case `undefined` is passed; id-url pairs otherwise
  */
 function coerceSpriteToArray(sprite) {
-    return typeof sprite === 'string' ? [{ id: 'default', url: sprite }] : (sprite !== null && sprite !== void 0 ? sprite : []);
+    const resultArray = [];
+    if (typeof sprite === 'string') {
+        resultArray.push({ id: 'default', url: sprite });
+    }
+    else if (sprite && sprite.length > 0) {
+        const dedupArray = [];
+        for (const { id, url } of sprite) {
+            const key = `${id}${url}`;
+            if (dedupArray.indexOf(key) === -1) {
+                dedupArray.push(key);
+                resultArray.push({ id, url });
+            }
+        }
+    }
+    return resultArray;
 }
 
 function loadSprite(originalSprite, requestManager, pixelRatio, callback) {
-    const sprite = coerceSpriteToArray(originalSprite);
+    const spriteArray = coerceSpriteToArray(originalSprite);
+    const spriteArrayLength = spriteArray.length;
     const format = pixelRatio > 1 ? '@2x' : '';
-    let error;
-    const jsonRequests = [];
-    const imageRequests = [];
+    const combinedRequestsMap = {};
     const jsonsMap = {};
     const imagesMap = {};
-    for (const { id, url } of sprite) {
-        // eslint-disable-next-line no-loop-func
-        const newJsonRequestsLength = jsonRequests.push(performance.getJSON(requestManager.transformRequest(requestManager.normalizeSpriteURL(url, format, '.json'), ResourceType.SpriteJSON), (err, data) => {
-            jsonRequests.splice(newJsonRequestsLength, 1);
-            if (!error) {
-                error = err;
-                jsonsMap[id] = data;
-                maybeComplete();
-            }
-        }));
-        // eslint-disable-next-line no-loop-func
-        const newImageRequestsLength = imageRequests.push(ImageRequest$1.getImage(requestManager.transformRequest(requestManager.normalizeSpriteURL(url, format, '.png'), ResourceType.SpriteImage), (err, img) => {
-            imageRequests.splice(newImageRequestsLength, 1);
-            if (!error) {
-                error = err;
-                imagesMap[id] = img;
-                maybeComplete();
-            }
-        }));
-    }
-    function maybeComplete() {
-        const jsonsLength = Object.values(jsonsMap).length;
-        const imagesLength = Object.values(imagesMap).length;
-        if (error) {
-            callback(error);
-        }
-        else if (sprite.length === jsonsLength && jsonsLength === imagesLength) {
-            const result = {};
-            for (const spriteName in jsonsMap) {
-                result[spriteName] = {};
-                const context = performance.exported.getImageCanvasContext(imagesMap[spriteName]);
-                const json = jsonsMap[spriteName];
-                for (const id in json) {
-                    const { width, height, x, y, sdf, pixelRatio, stretchX, stretchY, content } = json[id];
-                    const spriteData = { width, height, x, y, context };
-                    result[spriteName][id] = { data: null, pixelRatio, sdf, stretchX, stretchY, content, spriteData };
-                }
-            }
-            callback(null, result);
-        }
+    for (const { id, url } of spriteArray) {
+        const jsonRequestParameters = requestManager.transformRequest(requestManager.normalizeSpriteURL(url, format, '.json'), ResourceType.SpriteJSON);
+        const jsonRequestKey = `${id}_${jsonRequestParameters.url}`; // use id_url as requestMap key to make sure it is unique
+        combinedRequestsMap[jsonRequestKey] = performance.getJSON(jsonRequestParameters, (err, data) => {
+            delete combinedRequestsMap[jsonRequestKey];
+            jsonsMap[id] = data;
+            doOnceCompleted(callback, jsonsMap, imagesMap, err, spriteArrayLength);
+        });
+        const imageRequestParameters = requestManager.transformRequest(requestManager.normalizeSpriteURL(url, format, '.png'), ResourceType.SpriteImage);
+        const imageRequestKey = `${id}_${imageRequestParameters.url}`; // use id_url as requestMap key to make sure it is unique
+        combinedRequestsMap[imageRequestKey] = ImageRequest.getImage(imageRequestParameters, (err, img) => {
+            delete combinedRequestsMap[imageRequestKey];
+            imagesMap[id] = img;
+            doOnceCompleted(callback, jsonsMap, imagesMap, err, spriteArrayLength);
+        });
     }
     return {
         cancel() {
-            if (jsonRequests.length) {
-                for (const jsonRequest of jsonRequests) {
-                    jsonRequest.cancel();
-                    jsonRequests.splice(jsonRequests.indexOf(jsonRequest), 1);
-                }
-            }
-            if (imageRequests.length) {
-                for (const imageRequest of imageRequests) {
-                    imageRequest.cancel();
-                    imageRequests.splice(imageRequests.indexOf(imageRequest), 1);
-                }
+            for (const requst of Object.values(combinedRequestsMap)) {
+                requst.cancel();
             }
         }
     };
 }
+/**
+ * @param callbackFunc - the callback function (both erro and success)
+ * @param jsonsMap - JSON data map
+ * @param imagesMap - image data map
+ * @param err - error object
+ * @param expectedResultCounter - number of expected JSON or Image results when everything is finished, respectively.
+ */
+function doOnceCompleted(callbackFunc, jsonsMap, imagesMap, err, expectedResultCounter) {
+    if (err) {
+        callbackFunc(err);
+        return;
+    }
+    if (expectedResultCounter !== Object.values(jsonsMap).length || expectedResultCounter !== Object.values(imagesMap).length) {
+        // not done yet, nothing to do
+        return;
+    }
+    const result = {};
+    for (const spriteName in jsonsMap) {
+        result[spriteName] = {};
+        const context = performance.browser.getImageCanvasContext(imagesMap[spriteName]);
+        const json = jsonsMap[spriteName];
+        for (const id in json) {
+            const { width, height, x, y, sdf, pixelRatio, stretchX, stretchY, content } = json[id];
+            const spriteData = { width, height, x, y, context };
+            result[spriteName][id] = { data: null, pixelRatio, sdf, stretchX, stretchY, content, spriteData };
+        }
+    }
+    callbackFunc(null, result);
+}
 
+/**
+ * @internal
+ * A `Texture` GL related object
+ */
 class Texture {
     constructor(context, image, format, options) {
         this.context = context;
@@ -34911,26 +35459,27 @@ class LightPositionProperty {
     }
     interpolate(a, b, t) {
         return {
-            x: performance.interpolates.number(a.x, b.x, t),
-            y: performance.interpolates.number(a.y, b.y, t),
-            z: performance.interpolates.number(a.z, b.z, t),
+            x: performance.interpolate.number(a.x, b.x, t),
+            y: performance.interpolate.number(a.y, b.y, t),
+            z: performance.interpolate.number(a.z, b.z, t),
         };
     }
 }
-const properties = new performance.Properties({
-    'anchor': new performance.DataConstantProperty(performance.v8Spec.light.anchor),
-    'position': new LightPositionProperty(),
-    'color': new performance.DataConstantProperty(performance.v8Spec.light.color),
-    'intensity': new performance.DataConstantProperty(performance.v8Spec.light.intensity),
-});
 const TRANSITION_SUFFIX = '-transition';
+let lightProperties;
 /*
  * Represents the light used to light extruded features.
  */
 class Light extends performance.Evented {
     constructor(lightOptions) {
         super();
-        this._transitionable = new performance.Transitionable(properties);
+        lightProperties = lightProperties || new performance.Properties({
+            'anchor': new performance.DataConstantProperty(performance.v8Spec.light.anchor),
+            'position': new LightPositionProperty(),
+            'color': new performance.DataConstantProperty(performance.v8Spec.light.color),
+            'intensity': new performance.DataConstantProperty(performance.v8Spec.light.intensity),
+        });
+        this._transitionable = new performance.Transitionable(lightProperties);
         this.setLight(lightOptions);
         this._transitioning = this._transitionable.untransitioned();
     }
@@ -34974,13 +35523,13 @@ class Light extends performance.Evented {
 }
 
 /**
+ * @internal
  * A LineAtlas lets us reuse rendered dashed lines
  * by writing many of them to a texture and then fetching their positions
- * using .getDash.
+ * using {@link LineAtlas#getDash}.
  *
- * @param {number} width
- * @param {number} height
- * @private
+ * @param width - the width
+ * @param height - the height
  */
 class LineAtlas {
     constructor(width, height) {
@@ -34993,10 +35542,9 @@ class LineAtlas {
     /**
      * Get or create a dash line pattern.
      *
-     * @param {Array<number>} dasharray
-     * @param {boolean} round whether to add circle caps in between dash segments
-     * @returns {Object} position of dash texture in { y, height, width }
-     * @private
+     * @param dasharray - the key (represented by numbers) to get the dash texture
+     * @param round - whether to add circle caps in between dash segments
+     * @returns position of dash texture in {@link DashEntry}
      */
     getDash(dasharray, round) {
         const key = dasharray.join(',') + String(round);
@@ -35141,8 +35689,6 @@ class LineAtlas {
 /**
  * Responsible for sending messages from a {@link Source} to an associated
  * {@link WorkerSource}.
- *
- * @private
  */
 class Dispatcher {
     constructor(workerPool, parent, mapId) {
@@ -35162,7 +35708,6 @@ class Dispatcher {
     }
     /**
      * Broadcast a message to all Workers.
-     * @private
      */
     broadcast(type, data, cb) {
         cb = cb || function () { };
@@ -35207,7 +35752,7 @@ function loadTileJson(options, requestManager, callback) {
         return performance.getJSON(requestManager.transformRequest(options.url, ResourceType.Source), loaded);
     }
     else {
-        return performance.exported.frame(() => loaded(null, options));
+        return performance.browser.frame(() => loaded(null, options));
     }
 }
 
@@ -35221,27 +35766,35 @@ function loadTileJson(options, requestManager, callback) {
  * can also accept an `Array` of two {@link LngLatLike} constructs and will perform an implicit conversion.
  * This flexible type is documented as {@link LngLatBoundsLike}.
  *
- * @param {LngLatLike} [sw] The southwest corner of the bounding box.
- * @param {LngLatLike} [ne] The northeast corner of the bounding box.
+ * @group Geography and Geometry
+ *
  * @example
- * var sw = new maplibregl.LngLat(-73.9876, 40.7661);
- * var ne = new maplibregl.LngLat(-73.9397, 40.8002);
- * var llb = new maplibregl.LngLatBounds(sw, ne);
+ * ```ts
+ * let sw = new maplibregl.LngLat(-73.9876, 40.7661);
+ * let ne = new maplibregl.LngLat(-73.9397, 40.8002);
+ * let llb = new maplibregl.LngLatBounds(sw, ne);
+ * ```
  */
 class LngLatBounds {
     /**
-     * @param {LngLatLike} [sw] The southwest corner of the bounding box.
+     * @param sw - The southwest corner of the bounding box.
      * OR array of 4 numbers in the order of  west, south, east, north
      * OR array of 2 LngLatLike: [sw,ne]
-     * @param {LngLatLike} [ne] The northeast corner of the bounding box.
+     * @param ne - The northeast corner of the bounding box.
      * @example
-     * var sw = new maplibregl.LngLat(-73.9876, 40.7661);
-     * var ne = new maplibregl.LngLat(-73.9397, 40.8002);
-     * var llb = new maplibregl.LngLatBounds(sw, ne);
+     * ```ts
+     * let sw = new maplibregl.LngLat(-73.9876, 40.7661);
+     * let ne = new maplibregl.LngLat(-73.9397, 40.8002);
+     * let llb = new maplibregl.LngLatBounds(sw, ne);
+     * ```
      * OR
-     * var llb = new maplibregl.LngLatBounds([-73.9876, 40.7661, -73.9397, 40.8002]);
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds([-73.9876, 40.7661, -73.9397, 40.8002]);
+     * ```
      * OR
-     * var llb = new maplibregl.LngLatBounds([sw, ne]);
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds([sw, ne]);
+     * ```
      */
     constructor(sw, ne) {
         if (!sw) {
@@ -35263,8 +35816,8 @@ class LngLatBounds {
     /**
      * Set the northeast corner of the bounding box
      *
-     * @param {LngLatLike} ne a {@link LngLatLike} object describing the northeast corner of the bounding box.
-     * @returns {LngLatBounds} `this`
+     * @param ne - a {@link LngLatLike} object describing the northeast corner of the bounding box.
+     * @returns `this`
      */
     setNorthEast(ne) {
         this._ne = ne instanceof performance.LngLat ? new performance.LngLat(ne.lng, ne.lat) : performance.LngLat.convert(ne);
@@ -35273,8 +35826,8 @@ class LngLatBounds {
     /**
      * Set the southwest corner of the bounding box
      *
-     * @param {LngLatLike} sw a {@link LngLatLike} object describing the southwest corner of the bounding box.
-     * @returns {LngLatBounds} `this`
+     * @param sw - a {@link LngLatLike} object describing the southwest corner of the bounding box.
+     * @returns `this`
      */
     setSouthWest(sw) {
         this._sw = sw instanceof performance.LngLat ? new performance.LngLat(sw.lng, sw.lat) : performance.LngLat.convert(sw);
@@ -35283,8 +35836,8 @@ class LngLatBounds {
     /**
      * Extend the bounds to include a given LngLatLike or LngLatBoundsLike.
      *
-     * @param {LngLatLike|LngLatBoundsLike} obj object to extend to
-     * @returns {LngLatBounds} `this`
+     * @param obj - object to extend to
+     * @returns `this`
      */
     extend(obj) {
         const sw = this._sw, ne = this._ne;
@@ -35310,6 +35863,9 @@ class LngLatBounds {
                     return this.extend(performance.LngLat.convert(lngLatObj));
                 }
             }
+            else if (obj && ('lng' in obj || 'lon' in obj) && 'lat' in obj) {
+                return this.extend(performance.LngLat.convert(obj));
+            }
             return this;
         }
         if (!sw && !ne) {
@@ -35327,10 +35883,12 @@ class LngLatBounds {
     /**
      * Returns the geographical coordinate equidistant from the bounding box's corners.
      *
-     * @returns {LngLat} The bounding box's center.
+     * @returns The bounding box's center.
      * @example
-     * var llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
      * llb.getCenter(); // = LngLat {lng: -73.96365, lat: 40.78315}
+     * ```
      */
     getCenter() {
         return new performance.LngLat((this._sw.lng + this._ne.lng) / 2, (this._sw.lat + this._ne.lat) / 2);
@@ -35338,59 +35896,61 @@ class LngLatBounds {
     /**
      * Returns the southwest corner of the bounding box.
      *
-     * @returns {LngLat} The southwest corner of the bounding box.
+     * @returns The southwest corner of the bounding box.
      */
     getSouthWest() { return this._sw; }
     /**
      * Returns the northeast corner of the bounding box.
      *
-     * @returns {LngLat} The northeast corner of the bounding box.
+     * @returns The northeast corner of the bounding box.
      */
     getNorthEast() { return this._ne; }
     /**
      * Returns the northwest corner of the bounding box.
      *
-     * @returns {LngLat} The northwest corner of the bounding box.
+     * @returns The northwest corner of the bounding box.
      */
     getNorthWest() { return new performance.LngLat(this.getWest(), this.getNorth()); }
     /**
      * Returns the southeast corner of the bounding box.
      *
-     * @returns {LngLat} The southeast corner of the bounding box.
+     * @returns The southeast corner of the bounding box.
      */
     getSouthEast() { return new performance.LngLat(this.getEast(), this.getSouth()); }
     /**
      * Returns the west edge of the bounding box.
      *
-     * @returns {number} The west edge of the bounding box.
+     * @returns The west edge of the bounding box.
      */
     getWest() { return this._sw.lng; }
     /**
      * Returns the south edge of the bounding box.
      *
-     * @returns {number} The south edge of the bounding box.
+     * @returns The south edge of the bounding box.
      */
     getSouth() { return this._sw.lat; }
     /**
      * Returns the east edge of the bounding box.
      *
-     * @returns {number} The east edge of the bounding box.
+     * @returns The east edge of the bounding box.
      */
     getEast() { return this._ne.lng; }
     /**
      * Returns the north edge of the bounding box.
      *
-     * @returns {number} The north edge of the bounding box.
+     * @returns The north edge of the bounding box.
      */
     getNorth() { return this._ne.lat; }
     /**
      * Returns the bounding box represented as an array.
      *
-     * @returns {Array<Array<number>>} The bounding box represented as an array, consisting of the
-     *   southwest and northeast coordinates of the bounding represented as arrays of numbers.
+     * @returns The bounding box represented as an array, consisting of the
+     * southwest and northeast coordinates of the bounding represented as arrays of numbers.
      * @example
-     * var llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
      * llb.toArray(); // = [[-73.9876, 40.7661], [-73.9397, 40.8002]]
+     * ```
      */
     toArray() {
         return [this._sw.toArray(), this._ne.toArray()];
@@ -35398,11 +35958,13 @@ class LngLatBounds {
     /**
      * Return the bounding box represented as a string.
      *
-     * @returns {string} The bounding box represents as a string of the format
-     *   `'LngLatBounds(LngLat(lng, lat), LngLat(lng, lat))'`.
+     * @returns The bounding box represents as a string of the format
+     * `'LngLatBounds(LngLat(lng, lat), LngLat(lng, lat))'`.
      * @example
-     * var llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds([-73.9876, 40.7661], [-73.9397, 40.8002]);
      * llb.toString(); // = "LngLatBounds(LngLat(-73.9876, 40.7661), LngLat(-73.9397, 40.8002))"
+     * ```
      */
     toString() {
         return `LngLatBounds(${this._sw.toString()}, ${this._ne.toString()})`;
@@ -35410,7 +35972,7 @@ class LngLatBounds {
     /**
      * Check if the bounding box is an empty/`null`-type box.
      *
-     * @returns {boolean} True if bounds have been defined, otherwise false.
+     * @returns True if bounds have been defined, otherwise false.
      */
     isEmpty() {
         return !(this._sw && this._ne);
@@ -35418,17 +35980,19 @@ class LngLatBounds {
     /**
      * Check if the point is within the bounding box.
      *
-     * @param {LngLatLike} lnglat geographic point to check against.
-     * @returns {boolean} True if the point is within the bounding box.
+     * @param lnglat - geographic point to check against.
+     * @returns `true` if the point is within the bounding box.
      * @example
-     * var llb = new maplibregl.LngLatBounds(
+     * ```ts
+     * let llb = new maplibregl.LngLatBounds(
      *   new maplibregl.LngLat(-73.9876, 40.7661),
      *   new maplibregl.LngLat(-73.9397, 40.8002)
      * );
      *
-     * var ll = new maplibregl.LngLat(-73.9567, 40.7789);
+     * let ll = new maplibregl.LngLat(-73.9567, 40.7789);
      *
      * console.log(llb.contains(ll)); // = true
+     * ```
      */
     contains(lnglat) {
         const { lng, lat } = performance.LngLat.convert(lnglat);
@@ -35446,12 +36010,13 @@ class LngLatBounds {
      *
      * Internally, the function calls `LngLat#convert` to convert arrays to `LngLat` values.
      *
-     * @param {LngLatBoundsLike} input An array of two coordinates to convert, or a `LngLatBounds` object to return.
-     * @returns {LngLatBounds} A new `LngLatBounds` object, if a conversion occurred, or the original `LngLatBounds` object.
+     * @param input - An array of two coordinates to convert, or a `LngLatBounds` object to return.
+     * @returns A new `LngLatBounds` object, if a conversion occurred, or the original `LngLatBounds` object.
      * @example
-     * var arr = [[-73.9876, 40.7661], [-73.9397, 40.8002]];
-     * var llb = maplibregl.LngLatBounds.convert(arr);
-     * llb;   // = LngLatBounds {_sw: LngLat {lng: -73.9876, lat: 40.7661}, _ne: LngLat {lng: -73.9397, lat: 40.8002}}
+     * ```ts
+     * let arr = [[-73.9876, 40.7661], [-73.9397, 40.8002]];
+     * let llb = maplibregl.LngLatBounds.convert(arr); // = LngLatBounds {_sw: LngLat {lng: -73.9876, lat: 40.7661}, _ne: LngLat {lng: -73.9397, lat: 40.8002}}
+     * ```
      */
     static convert(input) {
         if (input instanceof LngLatBounds)
@@ -35463,12 +36028,14 @@ class LngLatBounds {
     /**
      * Returns a `LngLatBounds` from the coordinates extended by a given `radius`. The returned `LngLatBounds` completely contains the `radius`.
      *
-     * @param center center coordinates of the new bounds.
-     * @param {number} [radius=0] Distance in meters from the coordinates to extend the bounds.
-     * @returns {LngLatBounds} A new `LngLatBounds` object representing the coordinates extended by the `radius`.
+     * @param center - center coordinates of the new bounds.
+     * @param radius - Distance in meters from the coordinates to extend the bounds.
+     * @returns A new `LngLatBounds` object representing the coordinates extended by the `radius`.
      * @example
-     * var center = new maplibregl.LngLat(-73.9749, 40.7736);
+     * ```ts
+     * let center = new maplibregl.LngLat(-73.9749, 40.7736);
      * maplibregl.LngLatBounds.fromLngLat(100).toArray(); // = [[-73.97501862141328, 40.77351016847229], [-73.97478137858673, 40.77368983152771]]
+     * ```
      */
     static fromLngLat(center, radius = 0) {
         const earthCircumferenceInMetersAtEquator = 40075017;
@@ -35504,33 +36071,67 @@ class TileBounds {
 
 /**
  * A source containing vector tiles in [Mapbox Vector Tile format](https://docs.mapbox.com/vector-tiles/reference/).
- * (See the [Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/) for detailed documentation of options.)
+ * (See the [Style Specification](https://maplibre.org/maplibre-style-spec/) for detailed documentation of options.)
+ *
+ * @group Sources
  *
  * @example
+ * ```ts
  * map.addSource('some id', {
  *     type: 'vector',
  *     url: 'https://demotiles.maplibre.org/tiles/tiles.json'
  * });
+ * ```
  *
  * @example
+ * ```ts
  * map.addSource('some id', {
  *     type: 'vector',
  *     tiles: ['https://d25uarhxywzl1j.cloudfront.net/v0.1/{z}/{x}/{y}.mvt'],
  *     minzoom: 6,
  *     maxzoom: 14
  * });
+ * ```
  *
  * @example
+ * ```ts
  * map.getSource('some id').setUrl("https://demotiles.maplibre.org/tiles/tiles.json");
+ * ```
  *
  * @example
+ * ```ts
  * map.getSource('some id').setTiles(['https://d25uarhxywzl1j.cloudfront.net/v0.1/{z}/{x}/{y}.mvt']);
- * @see [Add a vector tile source](https://maplibre.org/maplibre-gl-js-docs/example/vector-source/)
- * @see [Add a third party vector tile source](https://maplibre.org/maplibre-gl-js-docs/example/third-party/)
+ * ```
+ * @see [Add a vector tile source](https://maplibre.org/maplibre-gl-js/docs/examples/vector-source/)
  */
 class VectorTileSource extends performance.Evented {
     constructor(id, options, dispatcher, eventedParent) {
         super();
+        this.load = () => {
+            this._loaded = false;
+            this.fire(new performance.Event('dataloading', { dataType: 'source' }));
+            this._tileJSONRequest = loadTileJson(this._options, this.map._requestManager, (err, tileJSON) => {
+                this._tileJSONRequest = null;
+                this._loaded = true;
+                this.map.style.sourceCaches[this.id].clearTiles();
+                if (err) {
+                    this.fire(new performance.ErrorEvent(err));
+                }
+                else if (tileJSON) {
+                    performance.extend(this, tileJSON);
+                    if (tileJSON.bounds)
+                        this.tileBounds = new TileBounds(tileJSON.bounds, this.minzoom, this.maxzoom);
+                    // `content` is included here to prevent a race condition where `Style#_updateSources` is called
+                    // before the TileJSON arrives. this makes sure the tiles needed are loaded once TileJSON arrives
+                    // ref: https://github.com/mapbox/mapbox-gl-js/pull/4347#discussion_r104418088
+                    this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'metadata' }));
+                    this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'content' }));
+                }
+            });
+        };
+        this.serialize = () => {
+            return performance.extend({}, this._options);
+        };
         this.id = id;
         this.dispatcher = dispatcher;
         this.type = 'vector';
@@ -35548,28 +36149,6 @@ class VectorTileSource extends performance.Evented {
             throw new Error('vector tile sources must have a tileSize of 512');
         }
         this.setEventedParent(eventedParent);
-    }
-    load() {
-        this._loaded = false;
-        this.fire(new performance.Event('dataloading', { dataType: 'source' }));
-        this._tileJSONRequest = loadTileJson(this._options, this.map._requestManager, (err, tileJSON) => {
-            this._tileJSONRequest = null;
-            this._loaded = true;
-            this.map.style.sourceCaches[this.id].clearTiles();
-            if (err) {
-                this.fire(new performance.ErrorEvent(err));
-            }
-            else if (tileJSON) {
-                performance.extend(this, tileJSON);
-                if (tileJSON.bounds)
-                    this.tileBounds = new TileBounds(tileJSON.bounds, this.minzoom, this.maxzoom);
-                // `content` is included here to prevent a race condition where `Style#_updateSources` is called
-                // before the TileJSON arrives. this makes sure the tiles needed are loaded once TileJSON arrives
-                // ref: https://github.com/mapbox/mapbox-gl-js/pull/4347#discussion_r104418088
-                this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'metadata' }));
-                this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'content' }));
-            }
-        });
     }
     loaded() {
         return this._loaded;
@@ -35591,8 +36170,8 @@ class VectorTileSource extends performance.Evented {
     /**
      * Sets the source `tiles` property and re-renders the map.
      *
-     * @param {string[]} tiles An array of one or more tile source URLs, as in the TileJSON spec.
-     * @returns {VectorTileSource} this
+     * @param tiles - An array of one or more tile source URLs, as in the TileJSON spec.
+     * @returns `this`
      */
     setTiles(tiles) {
         this.setSourceProperty(() => {
@@ -35603,8 +36182,8 @@ class VectorTileSource extends performance.Evented {
     /**
      * Sets the source `url` property and re-renders the map.
      *
-     * @param {string} url A URL to a TileJSON resource. Supported protocols are `http:` and `https:`.
-     * @returns {VectorTileSource} this
+     * @param url - A URL to a TileJSON resource. Supported protocols are `http:` and `https:`.
+     * @returns `this`
      */
     setUrl(url) {
         this.setSourceProperty(() => {
@@ -35618,9 +36197,6 @@ class VectorTileSource extends performance.Evented {
             this._tileJSONRequest.cancel();
             this._tileJSONRequest = null;
         }
-    }
-    serialize() {
-        return performance.extend({}, this._options);
     }
     loadTile(tile, callback) {
         const url = tile.tileID.canonical.url(this.tiles, this.map.getPixelRatio(), this.scheme);
@@ -35687,6 +36263,35 @@ class VectorTileSource extends performance.Evented {
     }
 }
 
+/**
+ * A source containing raster tiles (See the [Style Specification](https://maplibre.org/maplibre-style-spec/) for detailed documentation of options.)
+ *
+ * @group Sources
+ *
+ * @example
+ * ```ts
+ * map.addSource('raster-source', {
+ *     'type': 'raster',
+ *     'tiles': ['https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg'],
+ *     'tileSize': 256,
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * map.addSource('wms-test-source', {
+ *      'type': 'raster',
+ * // use the tiles option to specify a WMS tile source URL
+ *      'tiles': [
+ *          'https://img.nj.gov/imagerywms/Natural2015?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256&layers=Natural2015'
+ *      ],
+ *      'tileSize': 256
+ * });
+ * ```
+ * @see [Add a raster tile source](https://maplibre.org/maplibre-gl-js/docs/examples/map-tiles/)
+ * @see [Add a WMS source](https://maplibre.org/maplibre-gl-js/docs/examples/wms/)
+ * @see [Display a satellite map](https://maplibre.org/maplibre-gl-js/docs/examples/satellite-map/)
+ */
 class RasterTileSource extends performance.Evented {
     constructor(id, options, dispatcher, eventedParent) {
         super();
@@ -35745,7 +36350,7 @@ class RasterTileSource extends performance.Evented {
     }
     loadTile(tile, callback) {
         const url = tile.tileID.canonical.url(this.tiles, this.map.getPixelRatio(), this.scheme);
-        tile.request = ImageRequest$1.getImage(this.map._requestManager.transformRequest(url, ResourceType.Tile), (err, img, expiry) => {
+        tile.request = ImageRequest.getImage(this.map._requestManager.transformRequest(url, ResourceType.Tile), (err, img, expiry) => {
             delete tile.request;
             if (tile.aborted) {
                 tile.state = 'unloaded';
@@ -35756,7 +36361,7 @@ class RasterTileSource extends performance.Evented {
                 callback(err);
             }
             else if (img) {
-                if (this.map._refreshExpiredTiles)
+                if (this.map._refreshExpiredTiles && expiry)
                     tile.setExpiryData(expiry);
                 const context = this.map.painter.context;
                 const gl = context.gl;
@@ -35774,7 +36379,7 @@ class RasterTileSource extends performance.Evented {
                 tile.state = 'loaded';
                 callback(null);
             }
-        });
+        }, this.map._refreshExpiredTiles);
     }
     abortTile(tile, callback) {
         if (tile.request) {
@@ -35803,6 +36408,22 @@ function offscreenCanvasSupported() {
     return supportsOffscreenCanvas;
 }
 
+/**
+ * A source containing raster DEM tiles (See the [Style Specification](https://maplibre.org/maplibre-style-spec/) for detailed documentation of options.)
+ * This source can be used to show hillshading and 3D terrain
+ *
+ * @group Sources
+ *
+ * @example
+ * ```ts
+ * map.addSource('raster-dem-source', {
+ *      type: 'raster-dem',
+ *      url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+ *      tileSize: 256
+ * });
+ * ```
+ * @see [3D Terrain](https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/)
+ */
 class RasterDEMTileSource extends RasterTileSource {
     constructor(id, options, dispatcher, eventedParent) {
         super(id, options, dispatcher, eventedParent);
@@ -35811,19 +36432,9 @@ class RasterDEMTileSource extends RasterTileSource {
         this._options = performance.extend({ type: 'raster-dem' }, options);
         this.encoding = options.encoding || 'mapbox';
     }
-    serialize() {
-        return {
-            type: 'raster-dem',
-            url: this.url,
-            tileSize: this.tileSize,
-            tiles: this.tiles,
-            bounds: this.bounds,
-            encoding: this.encoding
-        };
-    }
     loadTile(tile, callback) {
         const url = tile.tileID.canonical.url(this.tiles, this.map.getPixelRatio(), this.scheme);
-        tile.request = ImageRequest$1.getImage(this.map._requestManager.transformRequest(url, ResourceType.Tile), imageLoaded.bind(this));
+        tile.request = ImageRequest.getImage(this.map._requestManager.transformRequest(url, ResourceType.Tile), imageLoaded.bind(this), this.map._refreshExpiredTiles);
         tile.neighboringTiles = this._getNeighboringTiles(tile.tileID);
         function imageLoaded(err, img) {
             delete tile.request;
@@ -35841,13 +36452,17 @@ class RasterDEMTileSource extends RasterTileSource {
                 delete img.cacheControl;
                 delete img.expires;
                 const transfer = performance.isImageBitmap(img) && offscreenCanvasSupported();
-                const rawImageData = transfer ? img : performance.exported.getImageData(img, 1);
+                const rawImageData = transfer ? img : performance.browser.getImageData(img, 1);
                 const params = {
                     uid: tile.uid,
                     coord: tile.tileID,
                     source: this.id,
                     rawImageData,
-                    encoding: this.encoding
+                    encoding: this.encoding,
+                    redMix: this.redMix,
+                    greenMix: this.greenMix,
+                    blueMix: this.blueMix,
+                    baseMix: this.baseMix
                 };
                 if (!tile.actor || tile.state === 'expired') {
                     tile.actor = this.dispatcher.getActor();
@@ -35913,15 +36528,20 @@ class RasterDEMTileSource extends RasterTileSource {
 
 /**
  * A source containing GeoJSON.
- * (See the [Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/#sources-geojson) for detailed documentation of options.)
+ * (See the [Style Specification](https://maplibre.org/maplibre-style-spec/#sources-geojson) for detailed documentation of options.)
+ *
+ * @group Sources
  *
  * @example
+ * ```ts
  * map.addSource('some id', {
  *     type: 'geojson',
  *     data: 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_ports.geojson'
  * });
+ * ```
  *
  * @example
+ * ```ts
  * map.addSource('some id', {
  *    type: 'geojson',
  *    data: {
@@ -35939,8 +36559,10 @@ class RasterDEMTileSource extends RasterTileSource {
  *        }]
  *    }
  * });
+ * ```
  *
  * @example
+ * ```ts
  * map.getSource('some id').setData({
  *   "type": "FeatureCollection",
  *   "features": [{
@@ -35952,17 +36574,25 @@ class RasterDEMTileSource extends RasterTileSource {
  *       }
  *   }]
  * });
- * @see [Draw GeoJSON points](https://maplibre.org/maplibre-gl-js-docs/example/geojson-markers/)
- * @see [Add a GeoJSON line](https://maplibre.org/maplibre-gl-js-docs/example/geojson-line/)
- * @see [Create a heatmap from points](https://maplibre.org/maplibre-gl-js-docs/example/heatmap/)
- * @see [Create and style clusters](https://maplibre.org/maplibre-gl-js-docs/example/cluster/)
+ * ```
+ * @see [Draw GeoJSON points](https://maplibre.org/maplibre-gl-js/docs/examples/geojson-markers/)
+ * @see [Add a GeoJSON line](https://maplibre.org/maplibre-gl-js/docs/examples/geojson-line/)
+ * @see [Create a heatmap from points](https://maplibre.org/maplibre-gl-js/docs/examples/heatmap/)
+ * @see [Create and style clusters](https://maplibre.org/maplibre-gl-js/docs/examples/cluster/)
  */
 class GeoJSONSource extends performance.Evented {
-    /**
-     * @private
-     */
+    /** @internal */
     constructor(id, options, dispatcher, eventedParent) {
         super();
+        this.load = () => {
+            this._updateWorkerData();
+        };
+        this.serialize = () => {
+            return performance.extend({}, this._options, {
+                type: this.type,
+                data: this._data
+            });
+        };
         this.id = id;
         // `type` is a property rather than a constant to make it easy for 3rd
         // parties to use GeoJSONSource to build their own source types.
@@ -36018,9 +36648,6 @@ class GeoJSONSource extends performance.Evented {
             this.workerOptions.promoteId = this.promoteId;
         }
     }
-    load() {
-        this._updateWorkerData();
-    }
     onAdd(map) {
         this.map = map;
         this.load();
@@ -36028,8 +36655,8 @@ class GeoJSONSource extends performance.Evented {
     /**
      * Sets the GeoJSON data and re-renders the map.
      *
-     * @param {Object|string} data A GeoJSON data object or a URL to one. The latter is preferable in the case of large GeoJSON files.
-     * @returns {GeoJSONSource} this
+     * @param data - A GeoJSON data object or a URL to one. The latter is preferable in the case of large GeoJSON files.
+     * @returns `this`
      */
     setData(data) {
         this._data = data;
@@ -36048,8 +36675,8 @@ class GeoJSONSource extends performance.Evented {
      *
      * Updates are applied on a best-effort basis, updating an ID that does not exist will not result in an error.
      *
-     * @param {GeoJSONSourceDiff} diff The changes that need to be applied.
-     * @returns {GeoJSONSource} this
+     * @param diff - The changes that need to be applied.
+     * @returns `this`
      */
     updateData(diff) {
         this._updateWorkerData(diff);
@@ -36057,12 +36684,13 @@ class GeoJSONSource extends performance.Evented {
     }
     /**
      * To disable/enable clustering on the source options
-     * @param {SetClusterOptions} options The options to set
-     * @returns {GeoJSONSource} this
+     * @param options - The options to set
+     * @returns `this`
      * @example
+     * ```ts
      * map.getSource('some id').setClusterOptions({cluster: false});
      * map.getSource('some id').setClusterOptions({cluster: false, clusterRadius: 50, clusterMaxZoom: 14});
-     *
+     * ```
      */
     setClusterOptions(options) {
         this.workerOptions.cluster = options.cluster;
@@ -36078,9 +36706,9 @@ class GeoJSONSource extends performance.Evented {
     /**
      * For clustered sources, fetches the zoom at which the given cluster expands.
      *
-     * @param clusterId The value of the cluster's `cluster_id` property.
-     * @param callback A callback to be called when the zoom value is retrieved (`(error, zoom) => { ... }`).
-     * @returns {GeoJSONSource} this
+     * @param clusterId - The value of the cluster's `cluster_id` property.
+     * @param callback - A callback to be called when the zoom value is retrieved (`(error, zoom) => { ... }`).
+     * @returns `this`
      */
     getClusterExpansionZoom(clusterId, callback) {
         this.actor.send('geojson.getClusterExpansionZoom', { clusterId, source: this.id }, callback);
@@ -36089,9 +36717,9 @@ class GeoJSONSource extends performance.Evented {
     /**
      * For clustered sources, fetches the children of the given cluster on the next zoom level (as an array of GeoJSON features).
      *
-     * @param clusterId The value of the cluster's `cluster_id` property.
-     * @param callback A callback to be called when the features are retrieved (`(error, features) => { ... }`).
-     * @returns {GeoJSONSource} this
+     * @param clusterId - The value of the cluster's `cluster_id` property.
+     * @param callback - A callback to be called when the features are retrieved (`(error, features) => { ... }`).
+     * @returns `this`
      */
     getClusterChildren(clusterId, callback) {
         this.actor.send('geojson.getClusterChildren', { clusterId, source: this.id }, callback);
@@ -36100,27 +36728,29 @@ class GeoJSONSource extends performance.Evented {
     /**
      * For clustered sources, fetches the original points that belong to the cluster (as an array of GeoJSON features).
      *
-     * @param clusterId The value of the cluster's `cluster_id` property.
-     * @param limit The maximum number of features to return.
-     * @param offset The number of features to skip (e.g. for pagination).
-     * @param callback A callback to be called when the features are retrieved (`(error, features) => { ... }`).
-     * @returns {GeoJSONSource} this
+     * @param clusterId - The value of the cluster's `cluster_id` property.
+     * @param limit - The maximum number of features to return.
+     * @param offset - The number of features to skip (e.g. for pagination).
+     * @param callback - A callback to be called when the features are retrieved (`(error, features) => { ... }`).
+     * @returns `this`
      * @example
-     * // Retrieve cluster leaves on click
+     * Retrieve cluster leaves on click
+     * ```ts
      * map.on('click', 'clusters', function(e) {
-     *   var features = map.queryRenderedFeatures(e.point, {
+     *   let features = map.queryRenderedFeatures(e.point, {
      *     layers: ['clusters']
      *   });
      *
-     *   var clusterId = features[0].properties.cluster_id;
-     *   var pointCount = features[0].properties.point_count;
-     *   var clusterSource = map.getSource('clusters');
+     *   let clusterId = features[0].properties.cluster_id;
+     *   let pointCount = features[0].properties.point_count;
+     *   let clusterSource = map.getSource('clusters');
      *
      *   clusterSource.getClusterLeaves(clusterId, pointCount, 0, function(error, features) {
      *     // Print cluster leaves in the console
      *     console.log('Cluster leaves:', error, features);
      *   })
      * });
+     * ```
      */
     getClusterLeaves(clusterId, limit, offset, callback) {
         this.actor.send('geojson.getClusterLeaves', {
@@ -36131,10 +36761,11 @@ class GeoJSONSource extends performance.Evented {
         }, callback);
         return this;
     }
-    /*
+    /**
      * Responsible for invoking WorkerSource's geojson.loadData target, which
      * handles loading the geojson data and preparing to serve it up as tiles,
      * using geojson-vt or supercluster as appropriate.
+     * @param diff - the diff object
      */
     _updateWorkerData(diff) {
         const options = performance.extend({}, this.workerOptions);
@@ -36142,7 +36773,7 @@ class GeoJSONSource extends performance.Evented {
             options.dataDiff = diff;
         }
         else if (typeof this._data === 'string') {
-            options.request = this.map._requestManager.transformRequest(performance.exported.resolveURL(this._data), ResourceType.Source);
+            options.request = this.map._requestManager.transformRequest(performance.browser.resolveURL(this._data), ResourceType.Source);
             options.request.collectResourceTiming = this._collectResourceTiming;
         }
         else {
@@ -36221,12 +36852,6 @@ class GeoJSONSource extends performance.Evented {
         this._removed = true;
         this.actor.send('removeSource', { type: this.type, source: this.id });
     }
-    serialize() {
-        return performance.extend({}, this._options, {
-            type: this.type,
-            data: this._data
-        });
-    }
     hasTransition() {
         return false;
     }
@@ -36239,9 +36864,12 @@ var rasterBoundsAttributes = performance.createLayout([
 
 /**
  * A data source containing an image.
- * (See the [Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/#sources-image) for detailed documentation of options.)
+ * (See the [Style Specification](https://maplibre.org/maplibre-style-spec/#sources-image) for detailed documentation of options.)
+ *
+ * @group Sources
  *
  * @example
+ * ```ts
  * // add to map
  * map.addSource('some id', {
  *    type: 'image',
@@ -36255,7 +36883,7 @@ var rasterBoundsAttributes = performance.createLayout([
  * });
  *
  * // update coordinates
- * var mySource = map.getSource('some id');
+ * let mySource = map.getSource('some id');
  * mySource.setCoordinates([
  *     [-76.54335737228394, 39.18579907229748],
  *     [-76.52803659439087, 39.1838364847587],
@@ -36275,13 +36903,70 @@ var rasterBoundsAttributes = performance.createLayout([
  * })
  *
  * map.removeSource('some id');  // remove
+ * ```
  */
 class ImageSource extends performance.Evented {
-    /**
-     * @private
-     */
+    /** @internal */
     constructor(id, options, dispatcher, eventedParent) {
         super();
+        this.load = (newCoordinates, successCallback) => {
+            this._loaded = false;
+            this.fire(new performance.Event('dataloading', { dataType: 'source' }));
+            this.url = this.options.url;
+            this._request = ImageRequest.getImage(this.map._requestManager.transformRequest(this.url, ResourceType.Image), (err, image) => {
+                this._request = null;
+                this._loaded = true;
+                if (err) {
+                    this.fire(new performance.ErrorEvent(err));
+                }
+                else if (image) {
+                    this.image = image;
+                    if (newCoordinates) {
+                        this.coordinates = newCoordinates;
+                    }
+                    if (successCallback) {
+                        successCallback();
+                    }
+                    this._finishLoading();
+                }
+            });
+        };
+        this.prepare = () => {
+            if (Object.keys(this.tiles).length === 0 || !this.image) {
+                return;
+            }
+            const context = this.map.painter.context;
+            const gl = context.gl;
+            if (!this.boundsBuffer) {
+                this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
+            }
+            if (!this.boundsSegments) {
+                this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
+            }
+            if (!this.texture) {
+                this.texture = new Texture(context, this.image, gl.RGBA);
+                this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
+            }
+            let newTilesLoaded = false;
+            for (const w in this.tiles) {
+                const tile = this.tiles[w];
+                if (tile.state !== 'loaded') {
+                    tile.state = 'loaded';
+                    tile.texture = this.texture;
+                    newTilesLoaded = true;
+                }
+            }
+            if (newTilesLoaded) {
+                this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'idle', sourceId: this.id }));
+            }
+        };
+        this.serialize = () => {
+            return {
+                type: 'image',
+                url: this.options.url,
+                coordinates: this.coordinates
+            };
+        };
         this.id = id;
         this.dispatcher = dispatcher;
         this.coordinates = options.coordinates;
@@ -36294,28 +36979,6 @@ class ImageSource extends performance.Evented {
         this.setEventedParent(eventedParent);
         this.options = options;
     }
-    load(newCoordinates, successCallback) {
-        this._loaded = false;
-        this.fire(new performance.Event('dataloading', { dataType: 'source' }));
-        this.url = this.options.url;
-        this._request = ImageRequest$1.getImage(this.map._requestManager.transformRequest(this.url, ResourceType.Image), (err, image) => {
-            this._request = null;
-            this._loaded = true;
-            if (err) {
-                this.fire(new performance.ErrorEvent(err));
-            }
-            else if (image) {
-                this.image = image;
-                if (newCoordinates) {
-                    this.coordinates = newCoordinates;
-                }
-                if (successCallback) {
-                    successCallback();
-                }
-                this._finishLoading();
-            }
-        });
-    }
     loaded() {
         return this._loaded;
     }
@@ -36323,13 +36986,8 @@ class ImageSource extends performance.Evented {
      * Updates the image URL and, optionally, the coordinates. To avoid having the image flash after changing,
      * set the `raster-fade-duration` paint property on the raster layer to 0.
      *
-     * @param {Object} options Options object.
-     * @param {string} [options.url] Required image URL.
-     * @param {Array<Array<number>>} [options.coordinates] Four geographical coordinates,
-     *   represented as arrays of longitude and latitude numbers, which define the corners of the image.
-     *   The coordinates start at the top left corner of the image and proceed in clockwise order.
-     *   They do not have to represent a rectangle.
-     * @returns {ImageSource} this
+     * @param options - The options object.
+     * @returns `this`
      */
     updateImage(options) {
         if (!options.url) {
@@ -36362,11 +37020,11 @@ class ImageSource extends performance.Evented {
     /**
      * Sets the image's coordinates and re-renders the map.
      *
-     * @param {Array<Array<number>>} coordinates Four geographical coordinates,
-     *   represented as arrays of longitude and latitude numbers, which define the corners of the image.
-     *   The coordinates start at the top left corner of the image and proceed in clockwise order.
-     *   They do not have to represent a rectangle.
-     * @returns {ImageSource} this
+     * @param coordinates - Four geographical coordinates,
+     * represented as arrays of longitude and latitude numbers, which define the corners of the image.
+     * The coordinates start at the top left corner of the image and proceed in clockwise order.
+     * They do not have to represent a rectangle.
+     * @returns `this`
      */
     setCoordinates(coordinates) {
         this.coordinates = coordinates;
@@ -36397,32 +37055,8 @@ class ImageSource extends performance.Evented {
         this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'content' }));
         return this;
     }
-    prepare() {
-        if (Object.keys(this.tiles).length === 0 || !this.image) {
-            return;
-        }
-        const context = this.map.painter.context;
-        const gl = context.gl;
-        if (!this.boundsBuffer) {
-            this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
-        }
-        if (!this.boundsSegments) {
-            this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
-        }
-        if (!this.texture) {
-            this.texture = new Texture(context, this.image, gl.RGBA);
-            this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
-        }
-        for (const w in this.tiles) {
-            const tile = this.tiles[w];
-            if (tile.state !== 'loaded') {
-                tile.state = 'loaded';
-                tile.texture = this.texture;
-            }
-        }
-    }
     loadTile(tile, callback) {
-        // We have a single tile -- whoose coordinates are this.tileID -- that
+        // We have a single tile -- whose coordinates are this.tileID -- that
         // covers the image we want to render.  If that's the one being
         // requested, set it up with the image; otherwise, mark the tile as
         // `errored` to indicate that we have no data for it.
@@ -36438,13 +37072,6 @@ class ImageSource extends performance.Evented {
             callback(null);
         }
     }
-    serialize() {
-        return {
-            type: 'image',
-            url: this.options.url,
-            coordinates: this.coordinates
-        };
-    }
     hasTransition() {
         return false;
     }
@@ -36453,7 +37080,7 @@ class ImageSource extends performance.Evented {
  * Given a list of coordinates, get their center as a coordinate.
  *
  * @returns centerpoint
- * @private
+ * @internal
  */
 function getCoordinatesCenterTileID(coords) {
     let minX = Infinity;
@@ -36476,9 +37103,12 @@ function getCoordinatesCenterTileID(coords) {
 
 /**
  * A data source containing video.
- * (See the [Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/#sources-video) for detailed documentation of options.)
+ * (See the [Style Specification](https://maplibre.org/maplibre-style-spec/#sources-video) for detailed documentation of options.)
+ *
+ * @group Sources
  *
  * @example
+ * ```ts
  * // add to map
  * map.addSource('some id', {
  *    type: 'video',
@@ -36495,7 +37125,7 @@ function getCoordinatesCenterTileID(coords) {
  * });
  *
  * // update
- * var mySource = map.getSource('some id');
+ * let mySource = map.getSource('some id');
  * mySource.setCoordinates([
  *     [-76.54335737228394, 39.18579907229748],
  *     [-76.52803659439087, 39.1838364847587],
@@ -36504,44 +37134,91 @@ function getCoordinatesCenterTileID(coords) {
  * ]);
  *
  * map.removeSource('some id');  // remove
- * @see [Add a video](https://maplibre.org/maplibre-gl-js-docs/example/video-on-a-map/)
+ * ```
+ * @see [Add a video](https://maplibre.org/maplibre-gl-js/docs/examples/video-on-a-map/)
+ *
+ * Note that when rendered as a raster layer, the layer's `raster-fade-duration` property will cause the video to fade in.
+ * This happens when playback is started, paused and resumed, or when the video's coordinates are updated. To avoid this behavior,
+ * set the layer's `raster-fade-duration` property to `0`.
  */
 class VideoSource extends ImageSource {
-    /**
-     * @private
-     */
     constructor(id, options, dispatcher, eventedParent) {
         super(id, options, dispatcher, eventedParent);
+        this.load = () => {
+            this._loaded = false;
+            const options = this.options;
+            this.urls = [];
+            for (const url of options.urls) {
+                this.urls.push(this.map._requestManager.transformRequest(url, ResourceType.Source).url);
+            }
+            performance.getVideo(this.urls, (err, video) => {
+                this._loaded = true;
+                if (err) {
+                    this.fire(new performance.ErrorEvent(err));
+                }
+                else if (video) {
+                    this.video = video;
+                    this.video.loop = true;
+                    // Start repainting when video starts playing. hasTransition() will then return
+                    // true to trigger additional frames as long as the videos continues playing.
+                    this.video.addEventListener('playing', () => {
+                        this.map.triggerRepaint();
+                    });
+                    if (this.map) {
+                        this.video.play();
+                    }
+                    this._finishLoading();
+                }
+            });
+        };
+        /**
+         * Sets the video's coordinates and re-renders the map.
+         *
+         * @returns `this`
+         */
+        this.prepare = () => {
+            if (Object.keys(this.tiles).length === 0 || this.video.readyState < 2) {
+                return; // not enough data for current position
+            }
+            const context = this.map.painter.context;
+            const gl = context.gl;
+            if (!this.boundsBuffer) {
+                this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
+            }
+            if (!this.boundsSegments) {
+                this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
+            }
+            if (!this.texture) {
+                this.texture = new Texture(context, this.video, gl.RGBA);
+                this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
+            }
+            else if (!this.video.paused) {
+                this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.video);
+            }
+            let newTilesLoaded = false;
+            for (const w in this.tiles) {
+                const tile = this.tiles[w];
+                if (tile.state !== 'loaded') {
+                    tile.state = 'loaded';
+                    tile.texture = this.texture;
+                    newTilesLoaded = true;
+                }
+            }
+            if (newTilesLoaded) {
+                this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'idle', sourceId: this.id }));
+            }
+        };
+        this.serialize = () => {
+            return {
+                type: 'video',
+                urls: this.urls,
+                coordinates: this.coordinates
+            };
+        };
         this.roundZoom = true;
         this.type = 'video';
         this.options = options;
-    }
-    load() {
-        this._loaded = false;
-        const options = this.options;
-        this.urls = [];
-        for (const url of options.urls) {
-            this.urls.push(this.map._requestManager.transformRequest(url, ResourceType.Source).url);
-        }
-        performance.getVideo(this.urls, (err, video) => {
-            this._loaded = true;
-            if (err) {
-                this.fire(new performance.ErrorEvent(err));
-            }
-            else if (video) {
-                this.video = video;
-                this.video.loop = true;
-                // Start repainting when video starts playing. hasTransition() will then return
-                // true to trigger additional frames as long as the videos continues playing.
-                this.video.addEventListener('playing', () => {
-                    this.map.triggerRepaint();
-                });
-                if (this.map) {
-                    this.video.play();
-                }
-                this._finishLoading();
-            }
-        });
     }
     /**
      * Pauses the video.
@@ -36561,7 +37238,6 @@ class VideoSource extends ImageSource {
     }
     /**
      * Sets playback to a timestamp, in seconds.
-     * @private
      */
     seek(seconds) {
         if (this.video) {
@@ -36576,7 +37252,7 @@ class VideoSource extends ImageSource {
     /**
      * Returns the HTML `video` element.
      *
-     * @returns {HTMLVideoElement} The HTML `video` element.
+     * @returns The HTML `video` element.
      */
     getVideo() {
         return this.video;
@@ -36591,68 +37267,18 @@ class VideoSource extends ImageSource {
             this.setCoordinates(this.coordinates);
         }
     }
-    /**
-     * Sets the video's coordinates and re-renders the map.
-     *
-     * @method setCoordinates
-     * @instance
-     * @memberof VideoSource
-     * @returns {VideoSource} this
-     */
-    // setCoordinates inherited from ImageSource
-    prepare() {
-        if (Object.keys(this.tiles).length === 0 || this.video.readyState < 2) {
-            return; // not enough data for current position
-        }
-        const context = this.map.painter.context;
-        const gl = context.gl;
-        if (!this.boundsBuffer) {
-            this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
-        }
-        if (!this.boundsSegments) {
-            this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
-        }
-        if (!this.texture) {
-            this.texture = new Texture(context, this.video, gl.RGBA);
-            this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
-        }
-        else if (!this.video.paused) {
-            this.texture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
-            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, this.video);
-        }
-        for (const w in this.tiles) {
-            const tile = this.tiles[w];
-            if (tile.state !== 'loaded') {
-                tile.state = 'loaded';
-                tile.texture = this.texture;
-            }
-        }
-    }
-    serialize() {
-        return {
-            type: 'video',
-            urls: this.urls,
-            coordinates: this.coordinates
-        };
-    }
     hasTransition() {
         return this.video && !this.video.paused;
     }
 }
 
 /**
- * Options to add a canvas source type to the map.
+ * A data source containing the contents of an HTML canvas. See {@link CanvasSourceSpecification} for detailed documentation of options.
  *
- * @typedef {Object} CanvasSourceOptions
- * @property {string} type Source type. Must be `"canvas"`.
- * @property {string|HTMLCanvasElement} canvas Canvas source from which to read pixels. Can be a string representing the ID of the canvas element, or the `HTMLCanvasElement` itself.
- * @property {Array<Array<number>>} coordinates Four geographical coordinates denoting where to place the corners of the canvas, specified in `[longitude, latitude]` pairs.
- * @property {boolean} [animate=true] Whether the canvas source is animated. If the canvas is static (i.e. pixels do not need to be re-read on every frame), `animate` should be set to `false` to improve performance.
- */
-/**
- * A data source containing the contents of an HTML canvas. See {@link CanvasSourceOptions} for detailed documentation of options.
+ * @group Sources
  *
  * @example
+ * ```ts
  * // add to map
  * map.addSource('some id', {
  *    type: 'canvas',
@@ -36667,7 +37293,7 @@ class VideoSource extends ImageSource {
  * });
  *
  * // update
- * var mySource = map.getSource('some id');
+ * let mySource = map.getSource('some id');
  * mySource.setCoordinates([
  *     [-76.54335737228394, 39.18579907229748],
  *     [-76.52803659439087, 39.1838364847587],
@@ -36676,13 +37302,86 @@ class VideoSource extends ImageSource {
  * ]);
  *
  * map.removeSource('some id');  // remove
+ * ```
  */
 class CanvasSource extends ImageSource {
-    /**
-     * @private
-     */
+    /** @internal */
     constructor(id, options, dispatcher, eventedParent) {
         super(id, options, dispatcher, eventedParent);
+        this.load = () => {
+            this._loaded = true;
+            if (!this.canvas) {
+                this.canvas = (this.options.canvas instanceof HTMLCanvasElement) ?
+                    this.options.canvas :
+                    document.getElementById(this.options.canvas);
+                // cast to HTMLCanvasElement in else of ternary
+                // should we do a safety check and throw if it's not actually HTMLCanvasElement?
+            }
+            this.width = this.canvas.width;
+            this.height = this.canvas.height;
+            if (this._hasInvalidDimensions()) {
+                this.fire(new performance.ErrorEvent(new Error('Canvas dimensions cannot be less than or equal to zero.')));
+                return;
+            }
+            this.play = function () {
+                this._playing = true;
+                this.map.triggerRepaint();
+            };
+            this.pause = function () {
+                if (this._playing) {
+                    this.prepare();
+                    this._playing = false;
+                }
+            };
+            this._finishLoading();
+        };
+        this.prepare = () => {
+            let resize = false;
+            if (this.canvas.width !== this.width) {
+                this.width = this.canvas.width;
+                resize = true;
+            }
+            if (this.canvas.height !== this.height) {
+                this.height = this.canvas.height;
+                resize = true;
+            }
+            if (this._hasInvalidDimensions())
+                return;
+            if (Object.keys(this.tiles).length === 0)
+                return; // not enough data for current position
+            const context = this.map.painter.context;
+            const gl = context.gl;
+            if (!this.boundsBuffer) {
+                this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
+            }
+            if (!this.boundsSegments) {
+                this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
+            }
+            if (!this.texture) {
+                this.texture = new Texture(context, this.canvas, gl.RGBA, { premultiply: true });
+            }
+            else if (resize || this._playing) {
+                this.texture.update(this.canvas, { premultiply: true });
+            }
+            let newTilesLoaded = false;
+            for (const w in this.tiles) {
+                const tile = this.tiles[w];
+                if (tile.state !== 'loaded') {
+                    tile.state = 'loaded';
+                    tile.texture = this.texture;
+                    newTilesLoaded = true;
+                }
+            }
+            if (newTilesLoaded) {
+                this.fire(new performance.Event('data', { dataType: 'source', sourceDataType: 'idle', sourceId: this.id }));
+            }
+        };
+        this.serialize = () => {
+            return {
+                type: 'canvas',
+                coordinates: this.coordinates
+            };
+        };
         // We build in some validation here, since canvas sources aren't included in the style spec:
         if (!options.coordinates) {
             this.fire(new performance.ErrorEvent(new performance.ValidationError(`sources.${id}`, null, 'missing required property "coordinates"')));
@@ -36704,48 +37403,9 @@ class CanvasSource extends ImageSource {
         this.animate = options.animate !== undefined ? options.animate : true;
     }
     /**
-     * Enables animation. The image will be copied from the canvas to the map on each frame.
-     * @method play
-     * @instance
-     * @memberof CanvasSource
-     */
-    /**
-     * Disables animation. The map will display a static copy of the canvas image.
-     * @method pause
-     * @instance
-     * @memberof CanvasSource
-     */
-    load() {
-        this._loaded = true;
-        if (!this.canvas) {
-            this.canvas = (this.options.canvas instanceof HTMLCanvasElement) ?
-                this.options.canvas :
-                document.getElementById(this.options.canvas);
-            // cast to HTMLCanvasElement in else of ternary
-            // should we do a safety check and throw if it's not actually HTMLCanvasElement?
-        }
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
-        if (this._hasInvalidDimensions()) {
-            this.fire(new performance.ErrorEvent(new Error('Canvas dimensions cannot be less than or equal to zero.')));
-            return;
-        }
-        this.play = function () {
-            this._playing = true;
-            this.map.triggerRepaint();
-        };
-        this.pause = function () {
-            if (this._playing) {
-                this.prepare();
-                this._playing = false;
-            }
-        };
-        this._finishLoading();
-    }
-    /**
      * Returns the HTML `canvas` element.
      *
-     * @returns {HTMLCanvasElement} The HTML `canvas` element.
+     * @returns The HTML `canvas` element.
      */
     getCanvas() {
         return this.canvas;
@@ -36761,61 +37421,6 @@ class CanvasSource extends ImageSource {
     onRemove() {
         this.pause();
     }
-    // /**
-    // * Sets the canvas's coordinates and re-renders the map.
-    // *
-    // * @method setCoordinates
-    // * @instance
-    // * @memberof CanvasSource
-    // * @param {Array<Array<number>>} coordinates Four geographical coordinates,
-    // *   represented as arrays of longitude and latitude numbers, which define the corners of the canvas.
-    // *   The coordinates start at the top left corner of the canvas and proceed in clockwise order.
-    // *   They do not have to represent a rectangle.
-    // * @returns {CanvasSource} this
-    // */
-    // setCoordinates inherited from ImageSource
-    prepare() {
-        let resize = false;
-        if (this.canvas.width !== this.width) {
-            this.width = this.canvas.width;
-            resize = true;
-        }
-        if (this.canvas.height !== this.height) {
-            this.height = this.canvas.height;
-            resize = true;
-        }
-        if (this._hasInvalidDimensions())
-            return;
-        if (Object.keys(this.tiles).length === 0)
-            return; // not enough data for current position
-        const context = this.map.painter.context;
-        const gl = context.gl;
-        if (!this.boundsBuffer) {
-            this.boundsBuffer = context.createVertexBuffer(this._boundsArray, rasterBoundsAttributes.members);
-        }
-        if (!this.boundsSegments) {
-            this.boundsSegments = performance.SegmentVector.simpleSegment(0, 0, 4, 2);
-        }
-        if (!this.texture) {
-            this.texture = new Texture(context, this.canvas, gl.RGBA, { premultiply: true });
-        }
-        else if (resize || this._playing) {
-            this.texture.update(this.canvas, { premultiply: true });
-        }
-        for (const w in this.tiles) {
-            const tile = this.tiles[w];
-            if (tile.state !== 'loaded') {
-                tile.state = 'loaded';
-                tile.texture = this.texture;
-            }
-        }
-    }
-    serialize() {
-        return {
-            type: 'canvas',
-            coordinates: this.coordinates
-        };
-    }
     hasTransition() {
         return this._playing;
     }
@@ -36828,38 +37433,47 @@ class CanvasSource extends ImageSource {
     }
 }
 
-const sourceTypes = {
-    vector: VectorTileSource,
-    raster: RasterTileSource,
-    'raster-dem': RasterDEMTileSource,
-    geojson: GeoJSONSource,
-    video: VideoSource,
-    image: ImageSource,
-    canvas: CanvasSource
-};
-/*
+const registeredSources = {};
+/**
  * Creates a tiled data source instance given an options object.
  *
- * @param id
- * @param {Object} source A source definition object compliant with
- * [`maplibre-gl-style-spec`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#sources) or, for a third-party source type,
+ * @param id - The id for the source. Must not be used by any existing source.
+ * @param specification - Source options, specific to the source type (except for `options.type`, which is always required).
+ * @param source - A source definition object compliant with
+ * [`maplibre-gl-style-spec`](https://maplibre.org/maplibre-style-spec/#sources) or, for a third-party source type,
   * with that type's requirements.
- * @param {Dispatcher} dispatcher
- * @returns {Source}
+ * @param dispatcher - A {@link Dispatcher} instance, which can be used to send messages to the workers.
+ * @returns a newly created source
  */
-const create = function (id, specification, dispatcher, eventedParent) {
-    const source = new sourceTypes[specification.type](id, specification, dispatcher, eventedParent);
+const create = (id, specification, dispatcher, eventedParent) => {
+    const Class = getSourceType(specification.type);
+    const source = new Class(id, specification, dispatcher, eventedParent);
     if (source.id !== id) {
         throw new Error(`Expected Source id to be ${id} instead of ${source.id}`);
     }
-    performance.bindAll(['load', 'abort', 'unload', 'serialize', 'prepare'], source);
     return source;
 };
-const getSourceType = function (name) {
-    return sourceTypes[name];
+const getSourceType = (name) => {
+    switch (name) {
+        case 'geojson':
+            return GeoJSONSource;
+        case 'image':
+            return ImageSource;
+        case 'raster':
+            return RasterTileSource;
+        case 'raster-dem':
+            return RasterDEMTileSource;
+        case 'vector':
+            return VectorTileSource;
+        case 'video':
+            return VideoSource;
+        case 'canvas':
+            return CanvasSource;
+    }
+    return registeredSources[name];
 };
-const setSourceType = function (name, type) {
-    sourceTypes[name] = type;
+const setSourceType = (name, type) => {
+    registeredSources[name] = type;
 };
 
 /*
@@ -37043,18 +37657,18 @@ function deserialize(input, style) {
 
 const CLOCK_SKEW_RETRY_TIMEOUT = 30000;
 /**
+ * @internal
  * A tile object is the combination of a Coordinate, which defines
  * its place, as well as a unique ID and data tracking for its content
- *
- * @private
  */
 class Tile {
     /**
-     * @param {OverscaledTileID} tileID
-     * @param size
-     * @private
+     * @param tileID - the tile ID
+     * @param size - The tile size
      */
     constructor(tileID, size) {
+        this.timeAdded = 0;
+        this.fadeEndTime = 0;
         this.tileID = tileID;
         this.uid = performance.uniqueId();
         this.uses = 0;
@@ -37076,10 +37690,9 @@ class Tile {
     }
     registerFadeDuration(duration) {
         const fadeEndTime = duration + this.timeAdded;
-        if (fadeEndTime < performance.exported.now())
+        if (fadeEndTime < this.fadeEndTime) {
             return;
-        if (this.fadeEndTime && fadeEndTime < this.fadeEndTime)
-            return;
+        }
         this.fadeEndTime = fadeEndTime;
     }
     wasRequested() {
@@ -37095,11 +37708,9 @@ class Tile {
      * this tile's elementGroups and buffers properties and set loaded
      * to true. If the data is null, like in the case of an empty
      * GeoJSON tile, no-op but still set loaded to true.
-     * @param {Object} data
-     * @param painter
-     * @param justReloaded
-     * @returns {undefined}
-     * @private
+     * @param data - The data from the worker
+     * @param painter - the painter
+     * @param justReloaded - `true` to just reload
      */
     loadVectorData(data, painter, justReloaded) {
         if (this.hasData()) {
@@ -37167,8 +37778,6 @@ class Tile {
     }
     /**
      * Release any data or WebGL resources referenced by this tile.
-     * @returns {undefined}
-     * @private
      */
     unloadVectorData() {
         for (const id in this.buckets) {
@@ -37348,13 +37957,13 @@ class Tile {
         return this.symbolFadeHoldUntil !== undefined;
     }
     symbolFadeFinished() {
-        return !this.symbolFadeHoldUntil || this.symbolFadeHoldUntil < performance.exported.now();
+        return !this.symbolFadeHoldUntil || this.symbolFadeHoldUntil < performance.browser.now();
     }
     clearFadeHold() {
         this.symbolFadeHoldUntil = undefined;
     }
     setHoldDuration(duration) {
-        this.symbolFadeHoldUntil = performance.exported.now() + duration;
+        this.symbolFadeHoldUntil = performance.browser.now() + duration;
     }
     setDependencies(namespace, dependencies) {
         const index = {};
@@ -37379,16 +37988,15 @@ class Tile {
 }
 
 /**
+ * @internal
  * A [least-recently-used cache](http://en.wikipedia.org/wiki/Cache_algorithms)
  * with hash lookup made possible by keeping a list of keys in parallel to
  * an array of dictionary of values
- *
- * @private
  */
 class TileCache {
     /**
-     * @param {number} max number of permitted values
-     * @param {Function} onRemove callback called with items when they expire
+     * @param max - number of permitted values
+     * @param onRemove - callback called with items when they expire
      */
     constructor(max, onRemove) {
         this.max = max;
@@ -37398,8 +38006,7 @@ class TileCache {
     /**
      * Clear the cache
      *
-     * @returns {TileCache} this cache
-     * @private
+     * @returns this cache
      */
     reset() {
         for (const key in this.data) {
@@ -37417,11 +38024,10 @@ class TileCache {
      * Add a key, value combination to the cache, trimming its size if this pushes
      * it over max length.
      *
-     * @param {OverscaledTileID} tileID lookup key for the item
-     * @param {*} data any value
+     * @param tileID - lookup key for the item
+     * @param data - tile data
      *
-     * @returns {TileCache} this cache
-     * @private
+     * @returns this cache
      */
     add(tileID, data, expiryTimeout) {
         const key = tileID.wrapped().key;
@@ -37449,9 +38055,8 @@ class TileCache {
     /**
      * Determine whether the value attached to `key` is present
      *
-     * @param {OverscaledTileID} tileID the key to be looked-up
-     * @returns {boolean} whether the cache has this value
-     * @private
+     * @param tileID - the key to be looked-up
+     * @returns whether the cache has this value
      */
     has(tileID) {
         return tileID.wrapped().key in this.data;
@@ -37460,9 +38065,8 @@ class TileCache {
      * Get the value attached to a specific key and remove data from cache.
      * If the key is not found, returns `null`
      *
-     * @param {OverscaledTileID} tileID the key to look up
-     * @returns {*} the data, or null if it isn't found
-     * @private
+     * @param tileID - the key to look up
+     * @returns the tile data, or null if it isn't found
      */
     getAndRemove(tileID) {
         if (!this.has(tileID)) {
@@ -37494,9 +38098,8 @@ class TileCache {
      * Get the value attached to a specific key without removing data
      * from the cache. If the key is not found, returns `null`
      *
-     * @param {OverscaledTileID} tileID the key to look up
-     * @returns {*} the data, or null if it isn't found
-     * @private
+     * @param tileID - the key to look up
+     * @returns the tile data, or null if it isn't found
      */
     get(tileID) {
         if (!this.has(tileID)) {
@@ -37508,10 +38111,9 @@ class TileCache {
     /**
      * Remove a key/value combination from the cache.
      *
-     * @param {OverscaledTileID} tileID the key for the pair to delete
-     * @param {Tile} value If a value is provided, remove that exact version of the value.
-     * @returns {TileCache} this cache
-     * @private
+     * @param tileID - the key for the pair to delete
+     * @param value - If a value is provided, remove that exact version of the value.
+     * @returns this cache
      */
     remove(tileID, value) {
         if (!this.has(tileID)) {
@@ -37533,9 +38135,8 @@ class TileCache {
     /**
      * Change the max size of the cache.
      *
-     * @param {number} max the max size of the cache
-     * @returns {TileCache} this cache
-     * @private
+     * @param max - the max size of the cache
+     * @returns this cache
      */
     setMaxSize(max) {
         this.max = max;
@@ -37550,7 +38151,7 @@ class TileCache {
      * Remove entries that do not pass a filter function. Used for removing
      * stale tiles from the cache.
      *
-     * @param {function} filterFn Determines whether the tile is filtered. If the supplied function returns false, the tile will be filtered out.
+     * @param filterFn - Determines whether the tile is filtered. If the supplied function returns false, the tile will be filtered out.
      */
     filter(filterFn) {
         const removed = [];
@@ -37568,13 +38169,13 @@ class TileCache {
 }
 
 /**
+ * @internal
  * SourceFeatureState manages the state and pending changes
  * to features in a source, separated by source layer.
  * stateChanges and deletedStates batch all changes to the tile (updates and removes, respectively)
  * between coalesce() events. addFeatureState() and removeFeatureState() also update their counterpart's
  * list of changes, such that coalesce() can apply the proper state changes while agnostic to the order of operations.
  * In deletedStates, all null's denote complete removal of state at that scope
- * @private
 */
 class SourceFeatureState {
     constructor() {
@@ -37710,6 +38311,7 @@ class SourceFeatureState {
 }
 
 /**
+ * @internal
  * `SourceCache` is responsible for
  *
  *  - creating an instance of `Source`
@@ -37717,8 +38319,6 @@ class SourceFeatureState {
  *  - caching tiles loaded from an instance of `Source`
  *  - loading the tiles needed to render a given viewport
  *  - unloading the cached tiles not needed to render a given viewport
- *
- * @private
  */
 class SourceCache extends performance.Evented {
     constructor(id, options, dispatcher) {
@@ -37738,6 +38338,7 @@ class SourceCache extends performance.Evented {
                 if (this.transform) {
                     this.update(this.transform, this.terrain);
                 }
+                this._didEmitContent = true;
             }
         });
         this.on('dataloading', () => {
@@ -37753,13 +38354,17 @@ class SourceCache extends performance.Evented {
         this._timers = {};
         this._cacheTimers = {};
         this._maxTileCacheSize = null;
+        this._maxTileCacheZoomLevels = null;
         this._loadedParentTiles = {};
         this._coveredTiles = {};
         this._state = new SourceFeatureState();
+        this._didEmitContent = false;
+        this._updated = false;
     }
     onAdd(map) {
         this.map = map;
         this._maxTileCacheSize = map ? map._maxTileCacheSize : null;
+        this._maxTileCacheZoomLevels = map ? map._maxTileCacheZoomLevels : null;
         if (this._source && this._source.onAdd) {
             this._source.onAdd(map);
         }
@@ -37773,7 +38378,6 @@ class SourceCache extends performance.Evented {
     /**
      * Return true if no tile data is pending, tiles will not change unless
      * an additional API call is received.
-     * @private
      */
     loaded() {
         if (this._sourceErrored) {
@@ -37783,6 +38387,13 @@ class SourceCache extends performance.Evented {
             return false;
         }
         if (!this._source.loaded()) {
+            return false;
+        }
+        if ((this.used !== undefined || this.usedForTerrain !== undefined) && !this.used && !this.usedForTerrain) {
+            return true;
+        }
+        // do not consider as loaded if the update hasn't been called yet (we do not know if we will have any tiles to fetch)
+        if (!this._updated) {
             return false;
         }
         for (const t in this._tiles) {
@@ -37837,7 +38448,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Return all tile ids ordered with z-order, and cast to numbers
-     * @private
      */
     getIds() {
         return Object.values(this._tiles).map((tile) => tile.tileID).sort(compareTileId).map(id => id.key);
@@ -37852,8 +38462,8 @@ class SourceCache extends performance.Evented {
             return renderables.sort((a_, b_) => {
                 const a = a_.tileID;
                 const b = b_.tileID;
-                const rotatedA = (new performance.pointGeometry(a.canonical.x, a.canonical.y))._rotate(this.transform.angle);
-                const rotatedB = (new performance.pointGeometry(b.canonical.x, b.canonical.y))._rotate(this.transform.angle);
+                const rotatedA = (new performance.Point(a.canonical.x, a.canonical.y))._rotate(this.transform.angle);
+                const rotatedB = (new performance.Point(b.canonical.x, b.canonical.y))._rotate(this.transform.angle);
                 return a.overscaledZ - b.overscaledZ || rotatedB.y - rotatedA.y || rotatedB.x - rotatedA.x;
             }).map(tile => tile.tileID.key);
         }
@@ -37907,7 +38517,7 @@ class SourceCache extends performance.Evented {
                 this.update(this.transform, this.terrain);
             return;
         }
-        tile.timeAdded = performance.exported.now();
+        tile.timeAdded = performance.browser.now();
         if (previousState === 'expired')
             tile.refreshedUponExpiration = true;
         this._setTileReloadTimer(id, tile);
@@ -37920,7 +38530,6 @@ class SourceCache extends performance.Evented {
     }
     /**
     * For raster terrain source, backfill DEM to eliminate visible tile boundaries
-    * @private
     */
     _backfillDEM(tile) {
         const renderables = this.getRenderableIds();
@@ -37962,14 +38571,12 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Get a specific tile by TileID
-     * @private
      */
     getTile(tileID) {
         return this.getTileByID(tileID.key);
     }
     /**
      * Get a specific tile by id
-     * @private
      */
     getTileByID(id) {
         return this._tiles[id];
@@ -37977,7 +38584,6 @@ class SourceCache extends performance.Evented {
     /**
      * For a given set of tiles, retain children that are loaded and have a zoom
      * between `zoom` (exclusive) and `maxCoveringZoom` (inclusive)
-     * @private
      */
     _retainLoadedChildren(idealTiles, zoom, maxCoveringZoom, retain) {
         for (const id in this._tiles) {
@@ -38011,7 +38617,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Find a loaded parent of the given tile (up to minCoveringZoom)
-     * @private
      */
     findLoadedParent(tileID, minCoveringZoom) {
         if (tileID.key in this._loadedParentTiles) {
@@ -38047,15 +38652,16 @@ class SourceCache extends performance.Evented {
      * Larger viewports use more tiles and need larger caches. Larger viewports
      * are more likely to be found on devices with more memory and on pages where
      * the map is more important.
-     * @private
      */
     updateCacheSize(transform) {
         const widthInTiles = Math.ceil(transform.width / this._source.tileSize) + 1;
         const heightInTiles = Math.ceil(transform.height / this._source.tileSize) + 1;
         const approxTilesInView = widthInTiles * heightInTiles;
-        const commonZoomRange = 5;
+        const commonZoomRange = this._maxTileCacheZoomLevels === null ?
+            performance.config.MAX_TILE_CACHE_ZOOM_LEVELS : this._maxTileCacheZoomLevels;
         const viewDependentMaxSize = Math.floor(approxTilesInView * commonZoomRange);
-        const maxSize = typeof this._maxTileCacheSize === 'number' ? Math.min(this._maxTileCacheSize, viewDependentMaxSize) : viewDependentMaxSize;
+        const maxSize = typeof this._maxTileCacheSize === 'number' ?
+            Math.min(this._maxTileCacheSize, viewDependentMaxSize) : viewDependentMaxSize;
         this._cache.setMaxSize(maxSize);
     }
     handleWrapJump(lng) {
@@ -38101,7 +38707,6 @@ class SourceCache extends performance.Evented {
     /**
      * Removes tiles that are outside the viewport and adds new tiles that
      * are inside the viewport.
-     * @private
      */
     update(transform, terrain) {
         this.transform = transform;
@@ -38146,12 +38751,19 @@ class SourceCache extends performance.Evented {
                 if (tileID.canonical.z > this._source.minzoom) {
                     const parent = tileID.scaledTo(tileID.canonical.z - 1);
                     parents[parent.key] = parent;
-                    // load very low zoom to calculate tile visability in transform.coveringTiles and high zoomlevels correct
+                    // load very low zoom to calculate tile visibility in transform.coveringTiles and high zoomlevels correct
                     const parent2 = tileID.scaledTo(Math.max(this._source.minzoom, Math.min(tileID.canonical.z, 5)));
                     parents[parent2.key] = parent2;
                 }
             }
             idealTileIDs = idealTileIDs.concat(Object.values(parents));
+        }
+        const noPendingDataEmissions = idealTileIDs.length === 0 && !this._updated && this._didEmitContent;
+        this._updated = true;
+        // if we won't have any tiles to fetch and content is already emitted
+        // there will be no more data emissions, so we need to emit the event with isSourceLoaded = true
+        if (noPendingDataEmissions) {
+            this.fire(new performance.Event('data', { sourceDataType: 'idle', dataType: 'source', sourceId: this.id }));
         }
         // Retain is a list of tiles that we shouldn't delete, even if they are not
         // the most ideal tile for the current viewport. This may include tiles like
@@ -38161,11 +38773,16 @@ class SourceCache extends performance.Evented {
             const parentsForFading = {};
             const fadingTiles = {};
             const ids = Object.keys(retain);
+            const now = performance.browser.now();
             for (const id of ids) {
                 const tileID = retain[id];
                 const tile = this._tiles[id];
-                if (!tile || tile.fadeEndTime && tile.fadeEndTime <= performance.exported.now())
+                // when fadeEndTime is 0, the tile is created but registerFadeDuration
+                // has not been called, therefore must be kept in fadingTiles dictionary
+                // for next round of rendering
+                if (!tile || (tile.fadeEndTime !== 0 && tile.fadeEndTime <= now)) {
                     continue;
+                }
                 // if the tile is loaded but still fading in, find parents to cross-fade with it
                 const parentTile = this.findLoadedParent(tileID, minCoveringZoom);
                 if (parentTile) {
@@ -38308,11 +38925,14 @@ class SourceCache extends performance.Evented {
                     tile = this._addTile(parentId);
                 }
                 if (tile) {
-                    retain[parentId.key] = parentId;
+                    const hasData = tile.hasData();
+                    if (parentWasRequested || hasData) {
+                        retain[parentId.key] = parentId;
+                    }
                     // Save the current values, since they're the parent of the next iteration
                     // of the parent tile ascent loop.
                     parentWasRequested = tile.wasRequested();
-                    if (tile.hasData())
+                    if (hasData)
                         break;
                 }
             }
@@ -38350,7 +38970,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Add a tile, given its coordinate, to the pyramid.
-     * @private
      */
     _addTile(tileID) {
         let tile = this._tiles[tileID.key];
@@ -38395,7 +39014,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Remove a tile, given its id, from the pyramid
-     * @private
      */
     _removeTile(id) {
         const tile = this._tiles[id];
@@ -38431,9 +39049,8 @@ class SourceCache extends performance.Evented {
     /**
      * Search through our current tiles and attempt to find the tiles that
      * cover the given bounds.
-     * @param pointQueryGeometry coordinates of the corners of bounding rectangle
-     * @returns {Array<Object>} result items have {tile, minX, maxX, minY, maxY}, where min/max bounding values are the given bounds transformed in into the coordinate space of this tile.
-     * @private
+     * @param pointQueryGeometry - coordinates of the corners of bounding rectangle
+     * @returns result items have `{tile, minX, maxX, minY, maxY}`, where min/max bounding values are the given bounds transformed in into the coordinate space of this tile.
      */
     tilesIn(pointQueryGeometry, maxPitchScaleFactor, has3DLayer) {
         const tileResults = [];
@@ -38496,9 +39113,10 @@ class SourceCache extends performance.Evented {
             return true;
         }
         if (isRasterType(this._source.type)) {
+            const now = performance.browser.now();
             for (const id in this._tiles) {
                 const tile = this._tiles[id];
-                if (tile.fadeEndTime !== undefined && tile.fadeEndTime >= performance.exported.now()) {
+                if (tile.fadeEndTime >= now) {
                     return true;
                 }
             }
@@ -38507,7 +39125,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Set the value of a particular state for a feature
-     * @private
      */
     setFeatureState(sourceLayer, featureId, state) {
         sourceLayer = sourceLayer || '_geojsonTileLayer';
@@ -38515,7 +39132,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Resets the value of a particular state key for a feature
-     * @private
      */
     removeFeatureState(sourceLayer, featureId, key) {
         sourceLayer = sourceLayer || '_geojsonTileLayer';
@@ -38523,7 +39139,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Get the entire state object for a feature
-     * @private
      */
     getFeatureState(sourceLayer, featureId) {
         sourceLayer = sourceLayer || '_geojsonTileLayer';
@@ -38532,7 +39147,6 @@ class SourceCache extends performance.Evented {
     /**
      * Sets the set of keys that the tile depends on. This allows tiles to
      * be reloaded when their dependencies change.
-     * @private
      */
     setDependencies(tileKey, namespace, dependencies) {
         const tile = this._tiles[tileKey];
@@ -38542,7 +39156,6 @@ class SourceCache extends performance.Evented {
     }
     /**
      * Reloads all tiles that depend on the given keys.
-     * @private
      */
     reloadTilesForDependencies(namespaces, keys) {
         for (const id in this._tiles) {
@@ -38575,7 +39188,6 @@ function workerFactory() {
 const PRELOAD_POOL_ID = 'mapboxgl_preloaded_worker_pool';
 /**
  * Constructs a worker pool.
- * @private
  */
 class WorkerPool {
     constructor() {
@@ -38609,14 +39221,14 @@ class WorkerPool {
         return Object.keys(this.active).length;
     }
 }
-const availableLogicalProcessors = Math.floor(performance.exported.hardwareConcurrency / 2);
-WorkerPool.workerCount = Math.max(Math.min(availableLogicalProcessors, 6), 1);
+// Based on results from A/B testing: https://github.com/maplibre/maplibre-gl-js/pull/2354
+const availableLogicalProcessors = Math.floor(performance.browser.hardwareConcurrency / 2);
+WorkerPool.workerCount = performance.isSafari(globalThis) ? Math.max(Math.min(availableLogicalProcessors, 3), 1) : 1;
 
 let globalWorkerPool;
 /**
  * Creates (if necessary) and returns the single, global WorkerPool instance
  * to be shared across each Map
- * @private
  */
 function getGlobalWorkerPool() {
     if (!globalWorkerPool) {
@@ -38692,6 +39304,7 @@ function overlapAllowed(overlapA, overlapB) {
     return allowed;
 }
 /**
+ * @internal
  * GridIndex is a data structure for testing the intersection of
  * circles and rectangles in a 2d plane.
  * It is optimized for rapid insertion and querying.
@@ -38701,8 +39314,6 @@ function overlapAllowed(overlapA, overlapB) {
  * at least one cell. As long as the geometries are relatively
  * uniformly distributed across the plane, this greatly reduces
  * the number of comparisons necessary.
- *
- * @private
  */
 class GridIndex {
     constructor(width, height, cellSize) {
@@ -39066,7 +39677,7 @@ function project(point, matrix, getElevation) {
     }
     const w = pos[3];
     return {
-        point: new performance.pointGeometry(pos[0] / w, pos[1] / w),
+        point: new performance.Point(pos[0] / w, pos[1] / w),
         signedDistanceFromCamera: w
     };
 }
@@ -39127,7 +39738,7 @@ function updateLineLabels(bucket, posMatrix, painter, isText, labelPlaneMatrix, 
         const perspectiveRatio = getPerspectiveRatio(painter.transform.cameraToCenterDistance, cameraToAnchorDistance);
         const fontSize = performance.evaluateSizeForFeature(sizeData, partiallyEvaluatedSize, symbol);
         const pitchScaledFontSize = pitchWithMap ? fontSize / perspectiveRatio : fontSize * perspectiveRatio;
-        const tileAnchorPoint = new performance.pointGeometry(symbol.anchorX, symbol.anchorY);
+        const tileAnchorPoint = new performance.Point(symbol.anchorX, symbol.anchorY);
         const anchorPoint = project(tileAnchorPoint, labelPlaneMatrix, getElevation).point;
         const projectionCache = { projections: {}, offsets: {} };
         const placeUnflipped = placeGlyphsAlongLine(symbol, pitchScaledFontSize, false /*unflipped*/, keepUpright, posMatrix, labelPlaneMatrix, glCoordMatrix, bucket.glyphOffsetArray, lineVertexArray, dynamicLayoutVertexArray, anchorPoint, tileAnchorPoint, projectionCache, aspectRatio, rotateToLine, getElevation);
@@ -39233,7 +39844,7 @@ function placeGlyphsAlongLine(symbol, fontSize, flip, keepUpright, posMatrix, la
         if (keepUpright && !flip) {
             const a = project(tileAnchorPoint, posMatrix, getElevation).point;
             const tileVertexIndex = (symbol.lineStartIndex + symbol.segment + 1);
-            const tileSegmentEnd = new performance.pointGeometry(lineVertexArray.getx(tileVertexIndex), lineVertexArray.gety(tileVertexIndex));
+            const tileSegmentEnd = new performance.Point(lineVertexArray.getx(tileVertexIndex), lineVertexArray.gety(tileVertexIndex));
             const projectedVertex = project(tileSegmentEnd, posMatrix, getElevation);
             // We know the anchor will be in the viewport, but the end of the line segment may be
             // behind the plane of the camera, in which case we can use a point at any arbitrary (closer)
@@ -39267,8 +39878,8 @@ function projectTruncatedLineSegment(previousTilePoint, currentTilePoint, previo
 }
 /**
  * Transform a vertex from tile coordinates to label plane coordinates
- * @param index index of vertex to project
- * @param projectionArgs necessary data to project a vertex
+ * @param index - index of vertex to project
+ * @param projectionArgs - necessary data to project a vertex
  * @returns the vertex projected to the label plane
  */
 function projectVertexToViewport(index, projectionArgs) {
@@ -39276,7 +39887,7 @@ function projectVertexToViewport(index, projectionArgs) {
     if (projectionCache.projections[index]) {
         return projectionCache.projections[index];
     }
-    const currentVertex = new performance.pointGeometry(lineVertexArray.getx(index), lineVertexArray.gety(index));
+    const currentVertex = new performance.Point(lineVertexArray.getx(index), lineVertexArray.gety(index));
     const projection = project(currentVertex, labelPlaneMatrix, getElevation);
     if (projection.signedDistanceFromCamera > 0) {
         projectionCache.projections[index] = projection.point;
@@ -39287,15 +39898,15 @@ function projectVertexToViewport(index, projectionArgs) {
     const previousLineVertexIndex = index - direction;
     const previousTilePoint = distanceFromAnchor === 0 ?
         tileAnchorPoint :
-        new performance.pointGeometry(lineVertexArray.getx(previousLineVertexIndex), lineVertexArray.gety(previousLineVertexIndex));
+        new performance.Point(lineVertexArray.getx(previousLineVertexIndex), lineVertexArray.gety(previousLineVertexIndex));
     // Don't cache because the new vertex might not be far enough out for future glyphs on the same segment
     return projectTruncatedLineSegment(previousTilePoint, currentVertex, previousVertex, absOffsetX - distanceFromAnchor + 1, labelPlaneMatrix, getElevation);
 }
 /**
  * Calculate the normal vector for a line segment
- * @param segmentVector will be mutated as a tiny optimization
- * @param offset magnitude of resulting vector
- * @param direction direction of line traversal
+ * @param segmentVector - will be mutated as a tiny optimization
+ * @param offset - magnitude of resulting vector
+ * @param direction - direction of line traversal
  * @returns a normal vector from the segment, with magnitude equal to offset amount
  */
 function transformToOffsetNormal(segmentVector, offset, direction) {
@@ -39305,14 +39916,14 @@ function transformToOffsetNormal(segmentVector, offset, direction) {
  * Construct offset line segments for the current segment and the next segment, then extend/shrink
  * the segments until they intersect. If the segments are parallel, then they will touch with no modification.
  *
- * @param index Index of the current vertex
- * @param prevToCurrentOffsetNormal Normal vector of the line segment from the previous vertex to the current vertex
- * @param currentVertex Current (non-offset) vertex projected to the label plane
- * @param lineStartIndex Beginning index for the line this label is on
- * @param lineEndIndex End index for the line this label is on
- * @param offsetPreviousVertex The previous vertex projected to the label plane, and then offset along the previous segments normal
- * @param lineOffsetY Magnitude of the offset
- * @param projectionArgs Necessary data for tile-to-label-plane projection
+ * @param index - Index of the current vertex
+ * @param prevToCurrentOffsetNormal - Normal vector of the line segment from the previous vertex to the current vertex
+ * @param currentVertex - Current (non-offset) vertex projected to the label plane
+ * @param lineStartIndex - Beginning index for the line this label is on
+ * @param lineEndIndex - End index for the line this label is on
+ * @param offsetPreviousVertex - The previous vertex projected to the label plane, and then offset along the previous segments normal
+ * @param lineOffsetY - Magnitude of the offset
+ * @param projectionArgs - Necessary data for tile-to-label-plane projection
  * @returns The point at which the current and next line segments intersect, once offset and extended/shrunk to their meeting point
  */
 function findOffsetIntersectionPoint(index, prevToCurrentOffsetNormal, currentVertex, lineStartIndex, lineEndIndex, offsetPreviousVertex, lineOffsetY, projectionArgs) {
@@ -39360,7 +39971,7 @@ function placeGlyphAlongLine(offsetX, lineOffsetX, lineOffsetY, flip, anchorPoin
         lineStartIndex + anchorSegment + 1;
     let currentVertex = anchorPoint;
     let previousVertex = anchorPoint;
-    // offsetPrev and intersectionPoint are analagous to previousVertex and currentVertex
+    // offsetPrev and intersectionPoint are analogous to previousVertex and currentVertex
     // but if there's a line offset they are calculated in parallel as projection happens
     let offsetIntersectionPoint;
     let offsetPreviousVertex;
@@ -39459,6 +40070,7 @@ function xyTransformMat4(out, a, m) {
 // stability, but it's expensive.
 const viewportPadding = 100;
 /**
+ * @internal
  * A collision index used to prevent symbols from overlapping. It keep tracks of
  * where previous symbols have been placed and is used to check if a new
  * symbol overlaps with any previously added symbols.
@@ -39467,8 +40079,6 @@ const viewportPadding = 100;
  * there's room for a symbol, then insertCollisionBox/Circles actually puts the
  * symbol in the index. The two step process allows paired symbols to be inserted
  * together even if they overlap.
- *
- * @private
  */
 class CollisionIndex {
     constructor(transform, grid = new GridIndex(transform.width + 2 * viewportPadding, transform.height + 2 * viewportPadding, 25), ignoredGrid = new GridIndex(transform.width + 2 * viewportPadding, transform.height + 2 * viewportPadding, 25)) {
@@ -39504,7 +40114,7 @@ class CollisionIndex {
     }
     placeCollisionCircles(overlapMode, symbol, lineVertexArray, glyphOffsetArray, fontSize, posMatrix, labelPlaneMatrix, labelToScreenMatrix, showCollisionCircles, pitchWithMap, collisionGroupPredicate, circlePixelDiameter, textPixelPadding, getElevation) {
         const placedCollisionCircles = [];
-        const tileUnitAnchorPoint = new performance.pointGeometry(symbol.anchorX, symbol.anchorY);
+        const tileUnitAnchorPoint = new performance.Point(symbol.anchorX, symbol.anchorY);
         const screenAnchorPoint = project(tileUnitAnchorPoint, posMatrix, getElevation);
         const perspectiveRatio = getPerspectiveRatio(this.transform.cameraToCenterDistance, screenAnchorPoint.signedDistanceFromCamera);
         const labelPlaneFontSize = pitchWithMap ? fontSize / perspectiveRatio : fontSize * perspectiveRatio;
@@ -39520,8 +40130,8 @@ class CollisionIndex {
         let entirelyOffscreen = true;
         if (firstAndLastGlyph) {
             const radius = circlePixelDiameter * 0.5 * perspectiveRatio + textPixelPadding;
-            const screenPlaneMin = new performance.pointGeometry(-viewportPadding, -viewportPadding);
-            const screenPlaneMax = new performance.pointGeometry(this.screenRightBoundary, this.screenBottomBoundary);
+            const screenPlaneMin = new performance.Point(-viewportPadding, -viewportPadding);
+            const screenPlaneMax = new performance.Point(this.screenRightBoundary, this.screenBottomBoundary);
             const interpolator = new PathInterpolator();
             // Construct a projected path from projected line vertices. Anchor points are ignored and removed
             const first = firstAndLastGlyph.first;
@@ -39621,8 +40231,6 @@ class CollisionIndex {
      * Because the geometries in the CollisionIndex are an approximation of the shape of
      * symbols on the map, we use the CollisionIndex to look up the symbol part of
      * `queryRenderedFeatures`.
-     *
-     * @private
      */
     queryRenderedSymbols(viewportQueryGeometry) {
         if (viewportQueryGeometry.length === 0 || (this.grid.keysLength() === 0 && this.ignoredGrid.keysLength() === 0)) {
@@ -39634,7 +40242,7 @@ class CollisionIndex {
         let maxX = -Infinity;
         let maxY = -Infinity;
         for (const point of viewportQueryGeometry) {
-            const gridPoint = new performance.pointGeometry(point.x + viewportPadding, point.y + viewportPadding);
+            const gridPoint = new performance.Point(point.x + viewportPadding, point.y + viewportPadding);
             minX = Math.min(minX, gridPoint.x);
             minY = Math.min(minY, gridPoint.y);
             maxX = Math.max(maxX, gridPoint.x);
@@ -39660,10 +40268,10 @@ class CollisionIndex {
             // distinction doesn't matter as much, and box geometry is easier
             // to work with.
             const bbox = [
-                new performance.pointGeometry(feature.x1, feature.y1),
-                new performance.pointGeometry(feature.x2, feature.y1),
-                new performance.pointGeometry(feature.x2, feature.y2),
-                new performance.pointGeometry(feature.x1, feature.y2)
+                new performance.Point(feature.x1, feature.y1),
+                new performance.Point(feature.x2, feature.y1),
+                new performance.Point(feature.x2, feature.y2),
+                new performance.Point(feature.x1, feature.y2)
             ];
             if (!performance.polygonIntersectsPolygon(query, bbox)) {
                 continue;
@@ -39698,7 +40306,7 @@ class CollisionIndex {
             p = [x, y, 0, 1];
             xyTransformMat4(p, p, posMatrix);
         }
-        const a = new performance.pointGeometry((((p[0] / p[3] + 1) / 2) * this.transform.width) + viewportPadding, (((-p[1] / p[3] + 1) / 2) * this.transform.height) + viewportPadding);
+        const a = new performance.Point((((p[0] / p[3] + 1) / 2) * this.transform.width) + viewportPadding, (((-p[1] / p[3] + 1) / 2) * this.transform.height) + viewportPadding);
         return {
             point: a,
             // See perspective ratio comment in symbol_sdf.vertex
@@ -39735,7 +40343,6 @@ class CollisionIndex {
  * translation by pixelsToTileUnits(30, 6.5) tile units.
  *
  * @returns value in tile units
- * @private
  */
 function pixelsToTileUnits(tile, pixelValue, z) {
     return pixelValue * (performance.EXTENT / (tile.tileSize * Math.pow(2, z - tile.tileID.overscaledZ)));
@@ -39818,12 +40425,11 @@ function calculateVariableLayoutShift(anchor, width, height, textOffset, textBox
     const { horizontalAlign, verticalAlign } = performance.getAnchorAlignment(anchor);
     const shiftX = -(horizontalAlign - 0.5) * width;
     const shiftY = -(verticalAlign - 0.5) * height;
-    const offset = performance.evaluateVariableOffset(anchor, textOffset);
-    return new performance.pointGeometry(shiftX + offset[0] * textBoxScale, shiftY + offset[1] * textBoxScale);
+    return new performance.Point(shiftX + textOffset[0] * textBoxScale, shiftY + textOffset[1] * textBoxScale);
 }
 function shiftVariableCollisionBox(collisionBox, shiftX, shiftY, rotateWithMap, pitchWithMap, angle) {
     const { x1, x2, y1, y2, anchorPointX, anchorPointY } = collisionBox;
-    const rotatedOffset = new performance.pointGeometry(shiftX, shiftY);
+    const rotatedOffset = new performance.Point(shiftX, shiftY);
     if (rotateWithMap) {
         rotatedOffset._rotate(pitchWithMap ? angle : -angle);
     }
@@ -39906,8 +40512,9 @@ class Placement {
             });
         }
     }
-    attemptAnchorPlacement(anchor, textBox, width, height, textBoxScale, rotateWithMap, pitchWithMap, textPixelRatio, posMatrix, collisionGroup, textOverlapMode, symbolInstance, bucket, orientation, iconBox, getElevation) {
-        const textOffset = [symbolInstance.textOffset0, symbolInstance.textOffset1];
+    attemptAnchorPlacement(textAnchorOffset, textBox, width, height, textBoxScale, rotateWithMap, pitchWithMap, textPixelRatio, posMatrix, collisionGroup, textOverlapMode, symbolInstance, bucket, orientation, iconBox, getElevation) {
+        const anchor = performance.TextAnchorEnum[textAnchorOffset.textAnchor];
+        const textOffset = [textAnchorOffset.textOffset0, textAnchorOffset.textOffset1];
         const shift = calculateVariableLayoutShift(anchor, width, height, textOffset, textBoxScale);
         const placedGlyphBoxes = this.collisionIndex.placeCollisionBox(shiftVariableCollisionBox(textBox, shift.x, shift.y, rotateWithMap, pitchWithMap, this.transform.angle), textOverlapMode, textPixelRatio, posMatrix, collisionGroup.predicate, getElevation);
         if (iconBox) {
@@ -39974,7 +40581,10 @@ class Placement {
         if (!bucket.collisionArrays && collisionBoxArray) {
             bucket.deserializeCollisionBoxes(collisionBoxArray);
         }
+        const tileID = this.retainedQueryData[bucket.bucketInstanceId].tileID;
+        const getElevation = this.terrain ? (x, y) => this.terrain.getElevation(tileID, x, y) : null;
         const placeSymbol = (symbolInstance, collisionArrays) => {
+            var _a, _b;
             if (seenCrossTileIDs[symbolInstance.crossTileID])
                 return;
             if (holdingForFade) {
@@ -40003,14 +40613,6 @@ class Placement {
             }
             if (collisionArrays.verticalTextFeatureIndex) {
                 verticalTextFeatureIndex = collisionArrays.verticalTextFeatureIndex;
-            }
-            // update elevation of collisionArrays
-            const tileID = this.retainedQueryData[bucket.bucketInstanceId].tileID;
-            const getElevation = this.terrain ? (x, y) => this.terrain.getElevation(tileID, x, y) : null;
-            for (const boxType of ['textBox', 'verticalTextBox', 'iconBox', 'verticalIconBox']) {
-                const box = collisionArrays[boxType];
-                if (box)
-                    box.elevation = getElevation ? getElevation(box.anchorPointX, box.anchorPointY) : 0;
             }
             const textBox = collisionArrays.textBox;
             if (textBox) {
@@ -40044,7 +40646,10 @@ class Placement {
                         placed = placeHorizontalFn();
                     }
                 };
-                if (!layout.get('text-variable-anchor')) {
+                const textAnchorOffsetStart = symbolInstance.textAnchorOffsetStartIndex;
+                const textAnchorOffsetEnd = symbolInstance.textAnchorOffsetEndIndex;
+                // If start+end indices match, text-variable-anchor is not in play.
+                if (textAnchorOffsetEnd === textAnchorOffsetStart) {
                     const placeBox = (collisionTextBox, orientation) => {
                         const placedFeature = this.collisionIndex.placeCollisionBox(collisionTextBox, textOverlapMode, textPixelRatio, posMatrix, collisionGroup.predicate, getElevation);
                         if (placedFeature && placedFeature.box && placedFeature.box.length) {
@@ -40067,35 +40672,40 @@ class Placement {
                     updatePreviousOrientationIfNotPlaced(placed && placed.box && placed.box.length);
                 }
                 else {
-                    let anchors = layout.get('text-variable-anchor');
-                    // If this symbol was in the last placement, shift the previously used
-                    // anchor to the front of the anchor list, only if the previous anchor
-                    // is still in the anchor list
-                    if (this.prevPlacement && this.prevPlacement.variableOffsets[symbolInstance.crossTileID]) {
-                        const prevOffsets = this.prevPlacement.variableOffsets[symbolInstance.crossTileID];
-                        if (anchors.indexOf(prevOffsets.anchor) > 0) {
-                            anchors = anchors.filter(anchor => anchor !== prevOffsets.anchor);
-                            anchors.unshift(prevOffsets.anchor);
-                        }
-                    }
+                    // If this symbol was in the last placement, prefer placement using same anchor, if it's still available
+                    let prevAnchor = performance.TextAnchorEnum[(_b = (_a = this.prevPlacement) === null || _a === void 0 ? void 0 : _a.variableOffsets[symbolInstance.crossTileID]) === null || _b === void 0 ? void 0 : _b.anchor];
                     const placeBoxForVariableAnchors = (collisionTextBox, collisionIconBox, orientation) => {
                         const width = collisionTextBox.x2 - collisionTextBox.x1;
                         const height = collisionTextBox.y2 - collisionTextBox.y1;
                         const textBoxScale = symbolInstance.textBoxScale;
                         const variableIconBox = hasIconTextFit && (iconOverlapMode === 'never') ? collisionIconBox : null;
                         let placedBox = { box: [], offscreen: false };
-                        const placementAttempts = (textOverlapMode !== 'never') ? anchors.length * 2 : anchors.length;
-                        for (let i = 0; i < placementAttempts; ++i) {
-                            const anchor = anchors[i % anchors.length];
-                            const overlapMode = (i >= anchors.length) ? textOverlapMode : 'never';
-                            const result = this.attemptAnchorPlacement(anchor, collisionTextBox, width, height, textBoxScale, rotateWithMap, pitchWithMap, textPixelRatio, posMatrix, collisionGroup, overlapMode, symbolInstance, bucket, orientation, variableIconBox, getElevation);
-                            if (result) {
-                                placedBox = result.placedGlyphBoxes;
-                                if (placedBox && placedBox.box && placedBox.box.length) {
-                                    placeText = true;
-                                    shift = result.shift;
-                                    break;
+                        let placementPasses = (textOverlapMode === 'never') ? 1 : 2;
+                        let overlapMode = 'never';
+                        if (prevAnchor) {
+                            placementPasses++;
+                        }
+                        for (let pass = 0; pass < placementPasses; pass++) {
+                            for (let i = textAnchorOffsetStart; i < textAnchorOffsetEnd; i++) {
+                                const textAnchorOffset = bucket.textAnchorOffsets.get(i);
+                                if (prevAnchor && textAnchorOffset.textAnchor !== prevAnchor) {
+                                    continue;
                                 }
+                                const result = this.attemptAnchorPlacement(textAnchorOffset, collisionTextBox, width, height, textBoxScale, rotateWithMap, pitchWithMap, textPixelRatio, posMatrix, collisionGroup, overlapMode, symbolInstance, bucket, orientation, variableIconBox, getElevation);
+                                if (result) {
+                                    placedBox = result.placedGlyphBoxes;
+                                    if (placedBox && placedBox.box && placedBox.box.length) {
+                                        placeText = true;
+                                        shift = result.shift;
+                                        return placedBox;
+                                    }
+                                }
+                            }
+                            if (prevAnchor) {
+                                prevAnchor = null;
+                            }
+                            else {
+                                overlapMode = textOverlapMode;
                             }
                         }
                         return placedBox;
@@ -40367,11 +40977,12 @@ class Placement {
             bucket.iconCollisionBox.collisionVertexArray.clear();
         if (bucket.hasTextCollisionBoxData())
             bucket.textCollisionBox.collisionVertexArray.clear();
-        const layout = bucket.layers[0].layout;
+        const layer = bucket.layers[0];
+        const layout = layer.layout;
         const duplicateOpacityState = new JointOpacityState(null, 0, false, false, true);
         const textAllowOverlap = layout.get('text-allow-overlap');
         const iconAllowOverlap = layout.get('icon-allow-overlap');
-        const variablePlacement = layout.get('text-variable-anchor');
+        const hasVariablePlacement = layer._unevaluatedLayout.hasValue('text-variable-anchor') || layer._unevaluatedLayout.hasValue('text-variable-anchor-offset');
         const rotateWithMap = layout.get('text-rotation-alignment') === 'map';
         const pitchWithMap = layout.get('text-pitch-alignment') === 'map';
         const hasIconTextFit = layout.get('icon-text-fit') !== 'none';
@@ -40462,10 +41073,10 @@ class Placement {
             if (bucket.hasIconCollisionBoxData() || bucket.hasTextCollisionBoxData()) {
                 const collisionArrays = bucket.collisionArrays[s];
                 if (collisionArrays) {
-                    let shift = new performance.pointGeometry(0, 0);
+                    let shift = new performance.Point(0, 0);
                     if (collisionArrays.textBox || collisionArrays.verticalTextBox) {
                         let used = true;
-                        if (variablePlacement) {
+                        if (hasVariablePlacement) {
                             const variableOffset = this.variableOffsets[crossTileID];
                             if (variableOffset) {
                                 // This will show either the currently placed position or the last
@@ -40639,9 +41250,9 @@ class PauseablePlacement {
         return this._done;
     }
     continuePlacement(order, layers, layerTiles) {
-        const startTime = performance.exported.now();
+        const startTime = performance.browser.now();
         const shouldPausePlacement = () => {
-            return this._forceFullPlacement ? false : (performance.exported.now() - startTime) > 2;
+            return this._forceFullPlacement ? false : (performance.browser.now() - startTime) > 2;
         };
         while (this._currentPlacementIndex >= 0) {
             const layerId = order[this._currentPlacementIndex];
@@ -40715,9 +41326,11 @@ class TileLayerIndex {
             const entry = { positions, crossTileIDs };
             // once we get too many symbols for a given key, it becomes much faster to index it before queries
             if (entry.positions.length > KDBUSH_THRESHHOLD) {
-                const index = new performance.KDBush(entry.positions, v => v.x, v => v.y, 16, Uint16Array);
+                const index = new performance.KDBush(entry.positions.length, 16, Uint16Array);
+                for (const { x, y } of entry.positions)
+                    index.add(x, y);
+                index.finish();
                 // clear all references to the original positions data
-                delete index.points;
                 delete entry.positions;
                 entry.index = index;
             }
@@ -40985,7 +41598,7 @@ const ignoredDiffOperations = performance.pick(performance.operations, [
 ]);
 const empty = performance.emptyStyle();
 /**
- * @private
+ * The Style base class
  */
 class Style extends performance.Evented {
     constructor(map, options = {}) {
@@ -40999,7 +41612,6 @@ class Style extends performance.Evented {
         this.crossTileSymbolIndex = new CrossTileSymbolIndex();
         this._spritesImagesIds = {};
         this._layers = {};
-        this._serializedLayers = {};
         this._order = [];
         this.sourceCaches = {};
         this.zoomHistory = new performance.ZoomHistory();
@@ -41019,7 +41631,13 @@ class Style extends performance.Evented {
                     const allComplete = results.every((elem) => elem);
                     if (allComplete) {
                         for (const id in self.sourceCaches) {
-                            self.sourceCaches[id].reload(); // Should be a no-op if the plugin loads before any tiles load
+                            const sourceType = self.sourceCaches[id].getSource().type;
+                            if (sourceType === 'vector' || sourceType === 'geojson') {
+                                // Non-vector sources don't have any symbols buckets to reload when the RTL text plugin loads
+                                // They also load more quickly, so they're more likely to have already displaying tiles
+                                // that would be unnecessarily booted by the plugin load event
+                                self.sourceCaches[id].reload(); // Should be a no-op if the plugin loads before any tiles load
+                            }
                         }
                     }
                 }
@@ -41062,7 +41680,7 @@ class Style extends performance.Evented {
     }
     loadJSON(json, options = {}, previousStyle) {
         this.fire(new performance.Event('dataloading', { dataType: 'style' }));
-        this._request = performance.exported.frame(() => {
+        this._request = performance.browser.frame(() => {
             this._request = null;
             options.validate = options.validate !== false;
             this._load(json, options, previousStyle);
@@ -41073,6 +41691,7 @@ class Style extends performance.Evented {
         this._load(empty, { validate: false });
     }
     _load(json, options, previousStyle) {
+        var _a;
         const nextState = options.transformStyle ? options.transformStyle(previousStyle, json) : json;
         if (options.validate && emitValidationErrors(this, performance.validateStyle(nextState))) {
             return;
@@ -41089,23 +41708,26 @@ class Style extends performance.Evented {
             this.imageManager.setLoaded(true);
         }
         this.glyphManager.setURL(nextState.glyphs);
-        const layers = performance.derefLayers(this.stylesheet.layers);
-        // Broadcast layers to workers first, so that expensive style processing (createStyleLayer)
-        // can happen in parallel on both main and worker threads.
-        this.dispatcher.broadcast('setLayers', layers);
-        this._order = layers.map((layer) => layer.id);
-        this._layers = {};
-        this._serializedLayers = {};
-        for (let layer of layers) {
-            layer = performance.createStyleLayer(layer);
-            layer.setEventedParent(this, { layer: { id: layer.id } });
-            this._layers[layer.id] = layer;
-            this._serializedLayers[layer.id] = layer.serialize();
-        }
+        this._createLayers();
         this.light = new Light(this.stylesheet.light);
-        this.map.setTerrain(this.stylesheet.terrain);
+        this.map.setTerrain((_a = this.stylesheet.terrain) !== null && _a !== void 0 ? _a : null);
         this.fire(new performance.Event('data', { dataType: 'style' }));
         this.fire(new performance.Event('style.load'));
+    }
+    _createLayers() {
+        const dereferencedLayers = performance.derefLayers(this.stylesheet.layers);
+        // Broadcast layers to workers first, so that expensive style processing (createStyleLayer)
+        // can happen in parallel on both main and worker threads.
+        this.dispatcher.broadcast('setLayers', dereferencedLayers);
+        this._order = dereferencedLayers.map((layer) => layer.id);
+        this._layers = {};
+        // reset serialization field, to be populated only when needed
+        this._serializedLayers = null;
+        for (const layer of dereferencedLayers) {
+            const styledLayer = performance.createStyleLayer(layer);
+            styledLayer.setEventedParent(this, { layer: { id: layer.id } });
+            this._layers[layer.id] = styledLayer;
+        }
     }
     _loadSprite(sprite, isUpdate = false, completion = undefined) {
         this.imageManager.setLoaded(false);
@@ -41191,12 +41813,40 @@ class Style extends performance.Evented {
             return false;
         return true;
     }
-    _serializeLayers(ids) {
+    /**
+     * take an array of string IDs, and based on this._layers, generate an array of LayerSpecification
+     * @param ids - an array of string IDs, for which serialized layers will be generated. If omitted, all serialized layers will be returned
+     * @returns generated result
+     */
+    _serializeByIds(ids) {
+        const serializedLayersDictionary = this._serializedAllLayers();
+        if (!ids || ids.length === 0) {
+            return Object.values(serializedLayersDictionary);
+        }
         const serializedLayers = [];
         for (const id of ids) {
-            const layer = this._layers[id];
+            // this check will skip all custom layers
+            if (serializedLayersDictionary[id]) {
+                serializedLayers.push(serializedLayersDictionary[id]);
+            }
+        }
+        return serializedLayers;
+    }
+    /**
+     * Lazy initialization of this._serializedLayers dictionary and return it
+     * @returns this._serializedLayers dictionary
+     */
+    _serializedAllLayers() {
+        let serializedLayers = this._serializedLayers;
+        if (serializedLayers) {
+            return serializedLayers;
+        }
+        serializedLayers = this._serializedLayers = {};
+        const allLayerIds = Object.keys(this._layers);
+        for (const layerId of allLayerIds) {
+            const layer = this._layers[layerId];
             if (layer.type !== 'custom') {
-                serializedLayers.push(layer.serialize());
+                serializedLayers[layerId] = layer.serialize();
             }
         }
         return serializedLayers;
@@ -41223,8 +41873,8 @@ class Style extends performance.Evented {
         }
     }
     /**
+     * @internal
      * Apply queued style updates in a batch and recalculate zoom-dependent paint properties.
-     * @private
      */
     update(parameters) {
         if (!this._loaded) {
@@ -41304,7 +41954,7 @@ class Style extends performance.Evented {
     }
     _updateWorkerLayers(updatedIds, removedIds) {
         this.dispatcher.broadcast('updateLayers', {
-            layers: this._serializeLayers(updatedIds),
+            layers: this._serializeByIds(updatedIds),
             removedIds
         });
     }
@@ -41324,17 +41974,17 @@ class Style extends performance.Evented {
      * May throw an Error ('Unimplemented: METHOD') if the mapbox-gl-style-spec
      * diff algorithm produces an operation that is not supported.
      *
-     * @returns {boolean} true if any changes were made; false otherwise
-     * @private
+     * @returns true if any changes were made; false otherwise
      */
     setState(nextState, options = {}) {
         this._checkLoaded();
-        nextState = options.transformStyle ? options.transformStyle(this.serialize(), nextState) : nextState;
+        const serializedStyle = this.serialize();
+        nextState = options.transformStyle ? options.transformStyle(serializedStyle, nextState) : nextState;
         if (emitValidationErrors(this, performance.validateStyle(nextState)))
             return false;
         nextState = performance.clone$1(nextState);
         nextState.layers = performance.derefLayers(nextState.layers);
-        const changes = performance.diffStyles(this.serialize(), nextState)
+        const changes = performance.diffStyles(serializedStyle, nextState)
             .filter(op => !(op.command in ignoredDiffOperations));
         if (changes.length === 0) {
             return false;
@@ -41343,14 +41993,14 @@ class Style extends performance.Evented {
         if (unimplementedOps.length > 0) {
             throw new Error(`Unimplemented: ${unimplementedOps.map(op => op.command).join(', ')}.`);
         }
-        changes.forEach((op) => {
+        for (const op of changes) {
             if (op.command === 'setTransition') {
                 // `transition` is always read directly off of
                 // `this.stylesheet`, which we update below
-                return;
+                continue;
             }
             this[op.command].apply(this, op.args);
-        });
+        }
         this.stylesheet = nextState;
         return true;
     }
@@ -41402,7 +42052,7 @@ class Style extends performance.Evented {
         const sourceCache = this.sourceCaches[id] = new SourceCache(id, source, this.dispatcher);
         sourceCache.style = this;
         sourceCache.setEventedParent(this, () => ({
-            isSourceLoaded: this.loaded(),
+            isSourceLoaded: sourceCache.loaded(),
             source: sourceCache.serialize(),
             sourceId: id
         }));
@@ -41411,9 +42061,9 @@ class Style extends performance.Evented {
     }
     /**
      * Remove a source from this stylesheet, given its id.
-     * @param {string} id id of the source to remove
-     * @throws {Error} if no source is found with the given ID
-     * @returns {Map} The {@link Map} object.
+     * @param id - id of the source to remove
+     * @throws if no source is found with the given ID
+     * @returns `this`.
      */
     removeSource(id) {
         this._checkLoaded();
@@ -41435,8 +42085,8 @@ class Style extends performance.Evented {
     }
     /**
      * Set the data of a GeoJSON source, given its id.
-     * @param {string} id id of the source
-     * @param {GeoJSON|string} data GeoJSON source
+     * @param id - id of the source
+     * @param data - GeoJSON source
      */
     setGeoJSONSourceData(id, data) {
         this._checkLoaded();
@@ -41449,9 +42099,9 @@ class Style extends performance.Evented {
         this._changed = true;
     }
     /**
-     * Get a source by id.
-     * @param {string} id id of the desired source
-     * @returns {Source | undefined} source
+     * Get a source by ID.
+     * @param id - ID of the desired source
+     * @returns source
      */
     getSource(id) {
         return this.sourceCaches[id] && this.sourceCaches[id].getSource();
@@ -41459,10 +42109,10 @@ class Style extends performance.Evented {
     /**
      * Add a layer to the map style. The layer will be inserted before the layer with
      * ID `before`, or appended if `before` is omitted.
-     * @param {Object | CustomLayerInterface} layerObject The style layer to add.
-     * @param {string} [before] ID of an existing layer to insert before
-     * @param {Object} options Style setter options.
-     * @returns {Map} The {@link Map} object.
+     * @param layerObject - The style layer to add.
+     * @param before - ID of an existing layer to insert before
+     * @param options - Style setter options.
+     * @returns `this`.
      */
     addLayer(layerObject, before, options = {}) {
         this._checkLoaded();
@@ -41478,7 +42128,7 @@ class Style extends performance.Evented {
             layer = performance.createStyleLayer(layerObject);
         }
         else {
-            if (typeof layerObject.source === 'object') {
+            if ('source' in layerObject && typeof layerObject.source === 'object') {
                 this.addSource(id, layerObject.source);
                 layerObject = performance.clone$1(layerObject);
                 layerObject = performance.extend(layerObject, { source: id });
@@ -41489,7 +42139,6 @@ class Style extends performance.Evented {
             layer = performance.createStyleLayer(layerObject);
             this._validateLayer(layer);
             layer.setEventedParent(this, { layer: { id } });
-            this._serializedLayers[layer.id] = layer.serialize();
         }
         const index = before ? this._order.indexOf(before) : this._order.length;
         if (before && index === -1) {
@@ -41502,7 +42151,7 @@ class Style extends performance.Evented {
         if (this._removedLayers[id] && layer.source && layer.type !== 'custom') {
             // If, in the current batch, we have already removed this layer
             // and we are now re-adding it with a different `type`, then we
-            // need to clear (rather than just reload) the underyling source's
+            // need to clear (rather than just reload) the underlying source's
             // tiles.  Otherwise, tiles marked 'reloading' will have buckets /
             // buffers that are set up for the _previous_ version of this
             // layer, causing, e.g.:
@@ -41525,8 +42174,8 @@ class Style extends performance.Evented {
     /**
      * Moves a layer to a different z-position. The layer will be inserted before the layer with
      * ID `before`, or appended if `before` is omitted.
-     * @param {string} id ID of the layer to move
-     * @param {string} [before] ID of an existing layer to insert before
+     * @param id - ID of the layer to move
+     * @param before - ID of an existing layer to insert before
      */
     moveLayer(id, before) {
         this._checkLoaded();
@@ -41554,8 +42203,8 @@ class Style extends performance.Evented {
      *
      * If no such layer exists, an `error` event is fired.
      *
-     * @param {string} id id of the layer to remove
-     * @fires error
+     * @param id - id of the layer to remove
+     * @event `error` - Fired if the layer does not exist
      */
     removeLayer(id) {
         this._checkLoaded();
@@ -41571,7 +42220,9 @@ class Style extends performance.Evented {
         this._changed = true;
         this._removedLayers[id] = layer;
         delete this._layers[id];
-        delete this._serializedLayers[id];
+        if (this._serializedLayers) {
+            delete this._serializedLayers[id];
+        }
         delete this._updatedLayers[id];
         delete this._updatedPaintProps[id];
         if (layer.onRemove) {
@@ -41581,8 +42232,8 @@ class Style extends performance.Evented {
     /**
      * Return the style layer object with the given `id`.
      *
-     * @param {string} id - id of the desired layer
-     * @returns {?Object} a layer, if one with the given `id` exists
+     * @param id - id of the desired layer
+     * @returns a layer, if one with the given `id` exists
      */
     getLayer(id) {
         return this._layers[id];
@@ -41590,8 +42241,8 @@ class Style extends performance.Evented {
     /**
      * checks if a specific layer is present within the style.
      *
-     * @param {string} id - id of the desired layer
-     * @returns {boolean} a boolean specifying if the given layer is present
+     * @param id - the id of the desired layer
+     * @returns a boolean specifying if the given layer is present
      */
     hasLayer(id) {
         return id in this._layers;
@@ -41636,8 +42287,8 @@ class Style extends performance.Evented {
     }
     /**
      * Get a layer's filter object
-     * @param {string} layer the layer to inspect
-     * @returns {*} the layer's filter, if any
+     * @param layer - the layer to inspect
+     * @returns the layer's filter, if any
      */
     getFilter(layer) {
         return performance.clone$1(this.getLayer(layer).filter);
@@ -41656,9 +42307,9 @@ class Style extends performance.Evented {
     }
     /**
      * Get a layout property's value from a given layer
-     * @param {string} layerId the layer to inspect
-     * @param {string} name the name of the layout property
-     * @returns {*} the property value
+     * @param layerId - the layer to inspect
+     * @param name - the name of the layout property
+     * @returns the property value
      */
     getLayoutProperty(layerId, name) {
         const layer = this.getLayer(layerId);
@@ -41753,20 +42404,29 @@ class Style extends performance.Evented {
         return performance.extend({ duration: 300, delay: 0 }, this.stylesheet && this.stylesheet.transition);
     }
     serialize() {
+        // We return undefined before we're loaded, following the pattern of Map.getStyle() before
+        // the Style object is initialized.
+        // Internally, Style._validate() calls Style.serialize() but callers are responsible for
+        // calling Style._checkLoaded() first if their validation requires the style to be loaded.
+        if (!this._loaded)
+            return;
+        const sources = performance.mapObject(this.sourceCaches, (source) => source.serialize());
+        const layers = this._serializeByIds(this._order);
+        const myStyleSheet = this.stylesheet;
         return performance.filterObject({
-            version: this.stylesheet.version,
-            name: this.stylesheet.name,
-            metadata: this.stylesheet.metadata,
-            light: this.stylesheet.light,
-            center: this.stylesheet.center,
-            zoom: this.stylesheet.zoom,
-            bearing: this.stylesheet.bearing,
-            pitch: this.stylesheet.pitch,
-            sprite: this.stylesheet.sprite,
-            glyphs: this.stylesheet.glyphs,
-            transition: this.stylesheet.transition,
-            sources: performance.mapObject(this.sourceCaches, (source) => source.serialize()),
-            layers: this._serializeLayers(this._order)
+            version: myStyleSheet.version,
+            name: myStyleSheet.name,
+            metadata: myStyleSheet.metadata,
+            light: myStyleSheet.light,
+            center: myStyleSheet.center,
+            zoom: myStyleSheet.zoom,
+            bearing: myStyleSheet.bearing,
+            pitch: myStyleSheet.pitch,
+            sprite: myStyleSheet.sprite,
+            glyphs: myStyleSheet.glyphs,
+            transition: myStyleSheet.transition,
+            sources,
+            layers
         }, (value) => { return value !== undefined; });
     }
     _updateLayer(layer) {
@@ -41777,6 +42437,9 @@ class Style extends performance.Evented {
             this._updatedSources[layer.source] = 'reload';
             this.sourceCaches[layer.source].pause();
         }
+        // upon updating, serilized layer dictionary should be reset.
+        // When needed, it will be populated with the correct copy again.
+        this._serializedLayers = null;
         this._changed = true;
     }
     _flattenAndSortRenderedFeatures(sourceResults) {
@@ -41864,15 +42527,17 @@ class Style extends performance.Evented {
         }
         const sourceResults = [];
         params.availableImages = this._availableImages;
+        // LayerSpecification is serialized StyleLayer, and this casting is safe.
+        const serializedLayers = this._serializedAllLayers();
         for (const id in this.sourceCaches) {
             if (params.layers && !includedSources[id])
                 continue;
-            sourceResults.push(queryRenderedFeatures(this.sourceCaches[id], this._layers, this._serializedLayers, queryGeometry, params, transform));
+            sourceResults.push(queryRenderedFeatures(this.sourceCaches[id], this._layers, serializedLayers, queryGeometry, params, transform));
         }
         if (this.placement) {
             // If a placement has run, query against its CollisionIndex
             // for symbol results, and treat it as an extra source to merge
-            sourceResults.push(queryRenderedSymbols(this._layers, this._serializedLayers, this.sourceCaches, queryGeometry, params, this.placement.collisionIndex, this.placement.retainedQueryData));
+            sourceResults.push(queryRenderedSymbols(this._layers, serializedLayers, this.sourceCaches, queryGeometry, params, this.placement.collisionIndex, this.placement.retainedQueryData));
         }
         return this._flattenAndSortRenderedFeatures(sourceResults);
     }
@@ -41884,10 +42549,10 @@ class Style extends performance.Evented {
         return sourceCache ? querySourceFeatures(sourceCache, params) : [];
     }
     addSourceType(name, SourceType, callback) {
-        if (Style.getSourceType(name)) {
+        if (getSourceType(name)) {
             return callback(new Error(`A source type called "${name}" already exists.`));
         }
-        Style.setSourceType(name, SourceType);
+        setSourceType(name, SourceType);
         if (!SourceType.workerSourceURL) {
             return callback(null, null);
         }
@@ -41912,7 +42577,7 @@ class Style extends performance.Evented {
         if (!_update)
             return;
         const parameters = {
-            now: performance.exported.now(),
+            now: performance.browser.now(),
             transition: performance.extend({
                 duration: 300,
                 delay: 0
@@ -41997,7 +42662,7 @@ class Style extends performance.Evented {
         // Also force full placement when fadeDuration === 0 to ensure that newly loaded
         // tiles will fully display symbols in their first frame
         forceFullPlacement = forceFullPlacement || this._layerOrderChanged || fadeDuration === 0;
-        if (forceFullPlacement || !this.pauseablePlacement || (this.pauseablePlacement.isDone() && !this.placement.stillRecent(performance.exported.now(), transform.zoom))) {
+        if (forceFullPlacement || !this.pauseablePlacement || (this.pauseablePlacement.isDone() && !this.placement.stillRecent(performance.browser.now(), transform.zoom))) {
             this.pauseablePlacement = new PauseablePlacement(transform, this.map.terrain, this._order, forceFullPlacement, showCollisionBoxes, fadeDuration, crossSourceCollisions, this.placement);
             this._layerOrderChanged = false;
         }
@@ -42011,7 +42676,7 @@ class Style extends performance.Evented {
         else {
             this.pauseablePlacement.continuePlacement(this._order, this._layers, layerTiles);
             if (this.pauseablePlacement.isDone()) {
-                this.placement = this.pauseablePlacement.commit(performance.exported.now());
+                this.placement = this.pauseablePlacement.commit(performance.browser.now());
                 placementCommitted = true;
             }
             if (symbolBucketsChanged) {
@@ -42030,7 +42695,7 @@ class Style extends performance.Evented {
             }
         }
         // needsRender is false when we have just finished a placement that didn't change the visibility of any symbols
-        const needsRerender = !this.pauseablePlacement.isDone() || this.placement.hasTransitions(performance.exported.now());
+        const needsRerender = !this.pauseablePlacement.isDone() || this.placement.hasTransitions(performance.browser.now());
         return needsRerender;
     }
     _releaseSymbolFadeTiles() {
@@ -42042,7 +42707,7 @@ class Style extends performance.Evented {
     getImages(mapId, params, callback) {
         this.imageManager.getImages(params.icons, callback);
         // Apply queued image changes before setting the tile's dependencies so that the tile
-        // is not reloaded unecessarily. Without this forced update the reload could happen in cases
+        // is not reloaded unnecessarily. Without this forced update the reload could happen in cases
         // like this one:
         // - icons contains "my-image"
         // - imageManager.getImages(...) triggers `onstyleimagemissing`
@@ -42083,10 +42748,10 @@ class Style extends performance.Evented {
     /**
      * Add a sprite.
      *
-     * @param {string} id id of the desired sprite
-     * @param {string} url url to load the desired sprite from
-     * @param {StyleSetterOptions} [options] style setter options
-     * @param [completion] completion handler
+     * @param id - The id of the desired sprite
+     * @param url - The url to load the desired sprite from
+     * @param options - The style setter options
+     * @param completion - The completion handler
      */
     addSprite(id, url, options = {}, completion) {
         this._checkLoaded();
@@ -42104,7 +42769,7 @@ class Style extends performance.Evented {
      * Remove a sprite by its id. When the last sprite is removed, the whole `this.stylesheet.sprite` object becomes
      * `undefined`. This falsy `undefined` value later prevents attempts to load the sprite when it's absent.
      *
-     * @param id the id of the sprite to remove
+     * @param id - the id of the sprite to remove
      */
     removeSprite(id) {
         this._checkLoaded();
@@ -42130,7 +42795,7 @@ class Style extends performance.Evented {
     /**
      * Get the current sprite value.
      *
-     * @returns {Array} empty array when no sprite is set; id-url pairs otherwise
+     * @returns empty array when no sprite is set; id-url pairs otherwise
      */
     getSprite() {
         return coerceSpriteToArray(this.stylesheet.sprite);
@@ -42138,9 +42803,9 @@ class Style extends performance.Evented {
     /**
      * Set a new value for the style's sprite.
      *
-     * @param {SpriteSpecification} sprite new sprite value
-     * @param {StyleSetterOptions} [options] style setter options
-     * @param [completion] completion handler
+     * @param sprite - new sprite value
+     * @param options - style setter options
+     * @param completion - the completion handler
      */
     setSprite(sprite, options = {}, completion) {
         this._checkLoaded();
@@ -42159,8 +42824,6 @@ class Style extends performance.Evented {
         }
     }
 }
-Style.getSourceType = getSourceType;
-Style.setSourceType = setSourceType;
 Style.registerForPluginStateChange = performance.registerForPluginStateChange;
 
 var posAttributes = performance.createLayout([
@@ -42168,7 +42831,7 @@ var posAttributes = performance.createLayout([
 ]);
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
-var preludeFrag = '#ifdef GL_ES\nprecision mediump float;\n#else\n#if !defined(lowp)\n#define lowp\n#endif\n#if !defined(mediump)\n#define mediump\n#endif\n#if !defined(highp)\n#define highp\n#endif\n#endif';
+var preludeFrag = '#ifdef GL_ES\nprecision mediump float;\n#else\n#if !defined(lowp)\n#define lowp\n#endif\n#if !defined(mediump)\n#define mediump\n#endif\n#if !defined(highp)\n#define highp\n#endif\n#endif\n';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
 var preludeVert = '#ifdef GL_ES\nprecision highp float;\n#else\n#if !defined(lowp)\n#define lowp\n#endif\n#if !defined(mediump)\n#define mediump\n#endif\n#if !defined(highp)\n#define highp\n#endif\n#endif\nvec2 unpack_float(const float packedValue) {int packedIntValue=int(packedValue);int v0=packedIntValue/256;return vec2(v0,packedIntValue-v0*256);}vec2 unpack_opacity(const float packedOpacity) {int intOpacity=int(packedOpacity)/2;return vec2(float(intOpacity)/127.0,mod(packedOpacity,2.0));}vec4 decode_color(const vec2 encodedColor) {return vec4(unpack_float(encodedColor[0])/255.0,unpack_float(encodedColor[1])/255.0\n);}float unpack_mix_vec2(const vec2 packedValue,const float t) {return mix(packedValue[0],packedValue[1],t);}vec4 unpack_mix_color(const vec4 packedColors,const float t) {vec4 minColor=decode_color(vec2(packedColors[0],packedColors[1]));vec4 maxColor=decode_color(vec2(packedColors[2],packedColors[3]));return mix(minColor,maxColor,t);}vec2 get_pattern_pos(const vec2 pixel_coord_upper,const vec2 pixel_coord_lower,const vec2 pattern_size,const float tile_units_to_pixels,const vec2 pos) {vec2 offset=mod(mod(mod(pixel_coord_upper,pattern_size)*256.0,pattern_size)*256.0+pixel_coord_lower,pattern_size);return (tile_units_to_pixels*pos+offset)/pattern_size;}\n#ifdef TERRAIN3D\nuniform sampler2D u_terrain;uniform float u_terrain_dim;uniform mat4 u_terrain_matrix;uniform vec4 u_terrain_unpack;uniform float u_terrain_exaggeration;uniform highp sampler2D u_depth;\n#endif\nconst highp vec4 bitSh=vec4(256.*256.*256.,256.*256.,256.,1.);const highp vec4 bitShifts=vec4(1.)/bitSh;highp float unpack(highp vec4 color) {return dot(color,bitShifts);}highp float depthOpacity(vec3 frag) {\n#ifdef TERRAIN3D\nhighp float d=unpack(texture2D(u_depth,frag.xy*0.5+0.5))+0.0001-frag.z;return 1.0-max(0.0,min(1.0,-d*500.0));\n#else\nreturn 1.0;\n#endif\n}float calculate_visibility(vec4 pos) {\n#ifdef TERRAIN3D\nvec3 frag=pos.xyz/pos.w;highp float d=depthOpacity(frag);if (d > 0.95) return 1.0;return (d+depthOpacity(frag+vec3(0.0,0.01,0.0)))/2.0;\n#else\nreturn 1.0;\n#endif\n}float ele(vec2 pos) {\n#ifdef TERRAIN3D\nvec4 rgb=(texture2D(u_terrain,pos)*255.0)*u_terrain_unpack;return rgb.r+rgb.g+rgb.b-u_terrain_unpack.a;\n#else\nreturn 0.0;\n#endif\n}float get_elevation(vec2 pos) {\n#ifdef TERRAIN3D\nvec2 coord=(u_terrain_matrix*vec4(pos,0.0,1.0)).xy*u_terrain_dim+1.0;vec2 f=fract(coord);vec2 c=(floor(coord)+0.5)/(u_terrain_dim+2.0);float d=1.0/(u_terrain_dim+2.0);float tl=ele(c);float tr=ele(c+vec2(d,0.0));float bl=ele(c+vec2(0.0,d));float br=ele(c+vec2(d,d));float elevation=mix(mix(tl,tr,f.x),mix(bl,br,f.x),f.y);return elevation*u_terrain_exaggeration;\n#else\nreturn 0.0;\n#endif\n}';
@@ -42255,13 +42918,13 @@ var fillPatternVert = 'uniform mat4 u_matrix;uniform vec2 u_pixel_coord_upper;un
 var fillExtrusionFrag = 'varying vec4 v_color;void main() {gl_FragColor=v_color;\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
-var fillExtrusionVert = 'uniform mat4 u_matrix;uniform vec3 u_lightcolor;uniform lowp vec3 u_lightpos;uniform lowp float u_lightintensity;uniform float u_vertical_gradient;uniform lowp float u_opacity;attribute vec2 a_pos;attribute vec4 a_normal_ed;\n#ifdef TERRAIN3D\nattribute vec2 a_centroid;\n#endif\nvarying vec4 v_color;\n#pragma mapbox: define highp float base\n#pragma mapbox: define highp float height\n#pragma mapbox: define highp vec4 color\nvoid main() {\n#pragma mapbox: initialize highp float base\n#pragma mapbox: initialize highp float height\n#pragma mapbox: initialize highp vec4 color\nvec3 normal=a_normal_ed.xyz;\n#ifdef TERRAIN3D\nfloat baseDelta=10.0;float ele=get_elevation(a_centroid);\n#else\nfloat baseDelta=0.0;float ele=0.0;\n#endif\nbase=max(0.0,ele+base-baseDelta);height=max(0.0,ele+height);float t=mod(normal.x,2.0);gl_Position=u_matrix*vec4(a_pos,t > 0.0 ? height : base,1);float colorvalue=color.r*0.2126+color.g*0.7152+color.b*0.0722;v_color=vec4(0.0,0.0,0.0,1.0);vec4 ambientlight=vec4(0.03,0.03,0.03,1.0);color+=ambientlight;float directional=clamp(dot(normal/16384.0,u_lightpos),0.0,1.0);directional=mix((1.0-u_lightintensity),max((1.0-colorvalue+u_lightintensity),1.0),directional);if (normal.y !=0.0) {directional*=((1.0-u_vertical_gradient)+(u_vertical_gradient*clamp((t+base)*pow(height/150.0,0.5),mix(0.7,0.98,1.0-u_lightintensity),1.0)));}v_color.r+=clamp(color.r*directional*u_lightcolor.r,mix(0.0,0.3,1.0-u_lightcolor.r),1.0);v_color.g+=clamp(color.g*directional*u_lightcolor.g,mix(0.0,0.3,1.0-u_lightcolor.g),1.0);v_color.b+=clamp(color.b*directional*u_lightcolor.b,mix(0.0,0.3,1.0-u_lightcolor.b),1.0);v_color*=u_opacity;}';
+var fillExtrusionVert = 'uniform mat4 u_matrix;uniform vec3 u_lightcolor;uniform lowp vec3 u_lightpos;uniform lowp float u_lightintensity;uniform float u_vertical_gradient;uniform lowp float u_opacity;attribute vec2 a_pos;attribute vec4 a_normal_ed;\n#ifdef TERRAIN3D\nattribute vec2 a_centroid;\n#endif\nvarying vec4 v_color;\n#pragma mapbox: define highp float base\n#pragma mapbox: define highp float height\n#pragma mapbox: define highp vec4 color\nvoid main() {\n#pragma mapbox: initialize highp float base\n#pragma mapbox: initialize highp float height\n#pragma mapbox: initialize highp vec4 color\nvec3 normal=a_normal_ed.xyz;\n#ifdef TERRAIN3D\nfloat height_terrain3d_offset=get_elevation(a_centroid);float base_terrain3d_offset=height_terrain3d_offset-(base > 0.0 ? 0.0 : 10.0);\n#else\nfloat height_terrain3d_offset=0.0;float base_terrain3d_offset=0.0;\n#endif\nbase=max(0.0,base)+base_terrain3d_offset;height=max(0.0,height)+height_terrain3d_offset;float t=mod(normal.x,2.0);gl_Position=u_matrix*vec4(a_pos,t > 0.0 ? height : base,1);float colorvalue=color.r*0.2126+color.g*0.7152+color.b*0.0722;v_color=vec4(0.0,0.0,0.0,1.0);vec4 ambientlight=vec4(0.03,0.03,0.03,1.0);color+=ambientlight;float directional=clamp(dot(normal/16384.0,u_lightpos),0.0,1.0);directional=mix((1.0-u_lightintensity),max((1.0-colorvalue+u_lightintensity),1.0),directional);if (normal.y !=0.0) {directional*=((1.0-u_vertical_gradient)+(u_vertical_gradient*clamp((t+base)*pow(height/150.0,0.5),mix(0.7,0.98,1.0-u_lightintensity),1.0)));}v_color.r+=clamp(color.r*directional*u_lightcolor.r,mix(0.0,0.3,1.0-u_lightcolor.r),1.0);v_color.g+=clamp(color.g*directional*u_lightcolor.g,mix(0.0,0.3,1.0-u_lightcolor.g),1.0);v_color.b+=clamp(color.b*directional*u_lightcolor.b,mix(0.0,0.3,1.0-u_lightcolor.b),1.0);v_color*=u_opacity;}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
 var fillExtrusionPatternFrag = 'uniform vec2 u_texsize;uniform float u_fade;uniform sampler2D u_image;varying vec2 v_pos_a;varying vec2 v_pos_b;varying vec4 v_lighting;\n#pragma mapbox: define lowp float base\n#pragma mapbox: define lowp float height\n#pragma mapbox: define lowp vec4 pattern_from\n#pragma mapbox: define lowp vec4 pattern_to\n#pragma mapbox: define lowp float pixel_ratio_from\n#pragma mapbox: define lowp float pixel_ratio_to\nvoid main() {\n#pragma mapbox: initialize lowp float base\n#pragma mapbox: initialize lowp float height\n#pragma mapbox: initialize mediump vec4 pattern_from\n#pragma mapbox: initialize mediump vec4 pattern_to\n#pragma mapbox: initialize lowp float pixel_ratio_from\n#pragma mapbox: initialize lowp float pixel_ratio_to\nvec2 pattern_tl_a=pattern_from.xy;vec2 pattern_br_a=pattern_from.zw;vec2 pattern_tl_b=pattern_to.xy;vec2 pattern_br_b=pattern_to.zw;vec2 imagecoord=mod(v_pos_a,1.0);vec2 pos=mix(pattern_tl_a/u_texsize,pattern_br_a/u_texsize,imagecoord);vec4 color1=texture2D(u_image,pos);vec2 imagecoord_b=mod(v_pos_b,1.0);vec2 pos2=mix(pattern_tl_b/u_texsize,pattern_br_b/u_texsize,imagecoord_b);vec4 color2=texture2D(u_image,pos2);vec4 mixedColor=mix(color1,color2,u_fade);gl_FragColor=mixedColor*v_lighting;\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
-var fillExtrusionPatternVert = 'uniform mat4 u_matrix;uniform vec2 u_pixel_coord_upper;uniform vec2 u_pixel_coord_lower;uniform float u_height_factor;uniform vec3 u_scale;uniform float u_vertical_gradient;uniform lowp float u_opacity;uniform vec3 u_lightcolor;uniform lowp vec3 u_lightpos;uniform lowp float u_lightintensity;attribute vec2 a_pos;attribute vec4 a_normal_ed;\n#ifdef TERRAIN3D\nattribute vec2 a_centroid;\n#endif\nvarying vec2 v_pos_a;varying vec2 v_pos_b;varying vec4 v_lighting;\n#pragma mapbox: define lowp float base\n#pragma mapbox: define lowp float height\n#pragma mapbox: define lowp vec4 pattern_from\n#pragma mapbox: define lowp vec4 pattern_to\n#pragma mapbox: define lowp float pixel_ratio_from\n#pragma mapbox: define lowp float pixel_ratio_to\nvoid main() {\n#pragma mapbox: initialize lowp float base\n#pragma mapbox: initialize lowp float height\n#pragma mapbox: initialize mediump vec4 pattern_from\n#pragma mapbox: initialize mediump vec4 pattern_to\n#pragma mapbox: initialize lowp float pixel_ratio_from\n#pragma mapbox: initialize lowp float pixel_ratio_to\nvec2 pattern_tl_a=pattern_from.xy;vec2 pattern_br_a=pattern_from.zw;vec2 pattern_tl_b=pattern_to.xy;vec2 pattern_br_b=pattern_to.zw;float tileRatio=u_scale.x;float fromScale=u_scale.y;float toScale=u_scale.z;vec3 normal=a_normal_ed.xyz;float edgedistance=a_normal_ed.w;vec2 display_size_a=(pattern_br_a-pattern_tl_a)/pixel_ratio_from;vec2 display_size_b=(pattern_br_b-pattern_tl_b)/pixel_ratio_to;\n#ifdef TERRAIN3D\nfloat baseDelta=10.0;float ele=get_elevation(a_centroid);\n#else\nfloat baseDelta=0.0;float ele=0.0;\n#endif\nbase=max(0.0,ele+base-baseDelta);height=max(0.0,ele+height);float t=mod(normal.x,2.0);float z=t > 0.0 ? height : base;gl_Position=u_matrix*vec4(a_pos,z,1);vec2 pos=normal.x==1.0 && normal.y==0.0 && normal.z==16384.0\n? a_pos\n: vec2(edgedistance,z*u_height_factor);v_pos_a=get_pattern_pos(u_pixel_coord_upper,u_pixel_coord_lower,fromScale*display_size_a,tileRatio,pos);v_pos_b=get_pattern_pos(u_pixel_coord_upper,u_pixel_coord_lower,toScale*display_size_b,tileRatio,pos);v_lighting=vec4(0.0,0.0,0.0,1.0);float directional=clamp(dot(normal/16383.0,u_lightpos),0.0,1.0);directional=mix((1.0-u_lightintensity),max((0.5+u_lightintensity),1.0),directional);if (normal.y !=0.0) {directional*=((1.0-u_vertical_gradient)+(u_vertical_gradient*clamp((t+base)*pow(height/150.0,0.5),mix(0.7,0.98,1.0-u_lightintensity),1.0)));}v_lighting.rgb+=clamp(directional*u_lightcolor,mix(vec3(0.0),vec3(0.3),1.0-u_lightcolor),vec3(1.0));v_lighting*=u_opacity;}';
+var fillExtrusionPatternVert = 'uniform mat4 u_matrix;uniform vec2 u_pixel_coord_upper;uniform vec2 u_pixel_coord_lower;uniform float u_height_factor;uniform vec3 u_scale;uniform float u_vertical_gradient;uniform lowp float u_opacity;uniform vec3 u_lightcolor;uniform lowp vec3 u_lightpos;uniform lowp float u_lightintensity;attribute vec2 a_pos;attribute vec4 a_normal_ed;\n#ifdef TERRAIN3D\nattribute vec2 a_centroid;\n#endif\nvarying vec2 v_pos_a;varying vec2 v_pos_b;varying vec4 v_lighting;\n#pragma mapbox: define lowp float base\n#pragma mapbox: define lowp float height\n#pragma mapbox: define lowp vec4 pattern_from\n#pragma mapbox: define lowp vec4 pattern_to\n#pragma mapbox: define lowp float pixel_ratio_from\n#pragma mapbox: define lowp float pixel_ratio_to\nvoid main() {\n#pragma mapbox: initialize lowp float base\n#pragma mapbox: initialize lowp float height\n#pragma mapbox: initialize mediump vec4 pattern_from\n#pragma mapbox: initialize mediump vec4 pattern_to\n#pragma mapbox: initialize lowp float pixel_ratio_from\n#pragma mapbox: initialize lowp float pixel_ratio_to\nvec2 pattern_tl_a=pattern_from.xy;vec2 pattern_br_a=pattern_from.zw;vec2 pattern_tl_b=pattern_to.xy;vec2 pattern_br_b=pattern_to.zw;float tileRatio=u_scale.x;float fromScale=u_scale.y;float toScale=u_scale.z;vec3 normal=a_normal_ed.xyz;float edgedistance=a_normal_ed.w;vec2 display_size_a=(pattern_br_a-pattern_tl_a)/pixel_ratio_from;vec2 display_size_b=(pattern_br_b-pattern_tl_b)/pixel_ratio_to;\n#ifdef TERRAIN3D\nfloat height_terrain3d_offset=get_elevation(a_centroid);float base_terrain3d_offset=height_terrain3d_offset-(base > 0.0 ? 0.0 : 10.0);\n#else\nfloat height_terrain3d_offset=0.0;float base_terrain3d_offset=0.0;\n#endif\nbase=max(0.0,base)+base_terrain3d_offset;height=max(0.0,height)+height_terrain3d_offset;float t=mod(normal.x,2.0);float z=t > 0.0 ? height : base;gl_Position=u_matrix*vec4(a_pos,z,1);vec2 pos=normal.x==1.0 && normal.y==0.0 && normal.z==16384.0\n? a_pos\n: vec2(edgedistance,z*u_height_factor);v_pos_a=get_pattern_pos(u_pixel_coord_upper,u_pixel_coord_lower,fromScale*display_size_a,tileRatio,pos);v_pos_b=get_pattern_pos(u_pixel_coord_upper,u_pixel_coord_lower,toScale*display_size_b,tileRatio,pos);v_lighting=vec4(0.0,0.0,0.0,1.0);float directional=clamp(dot(normal/16383.0,u_lightpos),0.0,1.0);directional=mix((1.0-u_lightintensity),max((0.5+u_lightintensity),1.0),directional);if (normal.y !=0.0) {directional*=((1.0-u_vertical_gradient)+(u_vertical_gradient*clamp((t+base)*pow(height/150.0,0.5),mix(0.7,0.98,1.0-u_lightintensity),1.0)));}v_lighting.rgb+=clamp(directional*u_lightcolor,mix(vec3(0.0),vec3(0.3),1.0-u_lightcolor),vec3(1.0));v_lighting*=u_opacity;}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
 var hillshadePrepareFrag = '#ifdef GL_ES\nprecision highp float;\n#endif\nuniform sampler2D u_image;varying vec2 v_pos;uniform vec2 u_dimension;uniform float u_zoom;uniform vec4 u_unpack;float getElevation(vec2 coord,float bias) {vec4 data=texture2D(u_image,coord)*255.0;data.a=-1.0;return dot(data,u_unpack)/4.0;}void main() {vec2 epsilon=1.0/u_dimension;float a=getElevation(v_pos+vec2(-epsilon.x,-epsilon.y),0.0);float b=getElevation(v_pos+vec2(0,-epsilon.y),0.0);float c=getElevation(v_pos+vec2(epsilon.x,-epsilon.y),0.0);float d=getElevation(v_pos+vec2(-epsilon.x,0),0.0);float e=getElevation(v_pos,0.0);float f=getElevation(v_pos+vec2(epsilon.x,0),0.0);float g=getElevation(v_pos+vec2(-epsilon.x,epsilon.y),0.0);float h=getElevation(v_pos+vec2(0,epsilon.y),0.0);float i=getElevation(v_pos+vec2(epsilon.x,epsilon.y),0.0);float exaggerationFactor=u_zoom < 2.0 ? 0.4 : u_zoom < 4.5 ? 0.35 : 0.3;float exaggeration=u_zoom < 15.0 ? (u_zoom-15.0)*exaggerationFactor : 0.0;vec2 deriv=vec2((c+f+f+i)-(a+d+d+g),(g+h+h+i)-(a+b+b+c))/pow(2.0,exaggeration+(19.2562-u_zoom));gl_FragColor=clamp(vec4(deriv.x/2.0+0.5,deriv.y/2.0+0.5,1.0,1.0),0.0,1.0);\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
@@ -42312,7 +42975,7 @@ var symbolIconFrag = 'uniform sampler2D u_texture;varying vec2 v_tex;varying flo
 var symbolIconVert = 'const float PI=3.141592653589793;attribute vec4 a_pos_offset;attribute vec4 a_data;attribute vec4 a_pixeloffset;attribute vec3 a_projected_pos;attribute float a_fade_opacity;uniform bool u_is_size_zoom_constant;uniform bool u_is_size_feature_constant;uniform highp float u_size_t;uniform highp float u_size;uniform highp float u_camera_to_center_distance;uniform highp float u_pitch;uniform bool u_rotate_symbol;uniform highp float u_aspect_ratio;uniform float u_fade_change;uniform mat4 u_matrix;uniform mat4 u_label_plane_matrix;uniform mat4 u_coord_matrix;uniform bool u_is_text;uniform bool u_pitch_with_map;uniform vec2 u_texsize;varying vec2 v_tex;varying float v_fade_opacity;\n#pragma mapbox: define lowp float opacity\nvoid main() {\n#pragma mapbox: initialize lowp float opacity\nvec2 a_pos=a_pos_offset.xy;vec2 a_offset=a_pos_offset.zw;vec2 a_tex=a_data.xy;vec2 a_size=a_data.zw;float a_size_min=floor(a_size[0]*0.5);vec2 a_pxoffset=a_pixeloffset.xy;vec2 a_minFontScale=a_pixeloffset.zw/256.0;float ele=get_elevation(a_pos);highp float segment_angle=-a_projected_pos[2];float size;if (!u_is_size_zoom_constant && !u_is_size_feature_constant) {size=mix(a_size_min,a_size[1],u_size_t)/128.0;} else if (u_is_size_zoom_constant && !u_is_size_feature_constant) {size=a_size_min/128.0;} else {size=u_size;}vec4 projectedPoint=u_matrix*vec4(a_pos,ele,1);highp float camera_to_anchor_distance=projectedPoint.w;highp float distance_ratio=u_pitch_with_map ?\ncamera_to_anchor_distance/u_camera_to_center_distance :\nu_camera_to_center_distance/camera_to_anchor_distance;highp float perspective_ratio=clamp(0.5+0.5*distance_ratio,0.0,4.0);size*=perspective_ratio;float fontScale=u_is_text ? size/24.0 : size;highp float symbol_rotation=0.0;if (u_rotate_symbol) {vec4 offsetProjectedPoint=u_matrix*vec4(a_pos+vec2(1,0),ele,1);vec2 a=projectedPoint.xy/projectedPoint.w;vec2 b=offsetProjectedPoint.xy/offsetProjectedPoint.w;symbol_rotation=atan((b.y-a.y)/u_aspect_ratio,b.x-a.x);}highp float angle_sin=sin(segment_angle+symbol_rotation);highp float angle_cos=cos(segment_angle+symbol_rotation);mat2 rotation_matrix=mat2(angle_cos,-1.0*angle_sin,angle_sin,angle_cos);vec4 projected_pos=u_label_plane_matrix*vec4(a_projected_pos.xy,ele,1.0);float z=float(u_pitch_with_map)*projected_pos.z/projected_pos.w;gl_Position=u_coord_matrix*vec4(projected_pos.xy/projected_pos.w+rotation_matrix*(a_offset/32.0*max(a_minFontScale,fontScale)+a_pxoffset/16.0),z,1.0);v_tex=a_tex/u_texsize;vec2 fade_opacity=unpack_opacity(a_fade_opacity);float fade_change=fade_opacity[1] > 0.5 ? u_fade_change :-u_fade_change;float visibility=calculate_visibility(projectedPoint);v_fade_opacity=max(0.0,min(visibility,fade_opacity[0]+fade_change));}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
-var symbolSDFFrag = '#define SDF_PX 8.0\nuniform bool u_is_halo;uniform sampler2D u_texture;uniform highp float u_gamma_scale;uniform lowp float u_device_pixel_ratio;uniform bool u_is_text;varying vec2 v_data0;varying vec3 v_data1;\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nvoid main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nfloat EDGE_GAMMA=0.105/u_device_pixel_ratio;vec2 tex=v_data0.xy;float gamma_scale=v_data1.x;float size=v_data1.y;float fade_opacity=v_data1[2];float fontScale=u_is_text ? size/24.0 : size;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float buff=(256.0-64.0)/256.0;if (u_is_halo) {color=halo_color;gamma=(halo_blur*1.19/SDF_PX+EDGE_GAMMA)/(fontScale*u_gamma_scale);buff=(6.0-halo_width/fontScale)/SDF_PX;}lowp float dist=texture2D(u_texture,tex).a;highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(buff-gamma_scaled,buff+gamma_scaled,dist);gl_FragColor=color*(alpha*opacity*fade_opacity);\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
+var symbolSDFFrag = '#define SDF_PX 8.0\nuniform bool u_is_halo;uniform sampler2D u_texture;uniform highp float u_gamma_scale;uniform lowp float u_device_pixel_ratio;uniform bool u_is_text;varying vec2 v_data0;varying vec3 v_data1;\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nvoid main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nfloat EDGE_GAMMA=0.105/u_device_pixel_ratio;vec2 tex=v_data0.xy;float gamma_scale=v_data1.x;float size=v_data1.y;float fade_opacity=v_data1[2];float fontScale=u_is_text ? size/24.0 : size;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float inner_edge=(256.0-64.0)/256.0;if (u_is_halo) {color=halo_color;gamma=(halo_blur*1.19/SDF_PX+EDGE_GAMMA)/(fontScale*u_gamma_scale);inner_edge=inner_edge+gamma*gamma_scale;}lowp float dist=texture2D(u_texture,tex).a;highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(inner_edge-gamma_scaled,inner_edge+gamma_scaled,dist);if (u_is_halo) {lowp float halo_edge=(6.0-halo_width/fontScale)/SDF_PX;alpha=min(smoothstep(halo_edge-gamma_scaled,halo_edge+gamma_scaled,dist),1.0-alpha);}gl_FragColor=color*(alpha*opacity*fade_opacity);\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
 var symbolSDFVert = 'const float PI=3.141592653589793;attribute vec4 a_pos_offset;attribute vec4 a_data;attribute vec4 a_pixeloffset;attribute vec3 a_projected_pos;attribute float a_fade_opacity;uniform bool u_is_size_zoom_constant;uniform bool u_is_size_feature_constant;uniform highp float u_size_t;uniform highp float u_size;uniform mat4 u_matrix;uniform mat4 u_label_plane_matrix;uniform mat4 u_coord_matrix;uniform bool u_is_text;uniform bool u_pitch_with_map;uniform highp float u_pitch;uniform bool u_rotate_symbol;uniform highp float u_aspect_ratio;uniform highp float u_camera_to_center_distance;uniform float u_fade_change;uniform vec2 u_texsize;varying vec2 v_data0;varying vec3 v_data1;\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nvoid main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nvec2 a_pos=a_pos_offset.xy;vec2 a_offset=a_pos_offset.zw;vec2 a_tex=a_data.xy;vec2 a_size=a_data.zw;float a_size_min=floor(a_size[0]*0.5);vec2 a_pxoffset=a_pixeloffset.xy;float ele=get_elevation(a_pos);highp float segment_angle=-a_projected_pos[2];float size;if (!u_is_size_zoom_constant && !u_is_size_feature_constant) {size=mix(a_size_min,a_size[1],u_size_t)/128.0;} else if (u_is_size_zoom_constant && !u_is_size_feature_constant) {size=a_size_min/128.0;} else {size=u_size;}vec4 projectedPoint=u_matrix*vec4(a_pos,ele,1);highp float camera_to_anchor_distance=projectedPoint.w;highp float distance_ratio=u_pitch_with_map ?\ncamera_to_anchor_distance/u_camera_to_center_distance :\nu_camera_to_center_distance/camera_to_anchor_distance;highp float perspective_ratio=clamp(0.5+0.5*distance_ratio,0.0,4.0);size*=perspective_ratio;float fontScale=u_is_text ? size/24.0 : size;highp float symbol_rotation=0.0;if (u_rotate_symbol) {vec4 offsetProjectedPoint=u_matrix*vec4(a_pos+vec2(1,0),ele,1);vec2 a=projectedPoint.xy/projectedPoint.w;vec2 b=offsetProjectedPoint.xy/offsetProjectedPoint.w;symbol_rotation=atan((b.y-a.y)/u_aspect_ratio,b.x-a.x);}highp float angle_sin=sin(segment_angle+symbol_rotation);highp float angle_cos=cos(segment_angle+symbol_rotation);mat2 rotation_matrix=mat2(angle_cos,-1.0*angle_sin,angle_sin,angle_cos);vec4 projected_pos=u_label_plane_matrix*vec4(a_projected_pos.xy,ele,1.0);float z=float(u_pitch_with_map)*projected_pos.z/projected_pos.w;gl_Position=u_coord_matrix*vec4(projected_pos.xy/projected_pos.w+rotation_matrix*(a_offset/32.0*fontScale+a_pxoffset),z,1.0);float gamma_scale=gl_Position.w;vec2 fade_opacity=unpack_opacity(a_fade_opacity);float visibility=calculate_visibility(projectedPoint);float fade_change=fade_opacity[1] > 0.5 ? u_fade_change :-u_fade_change;float interpolated_fade_opacity=max(0.0,min(visibility,fade_opacity[0]+fade_change));v_data0=a_tex/u_texsize;v_data1=vec3(gamma_scale,size,interpolated_fade_opacity);}';
@@ -42468,6 +43131,10 @@ uniform ${precision} ${type} u_${name};
     return { fragmentSource, vertexSource, staticAttributes, staticUniforms };
 }
 
+/**
+ * @internal
+ * A vertex array object used to pass data to the webgl code
+ */
 class VertexArrayObject {
     constructor() {
         this.boundProgram = null;
@@ -42495,11 +43162,11 @@ class VertexArrayObject {
             this.boundDynamicVertexBuffer !== dynamicVertexBuffer ||
             this.boundDynamicVertexBuffer2 !== dynamicVertexBuffer2 ||
             this.boundDynamicVertexBuffer3 !== dynamicVertexBuffer3);
-        if (!context.extVertexArrayObject || isFreshBindRequired) {
+        if (isFreshBindRequired) {
             this.freshBind(program, layoutVertexBuffer, paintVertexBuffers, indexBuffer, vertexOffset, dynamicVertexBuffer, dynamicVertexBuffer2, dynamicVertexBuffer3);
         }
         else {
-            context.bindVertexArrayOES.set(this.vao);
+            context.bindVertexArray.set(this.vao);
             if (dynamicVertexBuffer) {
                 // The buffer may have been updated. Rebind to upload data.
                 dynamicVertexBuffer.bind();
@@ -42516,36 +43183,22 @@ class VertexArrayObject {
         }
     }
     freshBind(program, layoutVertexBuffer, paintVertexBuffers, indexBuffer, vertexOffset, dynamicVertexBuffer, dynamicVertexBuffer2, dynamicVertexBuffer3) {
-        let numPrevAttributes;
         const numNextAttributes = program.numAttributes;
         const context = this.context;
         const gl = context.gl;
-        if (context.extVertexArrayObject) {
-            if (this.vao)
-                this.destroy();
-            this.vao = context.extVertexArrayObject.createVertexArrayOES();
-            context.bindVertexArrayOES.set(this.vao);
-            numPrevAttributes = 0;
-            // store the arguments so that we can verify them when the vao is bound again
-            this.boundProgram = program;
-            this.boundLayoutVertexBuffer = layoutVertexBuffer;
-            this.boundPaintVertexBuffers = paintVertexBuffers;
-            this.boundIndexBuffer = indexBuffer;
-            this.boundVertexOffset = vertexOffset;
-            this.boundDynamicVertexBuffer = dynamicVertexBuffer;
-            this.boundDynamicVertexBuffer2 = dynamicVertexBuffer2;
-            this.boundDynamicVertexBuffer3 = dynamicVertexBuffer3;
-        }
-        else {
-            numPrevAttributes = context.currentNumAttributes || 0;
-            // Disable all attributes from the previous program that aren't used in
-            // the new program. Note: attribute indices are *not* program specific!
-            for (let i = numNextAttributes; i < numPrevAttributes; i++) {
-                // WebGL breaks if you disable attribute 0, so if i == 0.
-                // http://stackoverflow.com/questions/20305231
-                gl.disableVertexAttribArray(i);
-            }
-        }
+        if (this.vao)
+            this.destroy();
+        this.vao = context.createVertexArray();
+        context.bindVertexArray.set(this.vao);
+        // store the arguments so that we can verify them when the vao is bound again
+        this.boundProgram = program;
+        this.boundLayoutVertexBuffer = layoutVertexBuffer;
+        this.boundPaintVertexBuffers = paintVertexBuffers;
+        this.boundIndexBuffer = indexBuffer;
+        this.boundVertexOffset = vertexOffset;
+        this.boundDynamicVertexBuffer = dynamicVertexBuffer;
+        this.boundDynamicVertexBuffer2 = dynamicVertexBuffer2;
+        this.boundDynamicVertexBuffer3 = dynamicVertexBuffer3;
         layoutVertexBuffer.enableAttributes(gl, program);
         for (const vertexBuffer of paintVertexBuffers) {
             vertexBuffer.enableAttributes(gl, program);
@@ -42584,7 +43237,7 @@ class VertexArrayObject {
     }
     destroy() {
         if (this.vao) {
-            this.context.extVertexArrayObject.deleteVertexArrayOES(this.vao);
+            this.context.deleteVertexArray(this.vao);
             this.vao = null;
         }
     }
@@ -42639,8 +43292,12 @@ function getTokenizedAttributesAndUniforms(array) {
     }
     return result;
 }
+/**
+ * @internal
+ * A webgl program to execute in the GPU space
+ */
 class Program {
-    constructor(context, name, source, configuration, fixedUniforms, showOverdrawInspector, terrain) {
+    constructor(context, source, configuration, fixedUniforms, showOverdrawInspector, terrain) {
         const gl = context.gl;
         this.program = gl.createProgram();
         const staticAttrInfo = getTokenizedAttributesAndUniforms(source.staticAttributes);
@@ -42672,6 +43329,9 @@ class Program {
         }
         gl.shaderSource(fragmentShader, fragmentSource);
         gl.compileShader(fragmentShader);
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            throw new Error(`Could not compile fragment shader: ${gl.getShaderInfoLog(fragmentShader)}`);
+        }
         gl.attachShader(this.program, fragmentShader);
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         if (gl.isContextLost()) {
@@ -42680,6 +43340,9 @@ class Program {
         }
         gl.shaderSource(vertexShader, vertexSource);
         gl.compileShader(vertexShader);
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            throw new Error(`Could not compile vertex shader: ${gl.getShaderInfoLog(vertexShader)}`);
+        }
         gl.attachShader(this.program, vertexShader);
         this.attributes = {};
         const uniformLocations = {};
@@ -42691,6 +43354,9 @@ class Program {
             }
         }
         gl.linkProgram(this.program);
+        if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+            throw new Error(`Program failed to link: ${gl.getProgramInfoLog(this.program)}`);
+        }
         gl.deleteShader(vertexShader);
         gl.deleteShader(fragmentShader);
         for (let it = 0; it < allUniformsInfo.length; it++) {
@@ -42715,7 +43381,7 @@ class Program {
         context.setStencilMode(stencilMode);
         context.setColorMode(colorMode);
         context.setCullFace(cullFaceMode);
-        // set varaibles used by the 3d functions defined in _prelude.vertex.glsl
+        // set variables used by the 3d functions defined in _prelude.vertex.glsl
         if (terrain) {
             context.activeTexture.set(gl.TEXTURE2);
             gl.bindTexture(gl.TEXTURE_2D, terrain.depthTexture);
@@ -43369,6 +44035,10 @@ const programUniforms = {
     terrainCoords: terrainCoordsUniforms
 };
 
+/**
+ * @internal
+ * an index buffer class
+ */
 class IndexBuffer {
     constructor(context, array, dynamicDraw) {
         this.context = context;
@@ -43408,9 +44078,7 @@ class IndexBuffer {
 }
 
 /**
- * @enum {string} AttributeType
- * @private
- * @readonly
+ * An Enum for AttributeType
  */
 const AttributeType = {
     Int8: 'BYTE',
@@ -43422,14 +44090,13 @@ const AttributeType = {
     Float32: 'FLOAT'
 };
 /**
+ * @internal
  * The `VertexBuffer` class turns a `StructArray` into a WebGL buffer. Each member of the StructArray's
- * Struct type is converted to a WebGL atribute.
- * @private
+ * Struct type is converted to a WebGL attribute.
  */
 class VertexBuffer {
     /**
-     * @param dynamicDraw Whether this buffer will be repeatedly updated.
-     * @private
+     * @param dynamicDraw - Whether this buffer will be repeatedly updated.
      */
     constructor(context, array, attributes, dynamicDraw) {
         this.length = array.length;
@@ -43466,9 +44133,9 @@ class VertexBuffer {
     }
     /**
      * Set the attribute pointers in a WebGL context
-     * @param gl The WebGL context
-     * @param program The active WebGL program
-     * @param vertexOffset Index of the starting vertex of the segment
+     * @param gl - The WebGL context
+     * @param program - The active WebGL program
+     * @param vertexOffset - Index of the starting vertex of the segment
      */
     setVertexAttribPointers(gl, program, vertexOffset) {
         for (let j = 0; j < this.attributes.length; j++) {
@@ -43488,6 +44155,18 @@ class VertexBuffer {
             gl.deleteBuffer(this.buffer);
             delete this.buffer;
         }
+    }
+}
+
+const cache = new WeakMap();
+function isWebGL2(gl) {
+    if (cache.has(gl)) {
+        return cache.get(gl);
+    }
+    else {
+        const value = gl.getParameter(gl.VERSION).startsWith('WebGL 2.0');
+        cache.set(gl, value);
+        return value;
     }
 }
 
@@ -43878,18 +44557,21 @@ class BindElementBuffer extends BaseValue {
         this.dirty = false;
     }
 }
-class BindVertexArrayOES extends BaseValue {
-    constructor(context) {
-        super(context);
-        this.vao = context.extVertexArrayObject;
-    }
+class BindVertexArray extends BaseValue {
     getDefault() {
         return null;
     }
     set(v) {
-        if (!this.vao || v === this.current && !this.dirty)
+        var _a;
+        if (v === this.current && !this.dirty)
             return;
-        this.vao.bindVertexArrayOES(v);
+        const gl = this.gl;
+        if (isWebGL2(gl)) {
+            gl.bindVertexArray(v);
+        }
+        else {
+            (_a = gl.getExtension('OES_vertex_array_object')) === null || _a === void 0 ? void 0 : _a.bindVertexArrayOES(v);
+        }
         this.current = v;
         this.dirty = false;
     }
@@ -43972,9 +44654,26 @@ class DepthAttachment extends FramebufferAttachment {
         this.dirty = false;
     }
 }
+class DepthStencilAttachment extends FramebufferAttachment {
+    set(v) {
+        if (v === this.current && !this.dirty)
+            return;
+        this.context.bindFramebuffer.set(this.parent);
+        // note: it's possible to attach a texture to the depth attachment
+        // point, but thus far MBGL only uses renderbuffers for depth
+        const gl = this.gl;
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, v);
+        this.current = v;
+        this.dirty = false;
+    }
+}
 
+/**
+ * @internal
+ * A framebuffer holder object
+ */
 class Framebuffer {
-    constructor(context, width, height, hasDepth) {
+    constructor(context, width, height, hasDepth, hasStencil) {
         this.context = context;
         this.width = width;
         this.height = height;
@@ -43982,7 +44681,10 @@ class Framebuffer {
         const fbo = this.framebuffer = gl.createFramebuffer();
         this.colorAttachment = new ColorAttachment(context, fbo);
         if (hasDepth) {
-            this.depthAttachment = new DepthAttachment(context, fbo);
+            this.depthAttachment = hasStencil ? new DepthStencilAttachment(context, fbo) : new DepthAttachment(context, fbo);
+        }
+        else if (hasStencil) {
+            throw new Error('Stencil cannot be setted without depth');
         }
         if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
             throw new Error('Framebuffer is not complete');
@@ -44017,10 +44719,14 @@ ColorMode.disabled = new ColorMode(ColorMode.Replace, performance.Color.transpar
 ColorMode.unblended = new ColorMode(ColorMode.Replace, performance.Color.transparent, [true, true, true, true]);
 ColorMode.alphaBlended = new ColorMode([ONE, ONE_MINUS_SRC_ALPHA], performance.Color.transparent, [true, true, true, true]);
 
+/**
+ * @internal
+ * A webgl wrapper class to allow injection, mocking and abstaction
+ */
 class Context {
     constructor(gl) {
+        var _a, _b;
         this.gl = gl;
-        this.extVertexArrayObject = this.gl.getExtension('OES_vertex_array_object');
         this.clearColor = new ClearColor(this);
         this.clearDepth = new ClearDepth(this);
         this.clearStencil = new ClearStencil(this);
@@ -44048,7 +44754,7 @@ class Context {
         this.bindTexture = new BindTexture(this);
         this.bindVertexBuffer = new BindVertexBuffer(this);
         this.bindElementBuffer = new BindElementBuffer(this);
-        this.bindVertexArrayOES = this.extVertexArrayObject && new BindVertexArrayOES(this);
+        this.bindVertexArray = new BindVertexArray(this);
         this.pixelStoreUnpack = new PixelStoreUnpack(this);
         this.pixelStoreUnpackPremultiplyAlpha = new PixelStoreUnpackPremultiplyAlpha(this);
         this.pixelStoreUnpackFlipY = new PixelStoreUnpackFlipY(this);
@@ -44058,13 +44764,20 @@ class Context {
         if (this.extTextureFilterAnisotropic) {
             this.extTextureFilterAnisotropicMax = gl.getParameter(this.extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
         }
-        this.extTextureHalfFloat = gl.getExtension('OES_texture_half_float');
-        if (this.extTextureHalfFloat) {
-            gl.getExtension('OES_texture_half_float_linear');
-            this.extRenderToTextureHalfFloat = gl.getExtension('EXT_color_buffer_half_float');
-        }
-        this.extTimerQuery = gl.getExtension('EXT_disjoint_timer_query');
         this.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+        if (isWebGL2(gl)) {
+            this.HALF_FLOAT = gl.HALF_FLOAT;
+            const extColorBufferHalfFloat = gl.getExtension('EXT_color_buffer_half_float');
+            this.RGBA16F = (_a = gl.RGBA16F) !== null && _a !== void 0 ? _a : extColorBufferHalfFloat === null || extColorBufferHalfFloat === void 0 ? void 0 : extColorBufferHalfFloat.RGBA16F_EXT;
+            this.RGB16F = (_b = gl.RGB16F) !== null && _b !== void 0 ? _b : extColorBufferHalfFloat === null || extColorBufferHalfFloat === void 0 ? void 0 : extColorBufferHalfFloat.RGB16F_EXT;
+            gl.getExtension('EXT_color_buffer_float');
+        }
+        else {
+            gl.getExtension('EXT_color_buffer_half_float');
+            gl.getExtension('OES_texture_half_float_linear');
+            const extTextureHalfFloat = gl.getExtension('OES_texture_half_float');
+            this.HALF_FLOAT = extTextureHalfFloat === null || extTextureHalfFloat === void 0 ? void 0 : extTextureHalfFloat.HALF_FLOAT_OES;
+        }
     }
     setDefault() {
         this.unbindVAO();
@@ -44122,9 +44835,7 @@ class Context {
         this.bindTexture.dirty = true;
         this.bindVertexBuffer.dirty = true;
         this.bindElementBuffer.dirty = true;
-        if (this.extVertexArrayObject) {
-            this.bindVertexArrayOES.dirty = true;
-        }
+        this.bindVertexArray.dirty = true;
         this.pixelStoreUnpack.dirty = true;
         this.pixelStoreUnpackPremultiplyAlpha.dirty = true;
         this.pixelStoreUnpackFlipY.dirty = true;
@@ -44143,10 +44854,10 @@ class Context {
         this.bindRenderbuffer.set(null);
         return rbo;
     }
-    createFramebuffer(width, height, hasDepth) {
-        return new Framebuffer(this, width, height, hasDepth);
+    createFramebuffer(width, height, hasDepth, hasStencil) {
+        return new Framebuffer(this, width, height, hasDepth, hasStencil);
     }
-    clear({ color, depth }) {
+    clear({ color, depth, stencil }) {
         const gl = this.gl;
         let mask = 0;
         if (color) {
@@ -44157,17 +44868,16 @@ class Context {
         if (typeof depth !== 'undefined') {
             mask |= gl.DEPTH_BUFFER_BIT;
             // Workaround for platforms where clearDepth doesn't seem to work
-            // without reseting the depthRange. See https://github.com/mapbox/mapbox-gl-js/issues/3437
+            // without resetting the depthRange. See https://github.com/mapbox/mapbox-gl-js/issues/3437
             this.depthRange.set([0, 1]);
             this.clearDepth.set(depth);
             this.depthMask.set(true);
         }
-        // See note in Painter#clearStencil: implement this the easy way once GPU bug/workaround is fixed upstream
-        // if (typeof stencil !== 'undefined') {
-        //     mask |= gl.STENCIL_BUFFER_BIT;
-        //     this.clearStencil.set(stencil);
-        //     this.stencilMask.set(0xFF);
-        // }
+        if (typeof stencil !== 'undefined') {
+            mask |= gl.STENCIL_BUFFER_BIT;
+            this.clearStencil.set(stencil);
+            this.stencilMask.set(0xFF);
+        }
         gl.clear(mask);
     }
     setCullFace(cullFaceMode) {
@@ -44217,12 +44927,22 @@ class Context {
         }
         this.colorMask.set(colorMode.mask);
     }
+    createVertexArray() {
+        var _a;
+        if (isWebGL2(this.gl))
+            return this.gl.createVertexArray();
+        return (_a = this.gl.getExtension('OES_vertex_array_object')) === null || _a === void 0 ? void 0 : _a.createVertexArrayOES();
+    }
+    deleteVertexArray(x) {
+        var _a;
+        if (isWebGL2(this.gl))
+            return this.gl.deleteVertexArray(x);
+        return (_a = this.gl.getExtension('OES_vertex_array_object')) === null || _a === void 0 ? void 0 : _a.deleteVertexArrayOES(x);
+    }
     unbindVAO() {
         // Unbinding the VAO prevents other things (custom layers, new buffer creation) from
         // unintentionally changing the state of the last VAO used.
-        if (this.extVertexArrayObject) {
-            this.bindVertexArrayOES.set(null);
-        }
+        this.bindVertexArray.set(null);
     }
 }
 
@@ -44287,7 +45007,7 @@ function drawCollisionDebug(painter, sourceCache, layer, coords, translate, tran
         const circleArray = bucket.collisionCircleArray;
         if (circleArray.length > 0) {
             // We need to know the projection matrix that was used for projecting collision circles to the screen.
-            // This might vary between buckets as the symbol placement is a continous process. This matrix is
+            // This might vary between buckets as the symbol placement is a continuous process. This matrix is
             // required for transforming points from previous screen space to the current one
             const invTransform = performance.create();
             const transform = posMatrix;
@@ -44369,10 +45089,10 @@ function drawSymbols(painter, sourceCache, layer, coords, variableOffsets) {
     // Disable the stencil test so that labels aren't clipped to tile boundaries.
     const stencilMode = StencilMode.disabled;
     const colorMode = painter.colorModeForRenderPass();
-    const variablePlacement = layer.layout.get('text-variable-anchor');
+    const hasVariablePlacement = layer._unevaluatedLayout.hasValue('text-variable-anchor') || layer._unevaluatedLayout.hasValue('text-variable-anchor-offset');
     //Compute variable-offsets before painting since icons and text data positioning
     //depend on each other in this case.
-    if (variablePlacement) {
+    if (hasVariablePlacement) {
         updateVariableAnchors(coords, painter, layer, sourceCache, layer.layout.get('text-rotation-alignment'), layer.layout.get('text-pitch-alignment'), variableOffsets);
     }
     if (layer.paint.get('icon-opacity').constantOr(1) !== 0) {
@@ -44390,8 +45110,7 @@ function calculateVariableRenderShift(anchor, width, height, textOffset, textBox
     const { horizontalAlign, verticalAlign } = performance.getAnchorAlignment(anchor);
     const shiftX = -(horizontalAlign - 0.5) * width;
     const shiftY = -(verticalAlign - 0.5) * height;
-    const variableOffset = performance.evaluateVariableOffset(anchor, textOffset);
-    return new performance.pointGeometry((shiftX / textBoxScale + variableOffset[0]) * renderTextSize, (shiftY / textBoxScale + variableOffset[1]) * renderTextSize);
+    return new performance.Point((shiftX / textBoxScale + textOffset[0]) * renderTextSize, (shiftY / textBoxScale + textOffset[1]) * renderTextSize);
 }
 function updateVariableAnchors(coords, painter, layer, sourceCache, rotationAlignment, pitchAlignment, variableOffsets) {
     const tr = painter.transform;
@@ -44430,7 +45149,7 @@ function updateVariableAnchorsForBucket(bucket, rotateWithMap, pitchWithMap, var
             hideGlyphs(symbol.numGlyphs, dynamicTextLayoutVertexArray);
         }
         else {
-            const tileAnchor = new performance.pointGeometry(symbol.anchorX, symbol.anchorY);
+            const tileAnchor = new performance.Point(symbol.anchorX, symbol.anchorY);
             const projectedAnchor = project(tileAnchor, pitchWithMap ? posMatrix : labelPlaneMatrix, getElevation);
             const perspectiveRatio = getPerspectiveRatio(transform.cameraToCenterDistance, projectedAnchor.signedDistanceFromCamera);
             let renderTextSize = performance.evaluateSizeForFeature(bucket.textSizeData, size, symbol) * perspectiveRatio / performance.ONE_EM;
@@ -44507,7 +45226,7 @@ function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate
     const hasSortKey = !layer.layout.get('symbol-sort-key').isConstant();
     let sortFeaturesByKey = false;
     const depthMode = painter.depthModeForSublayer(0, DepthMode.ReadOnly);
-    const variablePlacement = layer.layout.get('text-variable-anchor');
+    const hasVariablePlacement = layer._unevaluatedLayout.hasValue('text-variable-anchor') || layer._unevaluatedLayout.hasValue('text-variable-anchor-offset');
     const tileRenderState = [];
     for (const coord of coords) {
         const tile = sourceCache.getTile(coord);
@@ -44552,7 +45271,7 @@ function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate
         const s = pixelsToTileUnits(tile, 1, painter.transform.zoom);
         const labelPlaneMatrix = getLabelPlaneMatrix(coord.posMatrix, pitchWithMap, rotateWithMap, painter.transform, s);
         const glCoordMatrix = getGlCoordMatrix(coord.posMatrix, pitchWithMap, rotateWithMap, painter.transform, s);
-        const hasVariableAnchors = variablePlacement && bucket.hasTextData();
+        const hasVariableAnchors = hasVariablePlacement && bucket.hasTextData();
         const updateTextFitIcon = layer.layout.get('icon-text-fit') !== 'none' &&
             hasVariableAnchors &&
             bucket.hasIconData();
@@ -44561,7 +45280,7 @@ function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate
             const rotateToLine = layer.layout.get('text-rotation-alignment') === 'map';
             updateLineLabels(bucket, coord.posMatrix, painter, isText, labelPlaneMatrix, glCoordMatrix, pitchWithMap, keepUpright, rotateToLine, getElevation);
         }
-        const matrix = painter.translatePosMatrix(coord.posMatrix, tile, translate, translateAnchor), uLabelPlaneMatrix = (alongLine || (isText && variablePlacement) || updateTextFitIcon) ? identityMat4 : labelPlaneMatrix, uglCoordMatrix = painter.translatePosMatrix(glCoordMatrix, tile, translate, translateAnchor, true);
+        const matrix = painter.translatePosMatrix(coord.posMatrix, tile, translate, translateAnchor), uLabelPlaneMatrix = (alongLine || (isText && hasVariablePlacement) || updateTextFitIcon) ? identityMat4 : labelPlaneMatrix, uglCoordMatrix = painter.translatePosMatrix(glCoordMatrix, tile, translate, translateAnchor, true);
         const hasHalo = isSDF && layer.paint.get(isText ? 'text-halo-width' : 'icon-halo-width').constantOr(1) !== 0;
         let uniformValues;
         if (isSDF) {
@@ -44613,10 +45332,12 @@ function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate
     for (const segmentState of tileRenderState) {
         const state = segmentState.state;
         context.activeTexture.set(gl.TEXTURE0);
+        // @ts-ignore
         state.atlasTexture.bind(state.atlasInterpolation, gl.CLAMP_TO_EDGE);
         if (state.atlasTextureIcon) {
             context.activeTexture.set(gl.TEXTURE1);
             if (state.atlasTextureIcon) {
+                // @ts-ignore
                 state.atlasTextureIcon.bind(state.atlasInterpolationIcon, gl.CLAMP_TO_EDGE);
             }
         }
@@ -44753,7 +45474,7 @@ function bindFramebuffer(context, painter, layer) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        fbo = layer.heatmapFbo = context.createFramebuffer(painter.width / 4, painter.height / 4, false);
+        fbo = layer.heatmapFbo = context.createFramebuffer(painter.width / 4, painter.height / 4, false, false);
         bindTextureToFramebuffer(context, painter, texture, fbo);
     }
     else {
@@ -44762,11 +45483,13 @@ function bindFramebuffer(context, painter, layer) {
     }
 }
 function bindTextureToFramebuffer(context, painter, texture, fbo) {
+    var _a, _b;
     const gl = context.gl;
     // Use the higher precision half-float texture where available (producing much smoother looking heatmaps);
     // Otherwise, fall back to a low precision texture
-    const internalFormat = context.extRenderToTextureHalfFloat ? context.extTextureHalfFloat.HALF_FLOAT_OES : gl.UNSIGNED_BYTE;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, painter.width / 4, painter.height / 4, 0, gl.RGBA, internalFormat, null);
+    const numType = (_a = context.HALF_FLOAT) !== null && _a !== void 0 ? _a : gl.UNSIGNED_BYTE;
+    const internalFormat = (_b = context.RGBA16F) !== null && _b !== void 0 ? _b : gl.RGBA;
+    gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, painter.width / 4, painter.height / 4, 0, gl.RGBA, numType, null);
     fbo.colorAttachment.set(texture);
 }
 function renderTextureToMap(painter, layer) {
@@ -44891,7 +45614,7 @@ function drawLine(painter, sourceCache, layer, coords) {
  * The mismatch was causing setConstantPatternPositions method not being called and pixelRatio was always the
  * default of 1, instead of actual values set by original map.addImage.
  *
- * @param programConfiguration - to be used to set patttern poistion and device pixel ratio.
+ * @param programConfiguration - to be used to set pattern position and device pixel ratio.
  * @param propertyName - 'fill-pattern' or 'fill-extrusion-pattern' property key
  * @param constantPattern - either 'fill-pattern' or 'fill-extrusion-pattern' property value
  * @param tile - current tile being drawn
@@ -45000,7 +45723,7 @@ function drawFillTiles(painter, sourceCache, layer, coords, depthMode, colorMode
     }
 }
 
-function draw$1(painter, source, layer, coords) {
+function drawFillExtrusion(painter, source, layer, coords) {
     const opacity = layer.paint.get('fill-extrusion-opacity');
     if (opacity === 0) {
         return;
@@ -45113,7 +45836,7 @@ function prepareHillshade(painter, tile, layer, depthMode, stencilMode, colorMod
         if (!fbo) {
             const renderTexture = new Texture(context, { width: tileSize, height: tileSize, data: null }, gl.RGBA);
             renderTexture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
-            fbo = tile.fbo = context.createFramebuffer(tileSize, tileSize, true);
+            fbo = tile.fbo = context.createFramebuffer(tileSize, tileSize, true, false);
             fbo.colorAttachment.set(renderTexture.texture);
         }
         context.bindFramebuffer.set(fbo.framebuffer);
@@ -45174,7 +45897,7 @@ function drawRaster(painter, sourceCache, layer, tileIDs) {
 function getFadeValues(tile, parentTile, sourceCache, layer, transform, terrain) {
     const fadeDuration = layer.paint.get('raster-fade-duration');
     if (!terrain && fadeDuration > 0) {
-        const now = performance.exported.now();
+        const now = performance.browser.now();
         const sinceTile = (now - tile.timeAdded) / fadeDuration;
         const sinceParent = parentTile ? (now - parentTile.timeAdded) / fadeDuration : -1;
         const source = sourceCache.getSource();
@@ -45305,8 +46028,6 @@ function drawDebugTile(painter, sourceCache, coord) {
     const id = '$debug';
     const terrainData = painter.style.map.terrain && painter.style.map.terrain.getTerrainData(coord);
     context.activeTexture.set(gl.TEXTURE0);
-    // Bind the empty texture for drawing outlines
-    painter.emptyTexture.bind(gl.LINEAR, gl.CLAMP_TO_EDGE);
     const tileRawData = sourceCache.getTileByID(coord.key).latestRawTileData;
     const tileByteLength = (tileRawData && tileRawData.byteLength) || 0;
     const tileSizeKb = Math.floor(tileByteLength / 1024);
@@ -45396,8 +46117,8 @@ function drawCustom(painter, sourceCache, layer) {
 
 /**
  * Redraw the Depth Framebuffer
- * @param {Painter} painter - the painter
- * @param {Terrain} terrain - the terrain
+ * @param painter - the painter
+ * @param terrain - the terrain
  */
 function drawDepth(painter, terrain) {
     const context = painter.context;
@@ -45421,8 +46142,8 @@ function drawDepth(painter, terrain) {
 }
 /**
  * Redraw the Coords Framebuffers
- * @param {Painter} painter - the painter
- * @param {Terrain} terrain - the terrain
+ * @param painter - the painter
+ * @param terrain - the terrain
  */
 function drawCoords(painter, terrain) {
     const context = painter.context;
@@ -45470,24 +46191,9 @@ function drawTerrain(painter, terrain, tiles) {
     }
 }
 
-const draw = {
-    symbol: drawSymbols,
-    circle: drawCircles,
-    heatmap: drawHeatmap,
-    line: drawLine,
-    fill: drawFill,
-    'fill-extrusion': draw$1,
-    hillshade: drawHillshade,
-    raster: drawRaster,
-    background: drawBackground,
-    debug: drawDebug,
-    custom: drawCustom
-};
 /**
+ * @internal
  * Initialize a new painter object.
- *
- * @param {Canvas} gl an experimental-webgl drawing context
- * @private
  */
 class Painter {
     constructor(gl, transform) {
@@ -45501,15 +46207,14 @@ class Painter {
         this.numSublayers = SourceCache.maxUnderzooming + SourceCache.maxOverzooming + 1;
         this.depthEpsilon = 1 / Math.pow(2, 16);
         this.crossTileSymbolIndex = new CrossTileSymbolIndex();
-        this.gpuTimers = {};
     }
     /*
      * Update the GL viewport, projection matrix, and transforms to compensate
      * for a new width and height value.
      */
     resize(width, height, pixelRatio) {
-        this.width = width * pixelRatio;
-        this.height = height * pixelRatio;
+        this.width = Math.floor(width * pixelRatio);
+        this.height = Math.floor(height * pixelRatio);
         this.pixelRatio = pixelRatio;
         this.context.viewport.set([0, 0, this.width, this.height]);
         if (this.style) {
@@ -45559,11 +46264,6 @@ class Painter {
         quadTriangleIndices.emplaceBack(0, 1, 2);
         quadTriangleIndices.emplaceBack(2, 1, 3);
         this.quadTriangleIndexBuffer = context.createIndexBuffer(quadTriangleIndices);
-        this.emptyTexture = new Texture(context, {
-            width: 1,
-            height: 1,
-            data: new Uint8Array([0, 0, 0, 0])
-        }, context.gl.RGBA);
         const gl = this.context.gl;
         this.stencilClearMode = new StencilMode({ func: gl.ALWAYS, mask: 0 }, 0x0, 0xFF, gl.ZERO, gl.ZERO, gl.ZERO);
     }
@@ -45685,7 +46385,7 @@ class Painter {
         this.lineAtlas = style.lineAtlas;
         this.imageManager = style.imageManager;
         this.glyphManager = style.glyphManager;
-        this.symbolFadeChange = style.placement.symbolFadeChange(performance.exported.now());
+        this.symbolFadeChange = style.placement.symbolFadeChange(performance.browser.now());
         this.imageManager.beginFrame();
         const layerIds = this.style._order;
         const sourceCaches = this.style.sourceCaches;
@@ -45774,7 +46474,7 @@ class Painter {
         if (this.options.showTileBoundaries) {
             const selectedSource = selectDebugSource(this.style, this.transform.zoom);
             if (selectedSource) {
-                draw.debug(this, selectedSource, selectedSource.getVisibleCoordinates());
+                drawDebug(this, selectedSource, selectedSource.getVisibleCoordinates());
             }
         }
         if (this.options.showPadding) {
@@ -45790,56 +46490,43 @@ class Painter {
         if (layer.type !== 'background' && layer.type !== 'custom' && !(coords || []).length)
             return;
         this.id = layer.id;
-        this.gpuTimingStart(layer);
-        draw[layer.type](painter, sourceCache, layer, coords, this.style.placement.variableOffsets);
-        this.gpuTimingEnd();
-    }
-    gpuTimingStart(layer) {
-        if (!this.options.gpuTiming)
-            return;
-        const ext = this.context.extTimerQuery;
-        // This tries to time the draw call itself, but note that the cost for drawing a layer
-        // may be dominated by the cost of uploading vertices to the GPU.
-        // To instrument that, we'd need to pass the layerTimers object down into the bucket
-        // uploading logic.
-        let layerTimer = this.gpuTimers[layer.id];
-        if (!layerTimer) {
-            layerTimer = this.gpuTimers[layer.id] = {
-                calls: 0,
-                cpuTime: 0,
-                query: ext.createQueryEXT()
-            };
+        switch (layer.type) {
+            case 'symbol':
+                drawSymbols(painter, sourceCache, layer, coords, this.style.placement.variableOffsets);
+                break;
+            case 'circle':
+                drawCircles(painter, sourceCache, layer, coords);
+                break;
+            case 'heatmap':
+                drawHeatmap(painter, sourceCache, layer, coords);
+                break;
+            case 'line':
+                drawLine(painter, sourceCache, layer, coords);
+                break;
+            case 'fill':
+                drawFill(painter, sourceCache, layer, coords);
+                break;
+            case 'fill-extrusion':
+                drawFillExtrusion(painter, sourceCache, layer, coords);
+                break;
+            case 'hillshade':
+                drawHillshade(painter, sourceCache, layer, coords);
+                break;
+            case 'raster':
+                drawRaster(painter, sourceCache, layer, coords);
+                break;
+            case 'background':
+                drawBackground(painter, sourceCache, layer, coords);
+                break;
+            case 'custom':
+                drawCustom(painter, sourceCache, layer);
+                break;
         }
-        layerTimer.calls++;
-        ext.beginQueryEXT(ext.TIME_ELAPSED_EXT, layerTimer.query);
-    }
-    gpuTimingEnd() {
-        if (!this.options.gpuTiming)
-            return;
-        const ext = this.context.extTimerQuery;
-        ext.endQueryEXT(ext.TIME_ELAPSED_EXT);
-    }
-    collectGpuTimers() {
-        const currentLayerTimers = this.gpuTimers;
-        this.gpuTimers = {};
-        return currentLayerTimers;
-    }
-    queryGpuTimers(gpuTimers) {
-        const layers = {};
-        for (const layerId in gpuTimers) {
-            const gpuTimer = gpuTimers[layerId];
-            const ext = this.context.extTimerQuery;
-            const gpuTime = ext.getQueryObjectEXT(gpuTimer.query, ext.QUERY_RESULT_EXT) / (1000 * 1000);
-            ext.deleteQueryEXT(gpuTimer.query);
-            layers[layerId] = gpuTime;
-        }
-        return layers;
     }
     /**
      * Transform a matrix to incorporate the *-translate and *-translate-anchor properties into it.
-     * @param inViewportPixelUnitsUnits True when the units accepted by the matrix are in viewport pixels instead of tile units.
-     * @returns {mat4} matrix
-     * @private
+     * @param inViewportPixelUnitsUnits - True when the units accepted by the matrix are in viewport pixels instead of tile units.
+     * @returns matrix
      */
     translatePosMatrix(matrix, tile, translate, translateAnchor, inViewportPixelUnitsUnits) {
         if (!translate[0] && !translate[1])
@@ -45881,7 +46568,6 @@ class Painter {
      * Checks whether a pattern image is needed, and if it is, whether it is not loaded.
      *
      * @returns true if a needed image is missing and rendering needs to be skipped.
-     * @private
      */
     isPatternMissing(image) {
         if (!image)
@@ -45899,7 +46585,7 @@ class Painter {
             (this._showOverdrawInspector ? '/overdraw' : '') +
             (this.style.map.terrain ? '/terrain' : '');
         if (!this.cache[key]) {
-            this.cache[key] = new Program(this.context, name, shaders[name], programConfiguration, programUniforms[name], this._showOverdrawInspector, this.style.map.terrain);
+            this.cache[key] = new Program(this.context, shaders[name], programConfiguration, programUniforms[name], this._showOverdrawInspector, this.style.map.terrain);
         }
         return this.cache[key];
     }
@@ -45939,10 +46625,18 @@ class Painter {
         }
     }
     destroy() {
-        this.emptyTexture.destroy();
         if (this.debugOverlayTexture) {
             this.debugOverlayTexture.destroy();
         }
+    }
+    /*
+     * Return true if drawing buffer size is != from requested size.
+     * That means that we've reached GL limits somehow.
+     * Note: drawing buffer size changes only when canvas size changes
+     */
+    overLimit() {
+        const { drawingBufferWidth, drawingBufferHeight } = this.context.gl;
+        return this.width !== drawingBufferWidth || this.height !== drawingBufferHeight;
     }
 }
 
@@ -46064,10 +46758,7 @@ class Aabb {
  * This shifts the apprent center or the vanishing point of the map. This is useful for adding floating UI elements
  * on top of the map and having the vanishing point shift as UI elements resize.
  *
- * @param {number} [top=0]
- * @param {number} [bottom=0]
- * @param {number} [left=0]
- * @param {number} [right=0]
+ * @group Geography and Geometry
  */
 class EdgeInsets {
     constructor(top = 0, bottom = 0, left = 0, right = 0) {
@@ -46085,37 +46776,35 @@ class EdgeInsets {
     /**
      * Interpolates the inset in-place.
      * This maintains the current inset value for any inset not present in `target`.
-     * @param {PaddingOptions | EdgeInsets} start interpolation start
-     * @param {PaddingOptions} target interpolation target
-     * @param {number} t interpolation step/weight
-     * @returns {EdgeInsets} the insets
-     * @memberof EdgeInsets
+     * @param start - interpolation start
+     * @param target - interpolation target
+     * @param t - interpolation step/weight
+     * @returns the insets
      */
     interpolate(start, target, t) {
         if (target.top != null && start.top != null)
-            this.top = performance.interpolates.number(start.top, target.top, t);
+            this.top = performance.interpolate.number(start.top, target.top, t);
         if (target.bottom != null && start.bottom != null)
-            this.bottom = performance.interpolates.number(start.bottom, target.bottom, t);
+            this.bottom = performance.interpolate.number(start.bottom, target.bottom, t);
         if (target.left != null && start.left != null)
-            this.left = performance.interpolates.number(start.left, target.left, t);
+            this.left = performance.interpolate.number(start.left, target.left, t);
         if (target.right != null && start.right != null)
-            this.right = performance.interpolates.number(start.right, target.right, t);
+            this.right = performance.interpolate.number(start.right, target.right, t);
         return this;
     }
     /**
      * Utility method that computes the new apprent center or vanishing point after applying insets.
      * This is in pixels and with the top left being (0.0) and +y being downwards.
      *
-     * @param {number} width the width
-     * @param {number} height the height
-     * @returns {Point} the point
-     * @memberof EdgeInsets
+     * @param width - the width
+     * @param height - the height
+     * @returns the point
      */
     getCenter(width, height) {
         // Clamp insets so they never overflow width/height and always calculate a valid center
         const x = performance.clamp((this.left + width - this.right) / 2, 0, width);
         const y = performance.clamp((this.top + height - this.bottom) / 2, 0, height);
-        return new performance.pointGeometry(x, y);
+        return new performance.Point(x, y);
     }
     equals(other) {
         return this.top === other.top &&
@@ -46130,8 +46819,7 @@ class EdgeInsets {
      * Returns the current state as json, useful when you want to have a
      * read-only representation of the inset.
      *
-     * @returns {PaddingOptions} state as json
-     * @memberof EdgeInsets
+     * @returns state as json
      */
     toJSON() {
         return {
@@ -46144,15 +46832,14 @@ class EdgeInsets {
 }
 
 /**
+ * @internal
  * A single transform, generally used for a single tile to be
  * scaled, rotated, and zoomed.
- * @private
  */
 class Transform {
     constructor(minZoom, maxZoom, minPitch, maxPitch, renderWorldCopies) {
         this.tileSize = 512; // constant
         this.maxValidLatitude = 85.051129; // constant
-        this.freezeElevation = false;
         this._renderWorldCopies = renderWorldCopies === undefined ? true : !!renderWorldCopies;
         this._minZoom = minZoom || 0;
         this._maxZoom = maxZoom || 22;
@@ -46171,23 +46858,28 @@ class Transform {
         this._edgeInsets = new EdgeInsets();
         this._posMatrixCache = {};
         this._alignedPosMatrixCache = {};
+        this._minEleveationForCurrentTile = 0;
     }
     clone() {
         const clone = new Transform(this._minZoom, this._maxZoom, this._minPitch, this.maxPitch, this._renderWorldCopies);
-        clone.tileSize = this.tileSize;
-        clone.latRange = this.latRange;
-        clone.width = this.width;
-        clone.height = this.height;
-        clone._center = this._center;
-        clone._elevation = this._elevation;
-        clone.zoom = this.zoom;
-        clone.angle = this.angle;
-        clone._fov = this._fov;
-        clone._pitch = this._pitch;
-        clone._unmodified = this._unmodified;
-        clone._edgeInsets = this._edgeInsets.clone();
-        clone._calcMatrices();
+        clone.apply(this);
         return clone;
+    }
+    apply(that) {
+        this.tileSize = that.tileSize;
+        this.latRange = that.latRange;
+        this.width = that.width;
+        this.height = that.height;
+        this._center = that._center;
+        this._elevation = that._elevation;
+        this._minEleveationForCurrentTile = that._minEleveationForCurrentTile;
+        this.zoom = that.zoom;
+        this.angle = that.angle;
+        this._fov = that._fov;
+        this._pitch = that._pitch;
+        this._unmodified = that._unmodified;
+        this._edgeInsets = that._edgeInsets.clone();
+        this._calcMatrices();
     }
     get minZoom() { return this._minZoom; }
     set minZoom(zoom) {
@@ -46234,7 +46926,7 @@ class Transform {
         return this.centerPoint._sub(this.size._div(2));
     }
     get size() {
-        return new performance.pointGeometry(this.width, this.height);
+        return new performance.Point(this.width, this.height);
     }
     get bearing() {
         return -this.angle / Math.PI * 180;
@@ -46313,10 +47005,6 @@ class Transform {
     /**
      * The center of the screen in pixels with the top-left corner being (0,0)
      * and +y axis pointing downwards. This accounts for padding.
-     *
-     * @readonly
-     * @type {Point}
-     * @memberof Transform
      */
     get centerPoint() {
         return this._edgeInsets.getCenter(this.width, this.height);
@@ -46324,20 +47012,18 @@ class Transform {
     /**
      * Returns if the padding params match
      *
-     * @param {PaddingOptions} padding the padding to check against
-     * @returns {boolean} true if they are equal, false otherwise
-     * @memberof Transform
+     * @param padding - the padding to check against
+     * @returns true if they are equal, false otherwise
      */
     isPaddingEqual(padding) {
         return this._edgeInsets.equals(padding);
     }
     /**
-     * Helper method to upadte edge-insets inplace
+     * Helper method to update edge-insets in place
      *
-     * @param {PaddingOptions} start the starting padding
-     * @param {PaddingOptions} target the target padding
-     * @param {number} t the step/weight
-     * @memberof Transform
+     * @param start - the starting padding
+     * @param target - the target padding
+     * @param t - the step/weight
      */
     interpolatePadding(start, target, t) {
         this._unmodified = false;
@@ -46347,10 +47033,8 @@ class Transform {
     }
     /**
      * Return a zoom level that will cover all tiles the transform
-     * @param {Object} options options
-     * @param {number} options.tileSize Tile size, expressed in screen pixels.
-     * @param {boolean} options.roundZoom Target zoom level. If true, the value will be rounded to the closest integer. Otherwise the value will be floored.
-     * @returns {number} zoom level An integer zoom level at which all tiles will be visible.
+     * @param options - the options
+     * @returns zoom level An integer zoom level at which all tiles will be visible.
      */
     coveringZoomLevel(options) {
         const z = (options.roundZoom ? Math.round : Math.floor)(this.zoom + this.scaleZoom(this.tileSize / options.tileSize));
@@ -46360,16 +47044,14 @@ class Transform {
     /**
      * Return any "wrapped" copies of a given tile coordinate that are visible
      * in the current view.
-     *
-     * @private
      */
     getVisibleUnwrappedCoordinates(tileID) {
         const result = [new performance.UnwrappedTileID(0, tileID)];
         if (this._renderWorldCopies) {
-            const utl = this.pointCoordinate(new performance.pointGeometry(0, 0));
-            const utr = this.pointCoordinate(new performance.pointGeometry(this.width, 0));
-            const ubl = this.pointCoordinate(new performance.pointGeometry(this.width, this.height));
-            const ubr = this.pointCoordinate(new performance.pointGeometry(0, this.height));
+            const utl = this.pointCoordinate(new performance.Point(0, 0));
+            const utr = this.pointCoordinate(new performance.Point(this.width, 0));
+            const ubl = this.pointCoordinate(new performance.Point(this.width, this.height));
+            const ubr = this.pointCoordinate(new performance.Point(0, this.height));
             const w0 = Math.floor(Math.min(utl.x, utr.x, ubl.x, ubr.x));
             const w1 = Math.floor(Math.max(utl.x, utr.x, ubl.x, ubr.x));
             // Add an extra copy of the world on each side to properly render ImageSources and CanvasSources.
@@ -46387,15 +47069,8 @@ class Transform {
     /**
      * Return all coordinates that could cover this transform for a covering
      * zoom level.
-     * @param {Object} options
-     * @param {number} options.tileSize
-     * @param {number} options.minzoom
-     * @param {number} options.maxzoom
-     * @param {boolean} options.roundZoom
-     * @param {boolean} options.reparseOverscaled
-     * @param {boolean} options.renderWorldCopies
-     * @returns {Array<OverscaledTileID>} OverscaledTileIDs
-     * @private
+     * @param options - the options
+     * @returns OverscaledTileIDs
      */
     coveringTiles(options) {
         var _a, _b;
@@ -46503,38 +47178,15 @@ class Transform {
     scaleZoom(scale) { return Math.log(scale) / Math.LN2; }
     project(lnglat) {
         const lat = performance.clamp(lnglat.lat, -this.maxValidLatitude, this.maxValidLatitude);
-        return new performance.pointGeometry(performance.mercatorXfromLng(lnglat.lng) * this.worldSize, performance.mercatorYfromLat(lat) * this.worldSize);
+        return new performance.Point(performance.mercatorXfromLng(lnglat.lng) * this.worldSize, performance.mercatorYfromLat(lat) * this.worldSize);
     }
     unproject(point) {
         return new performance.MercatorCoordinate(point.x / this.worldSize, point.y / this.worldSize).toLngLat();
     }
     get point() { return this.project(this.center); }
     /**
-     * Updates the center-elevation value unless freezeElevation is activated.
-     * @param terrain the terrain
-     */
-    updateElevation(terrain) {
-        if (this.freezeElevation)
-            return;
-        this.elevation = terrain ? this.getElevation(this._center, terrain) : 0;
-    }
-    /**
-     * get the elevation from terrain for the current zoomlevel.
-     * @param lnglat the location
-     * @param terrain the terrain
-     * @returns {number} elevation in meters
-     */
-    getElevation(lnglat, terrain) {
-        const merc = performance.MercatorCoordinate.fromLngLat(lnglat.wrap());
-        const worldSize = (1 << this.tileZoom) * performance.EXTENT;
-        const mercX = merc.x * worldSize, mercY = merc.y * worldSize;
-        const tileX = Math.floor(mercX / performance.EXTENT), tileY = Math.floor(mercY / performance.EXTENT);
-        const tileID = new performance.OverscaledTileID(this.tileZoom, 0, this.tileZoom, tileX, tileY);
-        return terrain.getElevation(tileID, mercX % performance.EXTENT, mercY % performance.EXTENT, performance.EXTENT);
-    }
-    /**
      * get the camera position in LngLat and altitudes in meter
-     * @returns {Object} An object with lngLat & altitude.
+     * @returns An object with lngLat & altitude.
      */
     getCameraPosition() {
         const lngLat = this.pointLocation(this.getCameraPoint());
@@ -46545,12 +47197,12 @@ class Transform {
      * This method works in combination with freezeElevation activated.
      * freezeElevtion is enabled during map-panning because during this the camera should sit in constant height.
      * After panning finished, call this method to recalculate the zoomlevel for the current camera-height in current terrain.
-     * @param {Terrain} terrain the terrain
+     * @param terrain - the terrain
      */
     recalculateZoom(terrain) {
         // find position the camera is looking on
         const center = this.pointLocation(this.centerPoint, terrain);
-        const elevation = this.getElevation(center, terrain);
+        const elevation = terrain.getElevationForLngLatZoom(center, this.tileZoom);
         const deltaElevation = this.elevation - elevation;
         if (!deltaElevation)
             return;
@@ -46579,22 +47231,20 @@ class Transform {
     }
     /**
      * Given a location, return the screen point that corresponds to it
-     * @param {LngLat} lnglat location
-     * @param {Terrain} terrain optional terrain
-     * @returns {Point} screen point
-     * @private
+     * @param lnglat - location
+     * @param terrain - optional terrain
+     * @returns screen point
      */
     locationPoint(lnglat, terrain) {
         return terrain ?
-            this.coordinatePoint(this.locationCoordinate(lnglat), this.getElevation(lnglat, terrain), this.pixelMatrix3D) :
+            this.coordinatePoint(this.locationCoordinate(lnglat), terrain.getElevationForLngLatZoom(lnglat, this.tileZoom), this.pixelMatrix3D) :
             this.coordinatePoint(this.locationCoordinate(lnglat));
     }
     /**
      * Given a point on screen, return its lnglat
-     * @param {Point} p screen point
-     * @param {Terrain} terrain optional terrain
-     * @returns {LngLat} lnglat location
-     * @private
+     * @param p - screen point
+     * @param terrain - optional terrain
+     * @returns lnglat location
      */
     pointLocation(p, terrain) {
         return this.coordinateLocation(this.pointCoordinate(p, terrain));
@@ -46602,28 +47252,25 @@ class Transform {
     /**
      * Given a geographical lnglat, return an unrounded
      * coordinate that represents it at this transform's zoom level.
-     * @param {LngLat} lnglat
-     * @returns {MercatorCoordinate}
-     * @private
+     * @param lnglat - the location
+     * @returns The mercator coordinate
      */
     locationCoordinate(lnglat) {
         return performance.MercatorCoordinate.fromLngLat(lnglat);
     }
     /**
      * Given a Coordinate, return its geographical position.
-     * @param {Coordinate} coord
-     * @returns {LngLat} lnglat
-     * @private
+     * @param coord - mercator coordivates
+     * @returns lng and lat
      */
     coordinateLocation(coord) {
         return coord && coord.toLngLat();
     }
     /**
      * Given a Point, return its mercator coordinate.
-     * @param {Point} p the point
-     * @param {Terrain} terrain optional terrain
-     * @returns {LngLat} lnglat
-     * @private
+     * @param p - the point
+     * @param terrain - optional terrain
+     * @returns lnglat
      */
     pointCoordinate(p, terrain) {
         // get point-coordinate from terrain coordinates framebuffer
@@ -46633,7 +47280,7 @@ class Transform {
                 return coordinate;
             }
         }
-        // calcuate point-coordinate on flat earth
+        // calculate point-coordinate on flat earth
         const targetZ = 0;
         // since we don't know the correct projected z value for the point,
         // unproject two points to get a line and then find the point on that
@@ -46651,37 +47298,36 @@ class Transform {
         const z0 = coord0[2] / w0;
         const z1 = coord1[2] / w1;
         const t = z0 === z1 ? 0 : (targetZ - z0) / (z1 - z0);
-        return new performance.MercatorCoordinate(performance.interpolates.number(x0, x1, t) / this.worldSize, performance.interpolates.number(y0, y1, t) / this.worldSize);
+        return new performance.MercatorCoordinate(performance.interpolate.number(x0, x1, t) / this.worldSize, performance.interpolate.number(y0, y1, t) / this.worldSize);
     }
     /**
      * Given a coordinate, return the screen point that corresponds to it
-     * @param {Coordinate} coord
-     * @param {number} elevation default = 0
-     * @param {mat4} pixelMatrix, default = this.pixelMatrix
-     * @returns {Point} screen point
-     * @private
+     * @param coord - the coordinates
+     * @param elevation - the elevation
+     * @param pixelMatrix - the pixel matrix
+     * @returns screen point
      */
     coordinatePoint(coord, elevation = 0, pixelMatrix = this.pixelMatrix) {
         const p = [coord.x * this.worldSize, coord.y * this.worldSize, elevation, 1];
         performance.transformMat4(p, p, pixelMatrix);
-        return new performance.pointGeometry(p[0] / p[3], p[1] / p[3]);
+        return new performance.Point(p[0] / p[3], p[1] / p[3]);
     }
     /**
      * Returns the map's geographical bounds. When the bearing or pitch is non-zero, the visible region is not
      * an axis-aligned rectangle, and the result is the smallest bounds that encompasses the visible region.
-     * @returns {LngLatBounds} Returns a {@link LngLatBounds} object describing the map's geographical bounds.
+     * @returns Returns a {@link LngLatBounds} object describing the map's geographical bounds.
      */
     getBounds() {
         const top = Math.max(0, this.height / 2 - this.getHorizon());
         return new LngLatBounds()
-            .extend(this.pointLocation(new performance.pointGeometry(0, top)))
-            .extend(this.pointLocation(new performance.pointGeometry(this.width, top)))
-            .extend(this.pointLocation(new performance.pointGeometry(this.width, this.height)))
-            .extend(this.pointLocation(new performance.pointGeometry(0, this.height)));
+            .extend(this.pointLocation(new performance.Point(0, top)))
+            .extend(this.pointLocation(new performance.Point(this.width, top)))
+            .extend(this.pointLocation(new performance.Point(this.width, this.height)))
+            .extend(this.pointLocation(new performance.Point(0, this.height)));
     }
     /**
      * Returns the maximum geographical bounds the map is constrained to, or `null` if none set.
-     * @returns {LngLatBounds} {@link LngLatBounds}
+     * @returns max bounds
      */
     getMaxBounds() {
         if (!this.latRange || this.latRange.length !== 2 ||
@@ -46693,14 +47339,14 @@ class Transform {
      * Calculate pixel height of the visible horizon in relation to map-center (e.g. height/2),
      * multiplied by a static factor to simulate the earth-radius.
      * The calculated value is the horizontal line from the camera-height to sea-level.
-     * @returns {number} Horizon above center in pixels.
+     * @returns Horizon above center in pixels.
      */
     getHorizon() {
         return Math.tan(Math.PI / 2 - this._pitch) * this.cameraToCenterDistance * 0.85;
     }
     /**
      * Sets or clears the map's geographical constraints.
-     * @param {LngLatBounds} bounds A {@link LngLatBounds} object describing the new geographic boundaries of the map.
+     * @param bounds - A {@link LngLatBounds} object describing the new geographic boundaries of the map.
      */
     setMaxBounds(bounds) {
         if (bounds) {
@@ -46715,8 +47361,7 @@ class Transform {
     }
     /**
      * Calculate the posMatrix that, given a tile coordinate, would be used to display the tile on a map.
-     * @param {UnwrappedTileID} unwrappedTileID;
-     * @private
+     * @param unwrappedTileID - the tile ID
      */
     calculatePosMatrix(unwrappedTileID, aligned = false) {
         const posMatrixKey = unwrappedTileID.key;
@@ -46765,7 +47410,7 @@ class Transform {
         // how much the map should scale to fit the screen into given latitude/longitude ranges
         const s = Math.max(sx || 0, sy || 0);
         if (s) {
-            this.center = this.unproject(new performance.pointGeometry(sx ? (maxX + minX) / 2 : point.x, sy ? (maxY + minY) / 2 : point.y));
+            this.center = this.unproject(new performance.Point(sx ? (maxX + minX) / 2 : point.x, sy ? (maxY + minY) / 2 : point.y));
             this.zoom += this.scaleZoom(s);
             this._unmodified = unmodified;
             this._constraining = false;
@@ -46789,7 +47434,7 @@ class Transform {
         }
         // pan the map if the screen goes off the range
         if (x2 !== undefined || y2 !== undefined) {
-            this.center = this.unproject(new performance.pointGeometry(x2 !== undefined ? x2 : point.x, y2 !== undefined ? y2 : point.y)).wrap();
+            this.center = this.unproject(new performance.Point(x2 !== undefined ? x2 : point.x, y2 !== undefined ? y2 : point.y)).wrap();
         }
         this._unmodified = unmodified;
         this._constraining = false;
@@ -46812,9 +47457,11 @@ class Transform {
         performance.scale(m, m, [2 / this.width, 2 / this.height, 1]);
         this.glCoordMatrix = m;
         // Calculate the camera to sea-level distance in pixel in respect of terrain
-        // In case of negative elevation (e.g. the dead see) use the lower plane for calculation
-        this.cameraToSeaLevelDistance = this.cameraToCenterDistance + this._elevation * this._pixelPerMeter / Math.cos(this._pitch);
-        const lowestPlane = this._elevation < 0 ? this.cameraToCenterDistance : this.cameraToSeaLevelDistance;
+        const cameraToSeaLevelDistance = this.cameraToCenterDistance + this._elevation * this._pixelPerMeter / Math.cos(this._pitch);
+        // In case of negative minimum elevation (e.g. the dead see, under the sea maps) use a lower plane for calculation
+        const minElevation = Math.min(this.elevation, this._minEleveationForCurrentTile);
+        const cameraToLowestPointDistance = cameraToSeaLevelDistance - minElevation * this._pixelPerMeter / Math.cos(this._pitch);
+        const lowestPlane = minElevation < 0 ? cameraToLowestPointDistance : cameraToSeaLevelDistance;
         // Find the distance from the center point [width/2 + offset.x, height/2 + offset.y] to the
         // center top point [width/2 + offset.x, 0] in Z units, using the law of sines.
         // 1 Z unit is equivalent to 1 horizontal px at the center of the map
@@ -46885,12 +47532,12 @@ class Transform {
         // calcMatrices hasn't run yet
         if (!this.pixelMatrixInverse)
             return 1;
-        const coord = this.pointCoordinate(new performance.pointGeometry(0, 0));
+        const coord = this.pointCoordinate(new performance.Point(0, 0));
         const p = [coord.x * this.worldSize, coord.y * this.worldSize, 0, 1];
         const topPoint = performance.transformMat4(p, p, this.pixelMatrix);
         return topPoint[3] / this.cameraToCenterDistance;
     }
-    /*
+    /**
      * The camera looks at the map from a 3D (lng, lat, altitude) location. Let's use `cameraLocation`
      * as the name for the location under the camera and on the surface of the earth (lng, lat, 0).
      * `cameraPoint` is the projected position of the `cameraLocation`.
@@ -46904,17 +47551,17 @@ class Transform {
     getCameraPoint() {
         const pitch = this._pitch;
         const yOffset = Math.tan(pitch) * (this.cameraToCenterDistance || 1);
-        return this.centerPoint.add(new performance.pointGeometry(0, yOffset));
+        return this.centerPoint.add(new performance.Point(0, yOffset));
     }
-    /*
+    /**
      * When the map is pitched, some of the 3D features that intersect a query will not intersect
      * the query at the surface of the earth. Instead the feature may be closer and only intersect
      * the query because it extrudes into the air.
-     *
-     * This returns a geometry that includes all of the original query as well as all possible ares of the
+     * @param queryGeometry - For point queries, the line from the query point to the "camera point",
+     * for other geometries, the envelope of the query geometry and the "camera point"
+     * @returns a geometry that includes all of the original query as well as all possible ares of the
      * screen where the *base* of a visible extrusion could be.
-     *  - For point queries, the line from the query point to the "camera point"
-     *  - For other geometries, the envelope of the query geometry and the "camera point"
+     *
      */
     getCameraQueryGeometry(queryGeometry) {
         const c = this.getCameraPoint();
@@ -46933,11 +47580,11 @@ class Transform {
                 maxY = Math.max(maxY, p.y);
             }
             return [
-                new performance.pointGeometry(minX, minY),
-                new performance.pointGeometry(maxX, minY),
-                new performance.pointGeometry(maxX, maxY),
-                new performance.pointGeometry(minX, maxY),
-                new performance.pointGeometry(minX, minY)
+                new performance.Point(minX, minY),
+                new performance.Point(maxX, minY),
+                new performance.Point(maxX, maxY),
+                new performance.Point(minX, maxY),
+                new performance.Point(minX, minY)
             ];
         }
     }
@@ -46945,21 +47592,24 @@ class Transform {
 
 /**
  * Throttle the given function to run at most every `period` milliseconds.
- * @private
  */
 function throttle(fn, time) {
     let pending = false;
     let timerId = null;
+    let lastCallContext = null;
+    let lastCallArgs;
     const later = () => {
         timerId = null;
         if (pending) {
-            fn();
+            fn.apply(lastCallContext, lastCallArgs);
             timerId = setTimeout(later, time);
             pending = false;
         }
     };
-    return () => {
+    return (...args) => {
         pending = true;
+        lastCallContext = this;
+        lastCallArgs = args;
         if (!timerId) {
             later();
         }
@@ -46967,28 +47617,66 @@ function throttle(fn, time) {
     };
 }
 
-/*
+/**
  * Adds the map's position to its page's location hash.
  * Passed as an option to the map object.
  *
- * @returns {Hash} `this`
+ * @group Markers and Controls
  */
 class Hash {
     constructor(hashName) {
+        this._getCurrentHash = () => {
+            // Get the current hash from location, stripped from its number sign
+            const hash = window.location.hash.replace('#', '');
+            if (this._hashName) {
+                // Split the parameter-styled hash into parts and find the value we need
+                let keyval;
+                hash.split('&').map(part => part.split('=')).forEach(part => {
+                    if (part[0] === this._hashName) {
+                        keyval = part;
+                    }
+                });
+                return (keyval ? keyval[1] || '' : '').split('/');
+            }
+            return hash.split('/');
+        };
+        this._onHashChange = () => {
+            const loc = this._getCurrentHash();
+            if (loc.length >= 3 && !loc.some(v => isNaN(v))) {
+                const bearing = this._map.dragRotate.isEnabled() && this._map.touchZoomRotate.isEnabled() ? +(loc[3] || 0) : this._map.getBearing();
+                this._map.jumpTo({
+                    center: [+loc[2], +loc[1]],
+                    zoom: +loc[0],
+                    bearing,
+                    pitch: +(loc[4] || 0)
+                });
+                return true;
+            }
+            return false;
+        };
+        this._updateHashUnthrottled = () => {
+            // Replace if already present, else append the updated hash string
+            const location = window.location.href.replace(/(#.+)?$/, this.getHashString());
+            try {
+                window.history.replaceState(window.history.state, null, location);
+            }
+            catch (SecurityError) {
+                // IE11 does not allow this if the page is within an iframe created
+                // with iframe.contentWindow.document.write(...).
+                // https://github.com/mapbox/mapbox-gl-js/issues/7410
+            }
+        };
+        /**
+         * Mobile Safari doesn't allow updating the hash more than 100 times per 30 seconds.
+         */
+        this._updateHash = throttle(this._updateHashUnthrottled, 30 * 1000 / 100);
         this._hashName = hashName && encodeURIComponent(hashName);
-        performance.bindAll([
-            '_getCurrentHash',
-            '_onHashChange',
-            '_updateHash'
-        ], this);
-        // Mobile Safari doesn't allow updating the hash more than 100 times per 30 seconds.
-        this._updateHash = throttle(this._updateHashUnthrottled.bind(this), 30 * 1000 / 100);
     }
-    /*
+    /**
      * Map element to listen for coordinate changes
      *
-     * @param {Object} map
-     * @returns {Hash} `this`
+     * @param map - The map object
+     * @returns `this`
      */
     addTo(map) {
         this._map = map;
@@ -46996,10 +47684,10 @@ class Hash {
         this._map.on('moveend', this._updateHash);
         return this;
     }
-    /*
+    /**
      * Removes hash
      *
-     * @returns {Popup} `this`
+     * @returns `this`
      */
     remove() {
         removeEventListener('hashchange', this._onHashChange, false);
@@ -47043,47 +47731,6 @@ class Hash {
         }
         return `#${hash}`;
     }
-    _getCurrentHash() {
-        // Get the current hash from location, stripped from its number sign
-        const hash = window.location.hash.replace('#', '');
-        if (this._hashName) {
-            // Split the parameter-styled hash into parts and find the value we need
-            let keyval;
-            hash.split('&').map(part => part.split('=')).forEach(part => {
-                if (part[0] === this._hashName) {
-                    keyval = part;
-                }
-            });
-            return (keyval ? keyval[1] || '' : '').split('/');
-        }
-        return hash.split('/');
-    }
-    _onHashChange() {
-        const loc = this._getCurrentHash();
-        if (loc.length >= 3 && !loc.some(v => isNaN(v))) {
-            const bearing = this._map.dragRotate.isEnabled() && this._map.touchZoomRotate.isEnabled() ? +(loc[3] || 0) : this._map.getBearing();
-            this._map.jumpTo({
-                center: [+loc[2], +loc[1]],
-                zoom: +loc[0],
-                bearing,
-                pitch: +(loc[4] || 0)
-            });
-            return true;
-        }
-        return false;
-    }
-    _updateHashUnthrottled() {
-        // Replace if already present, else append the updated hash string
-        const location = window.location.href.replace(/(#.+)?$/, this.getHashString());
-        try {
-            window.history.replaceState(window.history.state, null, location);
-        }
-        catch (SecurityError) {
-            // IE11 does not allow this if the page is within an iframe created
-            // with iframe.contentWindow.document.write(...).
-            // https://github.com/mapbox/mapbox-gl-js/issues/7410
-        }
-    }
 }
 
 const defaultInertiaOptions = {
@@ -47116,10 +47763,10 @@ class HandlerInertia {
     }
     record(settings) {
         this._drainInertiaBuffer();
-        this._inertiaBuffer.push({ time: performance.exported.now(), settings });
+        this._inertiaBuffer.push({ time: performance.browser.now(), settings });
     }
     _drainInertiaBuffer() {
-        const inertia = this._inertiaBuffer, now = performance.exported.now(), cutoff = 160; //msec
+        const inertia = this._inertiaBuffer, now = performance.browser.now(), cutoff = 160; //msec
         while (inertia.length > 0 && now - inertia[0].time > cutoff)
             inertia.shift();
     }
@@ -47132,7 +47779,7 @@ class HandlerInertia {
             zoom: 0,
             bearing: 0,
             pitch: 0,
-            pan: new performance.pointGeometry(0, 0),
+            pan: new performance.Point(0, 0),
             pinchAround: undefined,
             around: undefined
         };
@@ -47202,8 +47849,8 @@ function calculateEasing(amount, inertiaDuration, inertiaOptions) {
 
 /**
  * `MapMouseEvent` is the event type for mouse-related map events.
- * @extends {Event}
  * @example
+ * ```ts
  * // The `click` event is an example of a `MapMouseEvent`.
  * // Set up an event listener on the map.
  * map.on('click', function(e) {
@@ -47211,6 +47858,7 @@ function calculateEasing(amount, inertiaDuration, inertiaOptions) {
  *   // coordinates of the point on the map that was clicked.
  *   console.log('A click event has occurred at ' + e.lngLat);
  * });
+ * ```
  */
 class MapMouseEvent extends performance.Event {
     /**
@@ -47229,14 +47877,10 @@ class MapMouseEvent extends performance.Event {
     }
     /**
      * `true` if `preventDefault` has been called.
-     * @private
      */
     get defaultPrevented() {
         return this._defaultPrevented;
     }
-    /**
-     * @private
-     */
     constructor(type, map, originalEvent, data = {}) {
         const point = DOM.mousePos(map.getCanvasContainer(), originalEvent);
         const lngLat = map.unproject(point);
@@ -47247,7 +47891,8 @@ class MapMouseEvent extends performance.Event {
 }
 /**
  * `MapTouchEvent` is the event type for touch-related map events.
- * @extends {Event}
+ *
+ * @group Event Related
  */
 class MapTouchEvent extends performance.Event {
     /**
@@ -47256,7 +47901,7 @@ class MapTouchEvent extends performance.Event {
      * Calling this method will prevent the following default map behaviors:
      *
      *   * On `touchstart` events, the behavior of {@link DragPanHandler}
-     *   * On `touchstart` events, the behavior of {@link TouchZoomRotateHandler}
+     *   * On `touchstart` events, the behavior of {@link TwoFingersTouchZoomRotateHandler}
      *
      */
     preventDefault() {
@@ -47264,21 +47909,17 @@ class MapTouchEvent extends performance.Event {
     }
     /**
      * `true` if `preventDefault` has been called.
-     * @private
      */
     get defaultPrevented() {
         return this._defaultPrevented;
     }
-    /**
-     * @private
-     */
     constructor(type, map, originalEvent) {
         const touches = type === 'touchend' ? originalEvent.changedTouches : originalEvent.touches;
         const points = DOM.touchPos(map.getCanvasContainer(), touches);
         const lngLats = points.map((t) => map.unproject(t));
         const point = points.reduce((prev, curr, i, arr) => {
             return prev.add(curr.div(arr.length));
-        }, new performance.pointGeometry(0, 0));
+        }, new performance.Point(0, 0));
         const lngLat = map.unproject(point);
         super(type, { points, point, lngLats, lngLat, originalEvent });
         this._defaultPrevented = false;
@@ -47286,27 +47927,25 @@ class MapTouchEvent extends performance.Event {
 }
 /**
  * `MapWheelEvent` is the event type for the `wheel` map event.
- * @extends {Object}
+ *
+ * @group Event Related
  */
 class MapWheelEvent extends performance.Event {
     /**
      * Prevents subsequent default processing of the event by the map.
      *
-     * Calling this method will prevent the the behavior of {@link ScrollZoomHandler}.
+     * Calling this method will prevent the behavior of {@link ScrollZoomHandler}.
      */
     preventDefault() {
         this._defaultPrevented = true;
     }
     /**
      * `true` if `preventDefault` has been called.
-     * @private
      */
     get defaultPrevented() {
         return this._defaultPrevented;
     }
-    /**
-     * @private
-     */
+    /** */
     constructor(type, map, originalEvent) {
         super(type, { originalEvent });
         this._defaultPrevented = false;
@@ -47438,15 +48077,46 @@ class BlockableMapEventHandler {
 }
 
 /**
+ * @internal
+ * Shared utilities for the Handler classes to access the correct camera state.
+ * If Camera.transformCameraUpdate is specified, the "desired state" of camera may differ from the state used for rendering.
+ * The handlers need the "desired state" to track accumulated changes.
+ */
+class TransformProvider {
+    constructor(map) {
+        this._map = map;
+    }
+    get transform() {
+        return this._map._requestedCameraState || this._map.transform;
+    }
+    get center() {
+        return { lng: this.transform.center.lng, lat: this.transform.center.lat };
+    }
+    get zoom() {
+        return this.transform.zoom;
+    }
+    get pitch() {
+        return this.transform.pitch;
+    }
+    get bearing() {
+        return this.transform.bearing;
+    }
+    unproject(point) {
+        return this.transform.pointLocation(performance.Point.convert(point), this._map.terrain);
+    }
+}
+
+/**
  * The `BoxZoomHandler` allows the user to zoom the map to fit within a bounding box.
  * The bounding box is defined by clicking and holding `shift` while dragging the cursor.
+ *
+ * @group Handlers
  */
 class BoxZoomHandler {
-    /**
-     * @private
-     */
+    /** @internal */
     constructor(map, options) {
         this._map = map;
+        this._tr = new TransformProvider(map);
         this._el = map.getCanvasContainer();
         this._container = map.getContainer();
         this._clickTolerance = options.clickTolerance || 1;
@@ -47454,7 +48124,7 @@ class BoxZoomHandler {
     /**
      * Returns a Boolean indicating whether the "box zoom" interaction is enabled.
      *
-     * @returns {boolean} `true` if the "box zoom" interaction is enabled.
+     * @returns `true` if the "box zoom" interaction is enabled.
      */
     isEnabled() {
         return !!this._enabled;
@@ -47462,7 +48132,7 @@ class BoxZoomHandler {
     /**
      * Returns a Boolean indicating whether the "box zoom" interaction is active, i.e. currently being used.
      *
-     * @returns {boolean} `true` if the "box zoom" interaction is active.
+     * @returns `true` if the "box zoom" interaction is active.
      */
     isActive() {
         return !!this._active;
@@ -47471,7 +48141,9 @@ class BoxZoomHandler {
      * Enables the "box zoom" interaction.
      *
      * @example
-     *   map.boxZoom.enable();
+     * ```ts
+     * map.boxZoom.enable();
+     * ```
      */
     enable() {
         if (this.isEnabled())
@@ -47482,7 +48154,9 @@ class BoxZoomHandler {
      * Disables the "box zoom" interaction.
      *
      * @example
-     *   map.boxZoom.disable();
+     * ```ts
+     * map.boxZoom.disable();
+     * ```
      */
     disable() {
         if (!this.isEnabled())
@@ -47531,7 +48205,7 @@ class BoxZoomHandler {
         else {
             this._map.fire(new performance.Event('boxzoomend', { originalEvent: e }));
             return {
-                cameraAnimation: map => map.fitScreenCoordinates(p0, p1, this._map.getBearing(), { linear: true })
+                cameraAnimation: map => map.fitScreenCoordinates(p0, p1, this._tr.bearing, { linear: true })
             };
         }
     }
@@ -47570,7 +48244,7 @@ function indexTouches(touches, points) {
 }
 
 function getCentroid(points) {
-    const sum = new performance.pointGeometry(0, 0);
+    const sum = new performance.Point(0, 0);
     for (const point of points) {
         sum._add(point);
     }
@@ -47667,7 +48341,8 @@ class TapRecognizer {
 }
 
 class TapZoomHandler {
-    constructor() {
+    constructor(map) {
+        this._tr = new TransformProvider(map);
         this._zoomIn = new TapRecognizer({
             numTouches: 1,
             numTaps: 2
@@ -47694,6 +48369,7 @@ class TapZoomHandler {
     touchend(e, points, mapTouches) {
         const zoomInPoint = this._zoomIn.touchend(e, points, mapTouches);
         const zoomOutPoint = this._zoomOut.touchend(e, points, mapTouches);
+        const tr = this._tr;
         if (zoomInPoint) {
             this._active = true;
             e.preventDefault();
@@ -47701,8 +48377,8 @@ class TapZoomHandler {
             return {
                 cameraAnimation: (map) => map.easeTo({
                     duration: 300,
-                    zoom: map.getZoom() + 1,
-                    around: map.unproject(zoomInPoint)
+                    zoom: tr.zoom + 1,
+                    around: tr.unproject(zoomInPoint)
                 }, { originalEvent: e })
             };
         }
@@ -47713,8 +48389,8 @@ class TapZoomHandler {
             return {
                 cameraAnimation: (map) => map.easeTo({
                     duration: 300,
-                    zoom: map.getZoom() - 1,
-                    around: map.unproject(zoomOutPoint)
+                    zoom: tr.zoom - 1,
+                    around: tr.unproject(zoomOutPoint)
                 }, { originalEvent: e })
             };
         }
@@ -47739,14 +48415,6 @@ class TapZoomHandler {
 
 /**
  * A generic class to create handlers for drag events, from both mouse and touch events.
- * @implements {DragMoveHandler<T, E>}
- * @param {Object} options
- * @param {number} options.clickTolerance If the movement is shorter than this value, consider it a click.
- * @param {string} options.move The move function to run on a valid movement.
- * @param {DragMoveStateManager<E>} options.moveStateManager A class used to manage the state of the drag event - start, checking valid moves, end. See the class documentation for more details.
- * @param {function} options.assignEvent A method used to assign the dragStart, dragMove, and dragEnd methods to the relevant event handlers, as well as assigning the contextmenu handler
- * @param {boolean} [options.activateOnStart] Should the move start on the "start" event, or should it start on the first valid move.
- * @param {boolean} [options.enable] If true, handler will be enabled during construction
  */
 class DragHandler {
     constructor(options) {
@@ -47957,7 +48625,7 @@ class TouchPanHandler {
     reset() {
         this._active = false;
         this._touches = {};
-        this._sum = new performance.pointGeometry(0, 0);
+        this._sum = new performance.Point(0, 0);
         // Put a delay on the cooperative gesture message so it's less twitchy
         setTimeout(() => {
             this._cancelCooperativeMessage = false;
@@ -47995,8 +48663,8 @@ class TouchPanHandler {
         if (mapTouches.length > 0)
             this._active = true;
         const touches = indexTouches(mapTouches, points);
-        const touchPointSum = new performance.pointGeometry(0, 0);
-        const touchDeltaSum = new performance.pointGeometry(0, 0);
+        const touchPointSum = new performance.Point(0, 0);
+        const touchDeltaSum = new performance.Point(0, 0);
         let touchDeltaCount = 0;
         for (const identifier in touches) {
             const point = touches[identifier];
@@ -48036,7 +48704,13 @@ class TouchPanHandler {
     }
 }
 
+/**
+ * The `TwoFingersTouchHandler`s allows the user to zoom, pitch and rotate the map using two fingers
+ *
+ * @group Handlers
+ */
 class TwoFingersTouchHandler {
+    /** @internal */
     constructor() {
         this.reset();
     }
@@ -48044,8 +48718,6 @@ class TwoFingersTouchHandler {
         this._active = false;
         delete this._firstTwoTouches;
     }
-    _start(points) { } //eslint-disable-line
-    _move(points, pinchAround, e) { return {}; } //eslint-disable-line
     touchstart(e, points, mapTouches) {
         //log('touchstart', points, e.target.innerHTML, e.targetTouches.length ? e.targetTouches[0].target.innerHTML: undefined);
         if (this._firstTwoTouches || mapTouches.length < 2)
@@ -48085,17 +48757,43 @@ class TwoFingersTouchHandler {
     touchcancel() {
         this.reset();
     }
+    /**
+     * Enables the "drag to pitch" interaction.
+     *
+     * @example
+     * ```ts
+     * map.touchPitch.enable();
+     * ```
+     */
     enable(options) {
         this._enabled = true;
         this._aroundCenter = !!options && options.around === 'center';
     }
+    /**
+     * Disables the "drag to pitch" interaction.
+     *
+     * @example
+     * ```ts
+     * map.touchPitch.disable();
+     * ```
+     */
     disable() {
         this._enabled = false;
         this.reset();
     }
+    /**
+     * Returns a Boolean indicating whether the "drag to pitch" interaction is enabled.
+     *
+     * @returns  `true` if the "drag to pitch" interaction is enabled.
+     */
     isEnabled() {
         return this._enabled;
     }
+    /**
+     * Returns a Boolean indicating whether the "drag to pitch" interaction is active, i.e. currently being used.
+     *
+     * @returns `true` if the "drag to pitch" interaction is active.
+     */
     isActive() {
         return this._active;
     }
@@ -48111,6 +48809,11 @@ const ZOOM_THRESHOLD = 0.1;
 function getZoomDelta(distance, lastDistance) {
     return Math.log(distance / lastDistance) / Math.LN2;
 }
+/**
+ * The `TwoFingersTouchHandler`s allows the user to zoom the map two fingers
+ *
+ * @group Handlers
+ */
 class TwoFingersTouchZoomHandler extends TwoFingersTouchHandler {
     reset() {
         super.reset();
@@ -48137,6 +48840,11 @@ const ROTATION_THRESHOLD = 25; // pixels along circumference of touch circle
 function getBearingDelta(a, b) {
     return a.angleWith(b) * 180 / Math.PI;
 }
+/**
+ * The `TwoFingersTouchHandler`s allows the user to rotate the map two fingers
+ *
+ * @group Handlers
+ */
 class TwoFingersTouchRotateHandler extends TwoFingersTouchHandler {
     reset() {
         super.reset();
@@ -48183,6 +48891,8 @@ function isVertical(vector) {
 const ALLOWED_SINGLE_TOUCH_TIME = 100;
 /**
  * The `TwoFingersTouchPitchHandler` allows the user to pitch the map by dragging up and down with two fingers.
+ *
+ * @group Handlers
  */
 class TwoFingersTouchPitchHandler extends TwoFingersTouchHandler {
     constructor(map) {
@@ -48270,12 +48980,13 @@ const defaultOptions$5 = {
  * - `Shift+⇠`: Decrease the rotation by 15 degrees.
  * - `Shift+⇡`: Increase the pitch by 10 degrees.
  * - `Shift+⇣`: Decrease the pitch by 10 degrees.
+ *
+ * @group Handlers
  */
 class KeyboardHandler {
-    /**
-    * @private
-    */
-    constructor() {
+    /** @internal */
+    constructor(map) {
+        this._tr = new TransformProvider(map);
         const stepOptions = defaultOptions$5;
         this._panStep = stepOptions.panStep;
         this._bearingStep = stepOptions.bearingStep;
@@ -48350,16 +49061,16 @@ class KeyboardHandler {
         }
         return {
             cameraAnimation: (map) => {
-                const zoom = map.getZoom();
+                const tr = this._tr;
                 map.easeTo({
                     duration: 300,
                     easeId: 'keyboardHandler',
                     easing: easeOut,
-                    zoom: zoomDir ? Math.round(zoom) + zoomDir * (e.shiftKey ? 2 : 1) : zoom,
-                    bearing: map.getBearing() + bearingDir * this._bearingStep,
-                    pitch: map.getPitch() + pitchDir * this._pitchStep,
+                    zoom: zoomDir ? Math.round(tr.zoom) + zoomDir * (e.shiftKey ? 2 : 1) : tr.zoom,
+                    bearing: tr.bearing + bearingDir * this._bearingStep,
+                    pitch: tr.pitch + pitchDir * this._pitchStep,
                     offset: [-xDir * this._panStep, -yDir * this._panStep],
-                    center: map.getCenter()
+                    center: tr.center
                 }, { originalEvent: e });
             }
         };
@@ -48368,7 +49079,9 @@ class KeyboardHandler {
      * Enables the "keyboard rotate and zoom" interaction.
      *
      * @example
-     *   map.keyboard.enable();
+     * ```ts
+     * map.keyboard.enable();
+     * ```
      */
     enable() {
         this._enabled = true;
@@ -48377,7 +49090,9 @@ class KeyboardHandler {
      * Disables the "keyboard rotate and zoom" interaction.
      *
      * @example
-     *   map.keyboard.disable();
+     * ```ts
+     * map.keyboard.disable();
+     * ```
      */
     disable() {
         this._enabled = false;
@@ -48387,7 +49102,7 @@ class KeyboardHandler {
      * Returns a Boolean indicating whether the "keyboard rotate and zoom"
      * interaction is enabled.
      *
-     * @returns {boolean} `true` if the "keyboard rotate and zoom"
+     * @returns `true` if the "keyboard rotate and zoom"
      * interaction is enabled.
      */
     isEnabled() {
@@ -48397,7 +49112,7 @@ class KeyboardHandler {
      * Returns true if the handler is enabled and has detected the start of a
      * zoom/rotate gesture.
      *
-     * @returns {boolean} `true` if the handler is enabled and has detected the
+     * @returns `true` if the handler is enabled and has detected the
      * start of a zoom/rotate gesture.
      */
     isActive() {
@@ -48408,7 +49123,9 @@ class KeyboardHandler {
      * "keyboard zoom" interaction enabled.
      *
      * @example
-     *   map.keyboard.disableRotation();
+     * ```ts
+     * map.keyboard.disableRotation();
+     * ```
      */
     disableRotation() {
         this._rotationDisabled = true;
@@ -48417,8 +49134,10 @@ class KeyboardHandler {
      * Enables the "keyboard pan/rotate" interaction.
      *
      * @example
-     *   map.keyboard.enable();
-     *   map.keyboard.enableRotation();
+     * ```ts
+     * map.keyboard.enable();
+     * map.keyboard.enableRotation();
+     * ```
      */
     enableRotation() {
         this._rotationDisabled = false;
@@ -48439,44 +49158,54 @@ const wheelZoomRate = 1 / 450;
 const maxScalePerFrame = 2;
 /**
  * The `ScrollZoomHandler` allows the user to zoom the map by scrolling.
+ *
+ * @group Handlers
  */
 class ScrollZoomHandler {
-    /**
-     * @private
-     */
-    constructor(map, handler) {
+    /** @internal */
+    constructor(map, triggerRenderFrame) {
+        this._onTimeout = (initialEvent) => {
+            this._type = 'wheel';
+            this._delta -= this._lastValue;
+            if (!this._active) {
+                this._start(initialEvent);
+            }
+        };
         this._map = map;
+        this._tr = new TransformProvider(map);
         this._el = map.getCanvasContainer();
-        this._handler = handler;
+        this._triggerRenderFrame = triggerRenderFrame;
         this._delta = 0;
         this._defaultZoomRate = defaultZoomRate;
         this._wheelZoomRate = wheelZoomRate;
-        performance.bindAll(['_onTimeout'], this);
     }
     /**
      * Set the zoom rate of a trackpad
-     * @param {number} [zoomRate=1/100] The rate used to scale trackpad movement to a zoom value.
+     * @param zoomRate - 1/100 The rate used to scale trackpad movement to a zoom value.
      * @example
-     * // Speed up trackpad zoom
+     * Speed up trackpad zoom
+     * ```ts
      * map.scrollZoom.setZoomRate(1/25);
+     * ```
      */
     setZoomRate(zoomRate) {
         this._defaultZoomRate = zoomRate;
     }
     /**
      * Set the zoom rate of a mouse wheel
-     * @param {number} [wheelZoomRate=1/450] The rate used to scale mouse wheel movement to a zoom value.
+     * @param wheelZoomRate - 1/450 The rate used to scale mouse wheel movement to a zoom value.
      * @example
-     * // Slow down zoom of mouse wheel
+     * Slow down zoom of mouse wheel
+     * ```ts
      * map.scrollZoom.setWheelZoomRate(1/600);
+     * ```
      */
     setWheelZoomRate(wheelZoomRate) {
         this._wheelZoomRate = wheelZoomRate;
     }
     /**
      * Returns a Boolean indicating whether the "scroll to zoom" interaction is enabled.
-     *
-     * @returns {boolean} `true` if the "scroll to zoom" interaction is enabled.
+     * @returns `true` if the "scroll to zoom" interaction is enabled.
      */
     isEnabled() {
         return !!this._enabled;
@@ -48495,25 +49224,26 @@ class ScrollZoomHandler {
     /**
      * Enables the "scroll to zoom" interaction.
      *
-     * @param {ScrollZoomHandlerOptions} [options] Options object.
-     * @param {string} [options.around] If "center" is passed, map will zoom around the center of map
-     *
+     * @param options - Options object.
      * @example
-     *   map.scrollZoom.enable();
-     * @example
-     *  map.scrollZoom.enable({ around: 'center' })
+     * ```ts
+     * map.scrollZoom.enable();
+     * map.scrollZoom.enable({ around: 'center' })
+     * ```
      */
     enable(options) {
         if (this.isEnabled())
             return;
         this._enabled = true;
-        this._aroundCenter = options && options.around === 'center';
+        this._aroundCenter = !!options && options.around === 'center';
     }
     /**
      * Disables the "scroll to zoom" interaction.
      *
      * @example
-     *   map.scrollZoom.disable();
+     * ```ts
+     * map.scrollZoom.disable();
+     * ```
      */
     disable() {
         if (!this.isEnabled())
@@ -48532,7 +49262,7 @@ class ScrollZoomHandler {
             }
         }
         let value = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 40 : e.deltaY;
-        const now = performance.exported.now(), timeDelta = now - (this._lastWheelEventTime || 0);
+        const now = performance.browser.now(), timeDelta = now - (this._lastWheelEventTime || 0);
         this._lastWheelEventTime = now;
         if (value !== 0 && (value % wheelZoomDelta) === 0) {
             // This one is definitely a mouse wheel event.
@@ -48574,13 +49304,6 @@ class ScrollZoomHandler {
         }
         e.preventDefault();
     }
-    _onTimeout(initialEvent) {
-        this._type = 'wheel';
-        this._delta -= this._lastValue;
-        if (!this._active) {
-            this._start(initialEvent);
-        }
-    }
     _start(e) {
         if (!this._delta)
             return;
@@ -48596,11 +49319,12 @@ class ScrollZoomHandler {
             delete this._finishTimeout;
         }
         const pos = DOM.mousePos(this._el, e);
-        this._around = performance.LngLat.convert(this._aroundCenter ? this._map.getCenter() : this._map.unproject(pos));
-        this._aroundPoint = this._map.transform.locationPoint(this._around);
+        const tr = this._tr;
+        this._around = performance.LngLat.convert(this._aroundCenter ? tr.center : tr.unproject(pos));
+        this._aroundPoint = tr.transform.locationPoint(this._around);
         if (!this._frameId) {
             this._frameId = true;
-            this._handler._triggerRenderFrame();
+            this._triggerRenderFrame();
         }
     }
     renderFrame() {
@@ -48609,7 +49333,7 @@ class ScrollZoomHandler {
         this._frameId = null;
         if (!this.isActive())
             return;
-        const tr = this._map.transform;
+        const tr = this._tr.transform;
         // if we've had scroll events since the last render frame, consume the
         // accumulated delta, and update the target zoom level accordingly
         if (this._delta !== 0) {
@@ -48638,9 +49362,9 @@ class ScrollZoomHandler {
         let finished = false;
         let zoom;
         if (this._type === 'wheel' && startZoom && easing) {
-            const t = Math.min((performance.exported.now() - this._lastWheelEventTime) / 200, 1);
+            const t = Math.min((performance.browser.now() - this._lastWheelEventTime) / 200, 1);
             const k = easing(t);
-            zoom = performance.interpolates.number(startZoom, targetZoom, k);
+            zoom = performance.interpolate.number(startZoom, targetZoom, k);
             if (t < 1) {
                 if (!this._frameId) {
                     this._frameId = true;
@@ -48659,7 +49383,7 @@ class ScrollZoomHandler {
             this._active = false;
             this._finishTimeout = setTimeout(() => {
                 this._zooming = false;
-                this._handler._triggerRenderFrame();
+                this._triggerRenderFrame();
                 delete this._targetZoom;
                 delete this._finishTimeout;
             }, 200);
@@ -48673,15 +49397,18 @@ class ScrollZoomHandler {
         };
     }
     _smoothOutEasing(duration) {
-        let easing = performance.ease;
+        let easing = performance.defaultEasing;
         if (this._prevEase) {
-            const ease = this._prevEase, t = (performance.exported.now() - ease.start) / ease.duration, speed = ease.easing(t + 0.01) - ease.easing(t), 
+            const currentEase = this._prevEase;
+            const t = (performance.browser.now() - currentEase.start) / currentEase.duration;
+            const speed = currentEase.easing(t + 0.01) - currentEase.easing(t);
             // Quick hack to make new bezier that is continuous with last
-            x = 0.27 / Math.sqrt(speed * speed + 0.0001) * 0.01, y = Math.sqrt(0.27 * 0.27 - x * x);
+            const x = 0.27 / Math.sqrt(speed * speed + 0.0001) * 0.01;
+            const y = Math.sqrt(0.27 * 0.27 - x * x);
             easing = performance.bezier(x, y, 0.25, 1);
         }
         this._prevEase = {
-            start: performance.exported.now(),
+            start: performance.browser.now(),
             duration,
             easing
         };
@@ -48689,17 +49416,23 @@ class ScrollZoomHandler {
     }
     reset() {
         this._active = false;
+        this._zooming = false;
+        delete this._targetZoom;
+        if (this._finishTimeout) {
+            clearTimeout(this._finishTimeout);
+            delete this._finishTimeout;
+        }
     }
 }
 
 /**
  * The `DoubleClickZoomHandler` allows the user to zoom the map at a point by
  * double clicking or double tapping.
+ *
+ * @group Handlers
  */
 class DoubleClickZoomHandler {
-    /**
-     * @private
-    */
+    /** @internal */
     constructor(clickZoom, TapZoom) {
         this._clickZoom = clickZoom;
         this._tapZoom = TapZoom;
@@ -48708,7 +49441,9 @@ class DoubleClickZoomHandler {
      * Enables the "double click to zoom" interaction.
      *
      * @example
+     * ```ts
      * map.doubleClickZoom.enable();
+     * ```
      */
     enable() {
         this._clickZoom.enable();
@@ -48718,7 +49453,9 @@ class DoubleClickZoomHandler {
      * Disables the "double click to zoom" interaction.
      *
      * @example
+     * ```ts
      * map.doubleClickZoom.disable();
+     * ```
      */
     disable() {
         this._clickZoom.disable();
@@ -48727,7 +49464,7 @@ class DoubleClickZoomHandler {
     /**
      * Returns a Boolean indicating whether the "double click to zoom" interaction is enabled.
      *
-     * @returns {boolean} `true` if the "double click to zoom" interaction is enabled.
+     * @returns `true` if the "double click to zoom" interaction is enabled.
      */
     isEnabled() {
         return this._clickZoom.isEnabled() && this._tapZoom.isEnabled();
@@ -48735,15 +49472,21 @@ class DoubleClickZoomHandler {
     /**
      * Returns a Boolean indicating whether the "double click to zoom" interaction is active, i.e. currently being used.
      *
-     * @returns {boolean} `true` if the "double click to zoom" interaction is active.
+     * @returns `true` if the "double click to zoom" interaction is active.
      */
     isActive() {
         return this._clickZoom.isActive() || this._tapZoom.isActive();
     }
 }
 
+/**
+ * The `ClickZoomHandler` allows the user to zoom the map at a point by double clicking
+ * It is used by other handlers
+ */
 class ClickZoomHandler {
-    constructor() {
+    /** @internal */
+    constructor(map) {
+        this._tr = new TransformProvider(map);
         this.reset();
     }
     reset() {
@@ -48755,8 +49498,8 @@ class ClickZoomHandler {
             cameraAnimation: (map) => {
                 map.easeTo({
                     duration: 300,
-                    zoom: map.getZoom() + (e.shiftKey ? -1 : 1),
-                    around: map.unproject(point)
+                    zoom: this._tr.zoom + (e.shiftKey ? -1 : 1),
+                    around: this._tr.unproject(point)
                 }, { originalEvent: e });
             }
         };
@@ -48789,20 +49532,26 @@ class TapDragZoomHandler {
         delete this._swipePoint;
         delete this._swipeTouch;
         delete this._tapTime;
+        delete this._tapPoint;
         this._tap.reset();
     }
     touchstart(e, points, mapTouches) {
         if (this._swipePoint)
             return;
-        if (this._tapTime && e.timeStamp - this._tapTime > MAX_TAP_INTERVAL) {
-            this.reset();
-        }
         if (!this._tapTime) {
             this._tap.touchstart(e, points, mapTouches);
         }
-        else if (mapTouches.length > 0) {
-            this._swipePoint = points[0];
-            this._swipeTouch = mapTouches[0].identifier;
+        else {
+            const swipePoint = points[0];
+            const soonEnough = e.timeStamp - this._tapTime < MAX_TAP_INTERVAL;
+            const closeEnough = this._tapPoint.dist(swipePoint) < MAX_DIST;
+            if (!soonEnough || !closeEnough) {
+                this.reset();
+            }
+            else if (mapTouches.length > 0) {
+                this._swipePoint = swipePoint;
+                this._swipeTouch = mapTouches[0].identifier;
+            }
         }
     }
     touchmove(e, points, mapTouches) {
@@ -48828,6 +49577,7 @@ class TapDragZoomHandler {
             const point = this._tap.touchend(e, points, mapTouches);
             if (point) {
                 this._tapTime = e.timeStamp;
+                this._tapPoint = point;
             }
         }
         else if (this._swipePoint) {
@@ -48857,11 +49607,11 @@ class TapDragZoomHandler {
 /**
  * The `DragPanHandler` allows the user to pan the map by clicking and dragging
  * the cursor.
+ *
+ * @group Handlers
  */
 class DragPanHandler {
-    /**
-     * @private
-    */
+    /** @internal */
     constructor(el, mousePan, touchPan) {
         this._el = el;
         this._mousePan = mousePan;
@@ -48870,21 +49620,17 @@ class DragPanHandler {
     /**
      * Enables the "drag to pan" interaction.
      *
-     * @param {Object} [options] Options object
-     * @param {number} [options.linearity=0] factor used to scale the drag velocity
-     * @param {Function} [options.easing=bezier(0, 0, 0.3, 1)] easing function applled to `map.panTo` when applying the drag.
-     * @param {number} [options.maxSpeed=1400] the maximum value of the drag velocity.
-     * @param {number} [options.deceleration=2500] the rate at which the speed reduces after the pan ends.
-     *
+     * @param options - Options object
      * @example
+     * ```ts
      *   map.dragPan.enable();
-     * @example
      *   map.dragPan.enable({
      *      linearity: 0.3,
      *      easing: bezier(0, 0, 0.3, 1),
      *      maxSpeed: 1400,
      *      deceleration: 2500,
      *   });
+     * ```
      */
     enable(options) {
         this._inertiaOptions = options || {};
@@ -48896,7 +49642,9 @@ class DragPanHandler {
      * Disables the "drag to pan" interaction.
      *
      * @example
+     * ```ts
      * map.dragPan.disable();
+     * ```
      */
     disable() {
         this._mousePan.disable();
@@ -48906,7 +49654,7 @@ class DragPanHandler {
     /**
      * Returns a Boolean indicating whether the "drag to pan" interaction is enabled.
      *
-     * @returns {boolean} `true` if the "drag to pan" interaction is enabled.
+     * @returns `true` if the "drag to pan" interaction is enabled.
      */
     isEnabled() {
         return this._mousePan.isEnabled() && this._touchPan.isEnabled();
@@ -48914,7 +49662,7 @@ class DragPanHandler {
     /**
      * Returns a Boolean indicating whether the "drag to pan" interaction is active, i.e. currently being used.
      *
-     * @returns {boolean} `true` if the "drag to pan" interaction is active.
+     * @returns `true` if the "drag to pan" interaction is active.
      */
     isActive() {
         return this._mousePan.isActive() || this._touchPan.isActive();
@@ -48924,15 +49672,11 @@ class DragPanHandler {
 /**
  * The `DragRotateHandler` allows the user to rotate the map by clicking and
  * dragging the cursor while holding the right mouse button or `ctrl` key.
+ *
+ * @group Handlers
  */
 class DragRotateHandler {
-    /**
-     * @param {Object} [options]
-     * @param {number} [options.bearingSnap] The threshold, measured in degrees, that determines when the map's
-     *   bearing will snap to north.
-     * @param {bool} [options.pitchWithRotate=true] Control the map pitch in addition to the bearing
-     * @private
-     */
+    /** @internal */
     constructor(options, mouseRotate, mousePitch) {
         this._pitchWithRotate = options.pitchWithRotate;
         this._mouseRotate = mouseRotate;
@@ -48942,7 +49686,9 @@ class DragRotateHandler {
      * Enables the "drag to rotate" interaction.
      *
      * @example
+     * ```ts
      * map.dragRotate.enable();
+     * ```
      */
     enable() {
         this._mouseRotate.enable();
@@ -48953,7 +49699,9 @@ class DragRotateHandler {
      * Disables the "drag to rotate" interaction.
      *
      * @example
+     * ```ts
      * map.dragRotate.disable();
+     * ```
      */
     disable() {
         this._mouseRotate.disable();
@@ -48962,7 +49710,7 @@ class DragRotateHandler {
     /**
      * Returns a Boolean indicating whether the "drag to rotate" interaction is enabled.
      *
-     * @returns {boolean} `true` if the "drag to rotate" interaction is enabled.
+     * @returns `true` if the "drag to rotate" interaction is enabled.
      */
     isEnabled() {
         return this._mouseRotate.isEnabled() && (!this._pitchWithRotate || this._mousePitch.isEnabled());
@@ -48970,7 +49718,7 @@ class DragRotateHandler {
     /**
      * Returns a Boolean indicating whether the "drag to rotate" interaction is active, i.e. currently being used.
      *
-     * @returns {boolean} `true` if the "drag to rotate" interaction is active.
+     * @returns `true` if the "drag to rotate" interaction is active.
      */
     isActive() {
         return this._mouseRotate.isActive() || this._mousePitch.isActive();
@@ -48983,11 +49731,11 @@ class DragRotateHandler {
  *
  * They can zoom with one finger by double tapping and dragging. On the second tap,
  * hold the finger down and drag up or down to zoom in or out.
+ *
+ * @group Handlers
  */
 class TwoFingersTouchZoomRotateHandler {
-    /**
-     * @private
-    */
+    /** @internal */
     constructor(el, touchZoom, touchRotate, tapDragZoom) {
         this._el = el;
         this._touchZoom = touchZoom;
@@ -48999,13 +49747,13 @@ class TwoFingersTouchZoomRotateHandler {
     /**
      * Enables the "pinch to rotate and zoom" interaction.
      *
-     * @param {Object} [options] Options object.
-     * @param {string} [options.around] If "center" is passed, map will zoom around the center
+     * @param options - Options object.
      *
      * @example
-     *   map.touchZoomRotate.enable();
-     * @example
-     *   map.touchZoomRotate.enable({ around: 'center' });
+     * ```ts
+     * map.touchZoomRotate.enable();
+     * map.touchZoomRotate.enable({ around: 'center' });
+     * ```
      */
     enable(options) {
         this._touchZoom.enable(options);
@@ -49018,7 +49766,9 @@ class TwoFingersTouchZoomRotateHandler {
      * Disables the "pinch to rotate and zoom" interaction.
      *
      * @example
-     *   map.touchZoomRotate.disable();
+     * ```ts
+     * map.touchZoomRotate.disable();
+     * ```
      */
     disable() {
         this._touchZoom.disable();
@@ -49029,7 +49779,7 @@ class TwoFingersTouchZoomRotateHandler {
     /**
      * Returns a Boolean indicating whether the "pinch to rotate and zoom" interaction is enabled.
      *
-     * @returns {boolean} `true` if the "pinch to rotate and zoom" interaction is enabled.
+     * @returns `true` if the "pinch to rotate and zoom" interaction is enabled.
      */
     isEnabled() {
         return this._touchZoom.isEnabled() &&
@@ -49039,7 +49789,7 @@ class TwoFingersTouchZoomRotateHandler {
     /**
      * Returns true if the handler is enabled and has detected the start of a zoom/rotate gesture.
      *
-     * @returns {boolean} //eslint-disable-line
+     * @returns `true` if the handler is active, `false` otherwise
      */
     isActive() {
         return this._touchZoom.isActive() || this._touchRotate.isActive() || this._tapDragZoom.isActive();
@@ -49049,7 +49799,9 @@ class TwoFingersTouchZoomRotateHandler {
      * interaction enabled.
      *
      * @example
-     *   map.touchZoomRotate.disableRotation();
+     * ```ts
+     * map.touchZoomRotate.disableRotation();
+     * ```
      */
     disableRotation() {
         this._rotationDisabled = true;
@@ -49059,8 +49811,10 @@ class TwoFingersTouchZoomRotateHandler {
      * Enables the "pinch to rotate" interaction.
      *
      * @example
-     *   map.touchZoomRotate.enable();
-     *   map.touchZoomRotate.enableRotation();
+     * ```ts
+     * map.touchZoomRotate.enable();
+     * map.touchZoomRotate.enableRotation();
+     * ```
      */
     enableRotation() {
         this._rotationDisabled = false;
@@ -49077,6 +49831,69 @@ function hasChange(result) {
 }
 class HandlerManager {
     constructor(map, options) {
+        this.handleWindowEvent = (e) => {
+            this.handleEvent(e, `${e.type}Window`);
+        };
+        this.handleEvent = (e, eventName) => {
+            if (e.type === 'blur') {
+                this.stop(true);
+                return;
+            }
+            this._updatingCamera = true;
+            const inputEvent = e.type === 'renderFrame' ? undefined : e;
+            /*
+             * We don't call e.preventDefault() for any events by default.
+             * Handlers are responsible for calling it where necessary.
+             */
+            const mergedHandlerResult = { needsRenderFrame: false };
+            const eventsInProgress = {};
+            const activeHandlers = {};
+            const eventTouches = e.touches;
+            const mapTouches = eventTouches ? this._getMapTouches(eventTouches) : undefined;
+            const points = mapTouches ? DOM.touchPos(this._el, mapTouches) : DOM.mousePos(this._el, e);
+            for (const { handlerName, handler, allowed } of this._handlers) {
+                if (!handler.isEnabled())
+                    continue;
+                let data;
+                if (this._blockedByActive(activeHandlers, allowed, handlerName)) {
+                    handler.reset();
+                }
+                else {
+                    if (handler[eventName || e.type]) {
+                        data = handler[eventName || e.type](e, points, mapTouches);
+                        this.mergeHandlerResult(mergedHandlerResult, eventsInProgress, data, handlerName, inputEvent);
+                        if (data && data.needsRenderFrame) {
+                            this._triggerRenderFrame();
+                        }
+                    }
+                }
+                if (data || handler.isActive()) {
+                    activeHandlers[handlerName] = handler;
+                }
+            }
+            const deactivatedHandlers = {};
+            for (const name in this._previousActiveHandlers) {
+                if (!activeHandlers[name]) {
+                    deactivatedHandlers[name] = inputEvent;
+                }
+            }
+            this._previousActiveHandlers = activeHandlers;
+            if (Object.keys(deactivatedHandlers).length || hasChange(mergedHandlerResult)) {
+                this._changes.push([mergedHandlerResult, eventsInProgress, deactivatedHandlers]);
+                this._triggerRenderFrame();
+            }
+            if (Object.keys(activeHandlers).length || hasChange(mergedHandlerResult)) {
+                this._map._stop(true);
+            }
+            this._updatingCamera = false;
+            const { cameraAnimation } = mergedHandlerResult;
+            if (cameraAnimation) {
+                this._inertia.clear();
+                this._fireEvents({}, {}, true);
+                this._changes = [];
+                cameraAnimation(this._map);
+            }
+        };
         this._map = map;
         this._el = this._map.getCanvasContainer();
         this._handlers = [];
@@ -49088,7 +49905,6 @@ class HandlerManager {
         // Track whether map is currently moving, to compute start/move/end events
         this._eventsInProgress = {};
         this._addDefaultHandlers(options);
-        performance.bindAll(['handleEvent', 'handleWindowEvent'], this);
         const el = this._el;
         this._listeners = [
             // This needs to be `passive: true` so that a double tap fires two
@@ -49137,40 +49953,59 @@ class HandlerManager {
         this._add('mapEvent', new MapEventHandler(map, options));
         const boxZoom = map.boxZoom = new BoxZoomHandler(map, options);
         this._add('boxZoom', boxZoom);
-        const tapZoom = new TapZoomHandler();
-        const clickZoom = new ClickZoomHandler();
+        if (options.interactive && options.boxZoom) {
+            boxZoom.enable();
+        }
+        const tapZoom = new TapZoomHandler(map);
+        const clickZoom = new ClickZoomHandler(map);
         map.doubleClickZoom = new DoubleClickZoomHandler(clickZoom, tapZoom);
         this._add('tapZoom', tapZoom);
         this._add('clickZoom', clickZoom);
+        if (options.interactive && options.doubleClickZoom) {
+            map.doubleClickZoom.enable();
+        }
         const tapDragZoom = new TapDragZoomHandler();
         this._add('tapDragZoom', tapDragZoom);
         const touchPitch = map.touchPitch = new TwoFingersTouchPitchHandler(map);
         this._add('touchPitch', touchPitch);
+        if (options.interactive && options.touchPitch) {
+            map.touchPitch.enable(options.touchPitch);
+        }
         const mouseRotate = generateMouseRotationHandler(options);
         const mousePitch = generateMousePitchHandler(options);
         map.dragRotate = new DragRotateHandler(options, mouseRotate, mousePitch);
         this._add('mouseRotate', mouseRotate, ['mousePitch']);
         this._add('mousePitch', mousePitch, ['mouseRotate']);
+        if (options.interactive && options.dragRotate) {
+            map.dragRotate.enable();
+        }
         const mousePan = generateMousePanHandler(options);
         const touchPan = new TouchPanHandler(options, map);
         map.dragPan = new DragPanHandler(el, mousePan, touchPan);
         this._add('mousePan', mousePan);
         this._add('touchPan', touchPan, ['touchZoom', 'touchRotate']);
+        if (options.interactive && options.dragPan) {
+            map.dragPan.enable(options.dragPan);
+        }
         const touchRotate = new TwoFingersTouchRotateHandler();
         const touchZoom = new TwoFingersTouchZoomHandler();
         map.touchZoomRotate = new TwoFingersTouchZoomRotateHandler(el, touchZoom, touchRotate, tapDragZoom);
         this._add('touchRotate', touchRotate, ['touchPan', 'touchZoom']);
         this._add('touchZoom', touchZoom, ['touchPan', 'touchRotate']);
-        const scrollZoom = map.scrollZoom = new ScrollZoomHandler(map, this);
-        this._add('scrollZoom', scrollZoom, ['mousePan']);
-        const keyboard = map.keyboard = new KeyboardHandler();
-        this._add('keyboard', keyboard);
-        this._add('blockableMapEvent', new BlockableMapEventHandler(map));
-        for (const name of ['boxZoom', 'doubleClickZoom', 'tapDragZoom', 'touchPitch', 'dragRotate', 'dragPan', 'touchZoomRotate', 'scrollZoom', 'keyboard']) {
-            if (options.interactive && options[name]) {
-                map[name].enable(options[name]);
-            }
+        if (options.interactive && options.touchZoomRotate) {
+            map.touchZoomRotate.enable(options.touchZoomRotate);
         }
+        const scrollZoom = map.scrollZoom = new ScrollZoomHandler(map, () => this._triggerRenderFrame());
+        this._add('scrollZoom', scrollZoom, ['mousePan']);
+        if (options.interactive && options.scrollZoom) {
+            map.scrollZoom.enable(options.scrollZoom);
+        }
+        const keyboard = map.keyboard = new KeyboardHandler(map);
+        this._add('keyboard', keyboard);
+        if (options.interactive && options.keyboard) {
+            map.keyboard.enable();
+        }
+        this._add('blockableMapEvent', new BlockableMapEventHandler(map));
     }
     _add(handlerName, handler, allowed) {
         this._handlers.push({ handlerName, handler, allowed });
@@ -49213,9 +50048,6 @@ class HandlerManager {
         }
         return false;
     }
-    handleWindowEvent(e) {
-        this.handleEvent(e, `${e.type}Window`);
-    }
     _getMapTouches(touches) {
         const mapTouches = [];
         for (const t of touches) {
@@ -49225,66 +50057,6 @@ class HandlerManager {
             }
         }
         return mapTouches;
-    }
-    handleEvent(e, eventName) {
-        if (e.type === 'blur') {
-            this.stop(true);
-            return;
-        }
-        this._updatingCamera = true;
-        const inputEvent = e.type === 'renderFrame' ? undefined : e;
-        /*
-         * We don't call e.preventDefault() for any events by default.
-         * Handlers are responsible for calling it where necessary.
-         */
-        const mergedHandlerResult = { needsRenderFrame: false };
-        const eventsInProgress = {};
-        const activeHandlers = {};
-        const eventTouches = e.touches;
-        const mapTouches = eventTouches ? this._getMapTouches(eventTouches) : undefined;
-        const points = mapTouches ? DOM.touchPos(this._el, mapTouches) : DOM.mousePos(this._el, e);
-        for (const { handlerName, handler, allowed } of this._handlers) {
-            if (!handler.isEnabled())
-                continue;
-            let data;
-            if (this._blockedByActive(activeHandlers, allowed, handlerName)) {
-                handler.reset();
-            }
-            else {
-                if (handler[eventName || e.type]) {
-                    data = handler[eventName || e.type](e, points, mapTouches);
-                    this.mergeHandlerResult(mergedHandlerResult, eventsInProgress, data, handlerName, inputEvent);
-                    if (data && data.needsRenderFrame) {
-                        this._triggerRenderFrame();
-                    }
-                }
-            }
-            if (data || handler.isActive()) {
-                activeHandlers[handlerName] = handler;
-            }
-        }
-        const deactivatedHandlers = {};
-        for (const name in this._previousActiveHandlers) {
-            if (!activeHandlers[name]) {
-                deactivatedHandlers[name] = inputEvent;
-            }
-        }
-        this._previousActiveHandlers = activeHandlers;
-        if (Object.keys(deactivatedHandlers).length || hasChange(mergedHandlerResult)) {
-            this._changes.push([mergedHandlerResult, eventsInProgress, deactivatedHandlers]);
-            this._triggerRenderFrame();
-        }
-        if (Object.keys(activeHandlers).length || hasChange(mergedHandlerResult)) {
-            this._map._stop(true);
-        }
-        this._updatingCamera = false;
-        const { cameraAnimation } = mergedHandlerResult;
-        if (cameraAnimation) {
-            this._inertia.clear();
-            this._fireEvents({}, {}, true);
-            this._changes = [];
-            cameraAnimation(this._map);
-        }
     }
     mergeHandlerResult(mergedHandlerResult, eventsInProgress, handlerResult, name, e) {
         if (!handlerResult)
@@ -49311,7 +50083,7 @@ class HandlerManager {
         const combinedDeactivatedHandlers = {};
         for (const [change, eventsInProgress, deactivatedHandlers] of this._changes) {
             if (change.panDelta)
-                combined.panDelta = (combined.panDelta || new performance.pointGeometry(0, 0))._add(change.panDelta);
+                combined.panDelta = (combined.panDelta || new performance.Point(0, 0))._add(change.panDelta);
             if (change.zoomDelta)
                 combined.zoomDelta = (combined.zoomDelta || 0) + change.zoomDelta;
             if (change.bearingDelta)
@@ -49332,7 +50104,7 @@ class HandlerManager {
     }
     _updateMapTransform(combinedResult, combinedEventsInProgress, deactivatedHandlers) {
         const map = this._map;
-        const tr = map.transform;
+        const tr = map._getTransformForUpdate();
         const terrain = map.terrain;
         if (!hasChange(combinedResult) && !(terrain && this._terrainMovement)) {
             return this._fireEvents(combinedEventsInProgress, deactivatedHandlers, true);
@@ -49356,7 +50128,7 @@ class HandlerManager {
         }
         else {
             // when 3d-terrain is enabled act a little different:
-            //    - draging do not drag the picked point itself, instead it drags the map by pixel-delta.
+            //    - dragging do not drag the picked point itself, instead it drags the map by pixel-delta.
             //      With this approach it is no longer possible to pick a point from somewhere near
             //      the horizon to the center in one move.
             //      So this logic avoids the problem, that in such cases you easily loose orientation.
@@ -49364,10 +50136,10 @@ class HandlerManager {
                 (combinedEventsInProgress.drag || combinedEventsInProgress.zoom)) {
                 // When starting to drag or move, flag it and register moveend to clear flagging
                 this._terrainMovement = true;
-                tr.freezeElevation = true;
+                this._map._elevationFreeze = true;
                 tr.setLocationAtPoint(loc, around);
                 this._map.once('moveend', () => {
-                    tr.freezeElevation = false;
+                    this._map._elevationFreeze = false;
                     this._terrainMovement = false;
                     tr.recalculateZoom(map.terrain);
                 });
@@ -49380,6 +50152,7 @@ class HandlerManager {
                 tr.setLocationAtPoint(loc, around);
             }
         }
+        map._applyUpdatedTransform(tr);
         this._map._update();
         if (!combinedResult.noInertia)
             this._inertia.record(combinedResult);
@@ -49462,62 +50235,53 @@ class HandlerManager {
     }
 }
 
-/**
- * This is a private namespace for utility functions that will get automatically stripped
- * out in production builds.
- *
- * @private
- */
-const Debug = {
-    extend(dest, ...sources) {
-        return performance.extend(dest, ...sources);
-    },
-    run(fn) {
-        fn();
-    },
-    logToElement(message, overwrite = false, id = 'log') {
-        const el = window.document.getElementById(id);
-        if (el) {
-            if (overwrite)
-                el.innerHTML = '';
-            el.innerHTML += `<br>${message}`;
-        }
-    }
-};
-
 class Camera extends performance.Evented {
     constructor(transform, options) {
         super();
+        // Callback for map._requestRenderFrame
+        this._renderFrameCallback = () => {
+            const t = Math.min((performance.browser.now() - this._easeStart) / this._easeOptions.duration, 1);
+            this._onEaseFrame(this._easeOptions.easing(t));
+            if (t < 1) {
+                this._easeFrameId = this._requestRenderFrame(this._renderFrameCallback);
+            }
+            else {
+                this.stop();
+            }
+        };
         this._moving = false;
         this._zooming = false;
         this.transform = transform;
         this._bearingSnap = options.bearingSnap;
-        performance.bindAll(['_renderFrameCallback'], this);
-        //addAssertions(this);
+        this.on('moveend', () => {
+            delete this._requestedCameraState;
+        });
     }
     /**
      * Returns the map's geographical centerpoint.
      *
-     * @memberof Map#
      * @returns The map's geographical centerpoint.
      * @example
-     * // return a LngLat object such as {lng: 0, lat: 0}
-     * var center = map.getCenter();
+     * Return a LngLat object such as `{lng: 0, lat: 0}`
+     * ```ts
+     * let center = map.getCenter();
      * // access longitude and latitude values directly
-     * var {lng, lat} = map.getCenter();
+     * let {lng, lat} = map.getCenter();
+     * ```
      */
     getCenter() { return new performance.LngLat(this.transform.center.lng, this.transform.center.lat); }
     /**
      * Sets the map's geographical centerpoint. Equivalent to `jumpTo({center: center})`.
      *
-     * @memberof Map#
-     * @param center The centerpoint to set.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart` and `moveend`.
+     *
+     * @param center - The centerpoint to set.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setCenter([-74, 38]);
+     * ```
      */
     setCenter(center, eventData) {
         return this.jumpTo({ center }, eventData);
@@ -49525,35 +50289,34 @@ class Camera extends performance.Evented {
     /**
      * Pans the map by the specified offset.
      *
-     * @memberof Map#
-     * @param offset `x` and `y` coordinates by which to pan the map.
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
-     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js-docs/example/game-controls/)
+     * Triggers the following events: `movestart` and `moveend`.
+     *
+     * @param offset - `x` and `y` coordinates by which to pan the map.
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
+     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js/docs/examples/game-controls/)
      */
     panBy(offset, options, eventData) {
-        offset = performance.pointGeometry.convert(offset).mult(-1);
+        offset = performance.Point.convert(offset).mult(-1);
         return this.panTo(this.transform.center, performance.extend({ offset }, options), eventData);
     }
     /**
      * Pans the map to the specified location with an animated transition.
      *
-     * @memberof Map#
-     * @param lnglat The location to pan the map to.
-     * @param options Options describing the destination and animation of the transition.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart` and `moveend`.
+     *
+     * @param lnglat - The location to pan the map to.
+     * @param options - Options describing the destination and animation of the transition.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
+     * ```ts
      * map.panTo([-74, 38]);
-     * @example
      * // Specify that the panTo animation should last 5000 milliseconds.
      * map.panTo([-74, 38], {duration: 5000});
-     * @see [Update a feature in realtime](https://maplibre.org/maplibre-gl-js-docs/example/live-update-feature/)
+     * ```
+     * @see [Update a feature in realtime](https://maplibre.org/maplibre-gl-js/docs/examples/live-update-feature/)
      */
     panTo(lnglat, options, eventData) {
         return this.easeTo(performance.extend({
@@ -49563,28 +50326,26 @@ class Camera extends performance.Evented {
     /**
      * Returns the map's current zoom level.
      *
-     * @memberof Map#
      * @returns The map's current zoom level.
      * @example
+     * ```ts
      * map.getZoom();
+     * ```
      */
     getZoom() { return this.transform.zoom; }
     /**
      * Sets the map's zoom level. Equivalent to `jumpTo({zoom: zoom})`.
      *
-     * @memberof Map#
-     * @param zoom The zoom level to set (0-20).
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, and `zoomend`.
+     *
+     * @param zoom - The zoom level to set (0-20).
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * // Zoom to the zoom level 5 without an animated transition
+     * Zoom to the zoom level 5 without an animated transition
+     * ```ts
      * map.setZoom(5);
+     * ```
      */
     setZoom(zoom, eventData) {
         this.jumpTo({ zoom }, eventData);
@@ -49593,18 +50354,14 @@ class Camera extends performance.Evented {
     /**
      * Zooms the map to the specified zoom level, with an animated transition.
      *
-     * @memberof Map#
-     * @param zoom The zoom level to transition to.
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, and `zoomend`.
+     *
+     * @param zoom - The zoom level to transition to.
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
+     * ```ts
      * // Zoom to the zoom level 5 without an animated transition
      * map.zoomTo(5);
      * // Zoom to the zoom level 8 with an animated transition
@@ -49612,6 +50369,7 @@ class Camera extends performance.Evented {
      *   duration: 2000,
      *   offset: [100, 50]
      * });
+     * ```
      */
     zoomTo(zoom, options, eventData) {
         return this.easeTo(performance.extend({
@@ -49621,19 +50379,16 @@ class Camera extends performance.Evented {
     /**
      * Increases the map's zoom level by 1.
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, and `zoomend`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * // zoom the map in one level with a custom animation duration
+     * Zoom the map in one level with a custom animation duration
+     * ```ts
      * map.zoomIn({duration: 1000});
+     * ```
      */
     zoomIn(options, eventData) {
         this.zoomTo(this.getZoom() + 1, options, eventData);
@@ -49642,19 +50397,16 @@ class Camera extends performance.Evented {
     /**
      * Decreases the map's zoom level by 1.
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires move
-     * @fires zoom
-     * @fires moveend
-     * @fires zoomend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, and `zoomend`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * // zoom the map out one level with a custom animation offset
+     * Zoom the map out one level with a custom animation offset
+     * ```ts
      * map.zoomOut({offset: [80, 60]});
+     * ```
      */
     zoomOut(options, eventData) {
         this.zoomTo(this.getZoom() - 1, options, eventData);
@@ -49664,9 +50416,8 @@ class Camera extends performance.Evented {
      * Returns the map's current bearing. The bearing is the compass direction that is "up"; for example, a bearing
      * of 90° orients the map so that east is up.
      *
-     * @memberof Map#
      * @returns The map's current bearing.
-     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js-docs/example/game-controls/)
+     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js/docs/examples/game-controls/)
      */
     getBearing() { return this.transform.bearing; }
     /**
@@ -49675,15 +50426,16 @@ class Camera extends performance.Evented {
      *
      * Equivalent to `jumpTo({bearing: bearing})`.
      *
-     * @memberof Map#
-     * @param bearing The desired bearing.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `moveend`, and `rotate`.
+     *
+     * @param bearing - The desired bearing.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * // rotate the map to 90 degrees
+     * Rotate the map to 90 degrees
+     * ```ts
      * map.setBearing(90);
+     * ```
      */
     setBearing(bearing, eventData) {
         this.jumpTo({ bearing }, eventData);
@@ -49692,7 +50444,6 @@ class Camera extends performance.Evented {
     /**
      * Returns the current padding applied around the map viewport.
      *
-     * @memberof Map#
      * @returns The current padding around the map viewport.
      */
     getPadding() { return this.transform.padding; }
@@ -49701,15 +50452,16 @@ class Camera extends performance.Evented {
      *
      * Equivalent to `jumpTo({padding: padding})`.
      *
-     * @memberof Map#
-     * @param padding The desired padding. Format: { left: number, right: number, top: number, bottom: number }
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart` and `moveend`.
+     *
+     * @param padding - The desired padding.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * // Sets a left padding of 300px, and a top padding of 50px
+     * Sets a left padding of 300px, and a top padding of 50px
+     * ```ts
      * map.setPadding({ left: 300, top: 50 });
+     * ```
      */
     setPadding(padding, eventData) {
         this.jumpTo({ padding }, eventData);
@@ -49717,15 +50469,14 @@ class Camera extends performance.Evented {
     }
     /**
      * Rotates the map to the specified bearing, with an animated transition. The bearing is the compass direction
-     * that is \"up\"; for example, a bearing of 90° orients the map so that east is up.
+     * that is "up"; for example, a bearing of 90° orients the map so that east is up.
      *
-     * @memberof Map#
-     * @param bearing The desired bearing.
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `moveend`, and `rotate`.
+     *
+     * @param bearing - The desired bearing.
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      */
     rotateTo(bearing, options, eventData) {
         return this.easeTo(performance.extend({
@@ -49735,12 +50486,11 @@ class Camera extends performance.Evented {
     /**
      * Rotates the map so that north is up (0° bearing), with an animated transition.
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `moveend`, and `rotate`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      */
     resetNorth(options, eventData) {
         this.rotateTo(0, performance.extend({ duration: 1000 }, options), eventData);
@@ -49749,12 +50499,11 @@ class Camera extends performance.Evented {
     /**
      * Rotates and pitches the map so that north is up (0° bearing) and pitch is 0°, with an animated transition.
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `pitchstart`, `pitch`, `pitchend`, and `rotate`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      */
     resetNorthPitch(options, eventData) {
         this.easeTo(performance.extend({
@@ -49768,12 +50517,11 @@ class Camera extends performance.Evented {
      * Snaps the map so that north is up (0° bearing), if the current bearing is close enough to it (i.e. within the
      * `bearingSnap` threshold).
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `moveend`, and `rotate`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      */
     snapToNorth(options, eventData) {
         if (Math.abs(this.getBearing()) < this._bearingSnap) {
@@ -49784,42 +50532,36 @@ class Camera extends performance.Evented {
     /**
      * Returns the map's current pitch (tilt).
      *
-     * @memberof Map#
      * @returns The map's current pitch, measured in degrees away from the plane of the screen.
      */
     getPitch() { return this.transform.pitch; }
     /**
      * Sets the map's pitch (tilt). Equivalent to `jumpTo({pitch: pitch})`.
      *
-     * @memberof Map#
-     * @param pitch The pitch to set, measured in degrees away from the plane of the screen (0-60).
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires pitchstart
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `moveend`, `pitchstart`, and `pitchend`.
+     *
+     * @param pitch - The pitch to set, measured in degrees away from the plane of the screen (0-60).
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      */
     setPitch(pitch, eventData) {
         this.jumpTo({ pitch }, eventData);
         return this;
     }
     /**
-     * @memberof Map#
-     * @param {LngLatBoundsLike} bounds Calculate the center for these bounds in the viewport and use
-     *      the highest zoom level up to and including `Map#getMaxZoom()` that fits
-     *      in the viewport. LngLatBounds represent a box that is always axis-aligned with bearing 0.
-     * @param options Options object
-     * @param {number | PaddingOptions} [options.padding] The amount of padding in pixels to add to the given bounds.
-     * @param {number} [options.bearing=0] Desired map bearing at end of animation, in degrees.
-     * @param {PointLike} [options.offset=[0, 0]] The center of the given bounds relative to the map's center, measured in pixels.
-     * @param {number} [options.maxZoom] The maximum zoom level to allow when the camera would transition to the specified bounds.
-     * @returns {CenterZoomBearing} If map is able to fit to provided bounds, returns `center`, `zoom`, and `bearing`.
-     *      If map is unable to fit, method will warn and return undefined.
+     * @param bounds - Calculate the center for these bounds in the viewport and use
+     * the highest zoom level up to and including `Map#getMaxZoom()` that fits
+     * in the viewport. LngLatBounds represent a box that is always axis-aligned with bearing 0.
+     * @param options - Options object
+     * @returns If map is able to fit to provided bounds, returns `center`, `zoom`, and `bearing`.
+     * If map is unable to fit, method will warn and return undefined.
      * @example
-     * var bbox = [[-79, 43], [-73, 45]];
-     * var newCameraTransform = map.cameraForBounds(bbox, {
+     * ```ts
+     * let bbox = [[-79, 43], [-73, 45]];
+     * let newCameraTransform = map.cameraForBounds(bbox, {
      *   padding: {top: 10, bottom:25, left: 15, right: 5}
      * });
+     * ```
      */
     cameraForBounds(bounds, options) {
         bounds = LngLatBounds.convert(bounds);
@@ -49827,27 +50569,25 @@ class Camera extends performance.Evented {
         return this._cameraForBoxAndBearing(bounds.getNorthWest(), bounds.getSouthEast(), bearing, options);
     }
     /**
+     * @internal
      * Calculate the center of these two points in the viewport and use
      * the highest zoom level up to and including `Map#getMaxZoom()` that fits
      * the points in the viewport at the specified bearing.
-     * @memberof Map#
-     * @param {LngLatLike} p0 First point
-     * @param {LngLatLike} p1 Second point
-     * @param bearing Desired map bearing at end of animation, in degrees
-     * @param options
-     * @param {number | PaddingOptions} [options.padding] The amount of padding in pixels to add to the given bounds.
-     * @param {PointLike} [options.offset=[0, 0]] The center of the given bounds relative to the map's center, measured in pixels.
-     * @param {number} [options.maxZoom] The maximum zoom level to allow when the camera would transition to the specified bounds.
-     * @returns {CenterZoomBearing} If map is able to fit to provided bounds, returns `center`, `zoom`, and `bearing`.
+     * @param p0 - First point
+     * @param p1 - Second point
+     * @param bearing - Desired map bearing at end of animation, in degrees
+     * @param options - the camera options
+     * @returns If map is able to fit to provided bounds, returns `center`, `zoom`, and `bearing`.
      *      If map is unable to fit, method will warn and return undefined.
-     * @private
      * @example
-     * var p0 = [-79, 43];
-     * var p1 = [-73, 45];
-     * var bearing = 90;
-     * var newCameraTransform = map._cameraForBoxAndBearing(p0, p1, bearing, {
+     * ```ts
+     * let p0 = [-79, 43];
+     * let p1 = [-73, 45];
+     * let bearing = 90;
+     * let newCameraTransform = map._cameraForBoxAndBearing(p0, p1, bearing, {
      *   padding: {top: 10, bottom:25, left: 15, right: 5}
      * });
+     * ```
      */
     _cameraForBoxAndBearing(p0, p1, bearing, options) {
         const defaultPadding = {
@@ -49879,8 +50619,8 @@ class Camera extends performance.Evented {
         const p1world = tr.project(performance.LngLat.convert(p1));
         const p0rotated = p0world.rotate(-bearing * Math.PI / 180);
         const p1rotated = p1world.rotate(-bearing * Math.PI / 180);
-        const upperRight = new performance.pointGeometry(Math.max(p0rotated.x, p1rotated.x), Math.max(p0rotated.y, p1rotated.y));
-        const lowerLeft = new performance.pointGeometry(Math.min(p0rotated.x, p1rotated.x), Math.min(p0rotated.y, p1rotated.y));
+        const upperRight = new performance.Point(Math.max(p0rotated.x, p1rotated.x), Math.max(p0rotated.y, p1rotated.y));
+        const lowerLeft = new performance.Point(Math.min(p0rotated.x, p1rotated.x), Math.min(p0rotated.y, p1rotated.y));
         // Calculate zoom: consider the original bbox and padding.
         const size = upperRight.sub(lowerLeft);
         const scaleX = (tr.width - (edgePadding.left + edgePadding.right + options.padding.left + options.padding.right)) / size.x;
@@ -49891,10 +50631,10 @@ class Camera extends performance.Evented {
         }
         const zoom = Math.min(tr.scaleZoom(tr.scale * Math.min(scaleX, scaleY)), options.maxZoom);
         // Calculate center: apply the zoom, the configured offset, as well as offset that exists as a result of padding.
-        const offset = performance.pointGeometry.convert(options.offset);
+        const offset = performance.Point.convert(options.offset);
         const paddingOffsetX = (options.padding.left - options.padding.right) / 2;
         const paddingOffsetY = (options.padding.top - options.padding.bottom) / 2;
-        const paddingOffset = new performance.pointGeometry(paddingOffsetX, paddingOffsetY);
+        const paddingOffset = new performance.Point(paddingOffsetX, paddingOffsetY);
         const rotatedPaddingOffset = paddingOffset.rotate(bearing * Math.PI / 180);
         const offsetAtInitialZoom = offset.add(rotatedPaddingOffset);
         const offsetAtFinalZoom = offsetAtInitialZoom.mult(tr.scale / tr.zoomScale(zoom));
@@ -49909,27 +50649,21 @@ class Camera extends performance.Evented {
      * Pans and zooms the map to contain its visible area within the specified geographical bounds.
      * This function will also reset the map's bearing to 0 if bearing is nonzero.
      *
-     * @memberof Map#
-     * @param bounds Center these bounds in the viewport and use the highest
-     *      zoom level up to and including `Map#getMaxZoom()` that fits them in the viewport.
-     * @param {FitBoundsOptions} [options] Options supports all properties from {@link AnimationOptions} and {@link CameraOptions} in addition to the fields below.
-     * @param {number | PaddingOptions} [options.padding] The amount of padding in pixels to add to the given bounds.
-     * @param {boolean} [options.linear=false] If `true`, the map transitions using
-     *     {@link Map#easeTo}. If `false`, the map transitions using {@link Map#flyTo}. See
-     *     those functions and {@link AnimationOptions} for information about options available.
-     * @param {Function} [options.easing] An easing function for the animated transition. See {@link AnimationOptions}.
-     * @param {PointLike} [options.offset=[0, 0]] The center of the given bounds relative to the map's center, measured in pixels.
-     * @param {number} [options.maxZoom] The maximum zoom level to allow when the map view transitions to the specified bounds.
-     * @param {Object} [eventData] Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart` and `moveend`.
+     *
+     * @param bounds - Center these bounds in the viewport and use the highest
+     * zoom level up to and including `Map#getMaxZoom()` that fits them in the viewport.
+     * @param options- Options supports all properties from {@link AnimationOptions} and {@link CameraOptions} in addition to the fields below.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * var bbox = [[-79, 43], [-73, 45]];
+     * ```ts
+     * let bbox = [[-79, 43], [-73, 45]];
      * map.fitBounds(bbox, {
      *   padding: {top: 10, bottom:25, left: 15, right: 5}
      * });
-     * @see [Fit a map to a bounding box](https://maplibre.org/maplibre-gl-js-docs/example/fitbounds/)
+     * ```
+     * @see [Fit a map to a bounding box](https://maplibre.org/maplibre-gl-js/docs/examples/fitbounds/)
      */
     fitBounds(bounds, options, eventData) {
         return this._fitInternal(this.cameraForBounds(bounds, options), options, eventData);
@@ -49939,39 +50673,33 @@ class Camera extends performance.Evented {
      * once the map is rotated to the specified bearing. To zoom without rotating,
      * pass in the current map bearing.
      *
-     * @memberof Map#
-     * @param p0 First point on screen, in pixel coordinates
-     * @param p1 Second point on screen, in pixel coordinates
-     * @param bearing Desired map bearing at end of animation, in degrees
-     * @param options Options object
-     * @param {number | PaddingOptions} [options.padding] The amount of padding in pixels to add to the given bounds.
-     * @param {boolean} [options.linear=false] If `true`, the map transitions using
-     *     {@link Map#easeTo}. If `false`, the map transitions using {@link Map#flyTo}. See
-     *     those functions and {@link AnimationOptions} for information about options available.
-     * @param {Function} [options.easing] An easing function for the animated transition. See {@link AnimationOptions}.
-     * @param {PointLike} [options.offset=[0, 0]] The center of the given bounds relative to the map's center, measured in pixels.
-     * @param {number} [options.maxZoom] The maximum zoom level to allow when the map view transitions to the specified bounds.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires moveend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, `zoomend` and `rotate`.
+     *
+     * @param p0 - First point on screen, in pixel coordinates
+     * @param p1 - Second point on screen, in pixel coordinates
+     * @param bearing - Desired map bearing at end of animation, in degrees
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
-     * var p0 = [220, 400];
-     * var p1 = [500, 900];
+     * ```ts
+     * let p0 = [220, 400];
+     * let p1 = [500, 900];
      * map.fitScreenCoordinates(p0, p1, map.getBearing(), {
      *   padding: {top: 10, bottom:25, left: 15, right: 5}
      * });
+     * ```
      * @see Used by {@link BoxZoomHandler}
      */
     fitScreenCoordinates(p0, p1, bearing, options, eventData) {
-        return this._fitInternal(this._cameraForBoxAndBearing(this.transform.pointLocation(performance.pointGeometry.convert(p0)), this.transform.pointLocation(performance.pointGeometry.convert(p1)), bearing, options), options, eventData);
+        return this._fitInternal(this._cameraForBoxAndBearing(this.transform.pointLocation(performance.Point.convert(p0)), this.transform.pointLocation(performance.Point.convert(p1)), bearing, options), options, eventData);
     }
     _fitInternal(calculatedOptions, options, eventData) {
         // cameraForBounds warns + returns undefined if unable to fit:
         if (!calculatedOptions)
             return this;
         options = performance.extend(calculatedOptions, options);
-        // Explictly remove the padding field because, calculatedOptions already accounts for padding by setting zoom and center accordingly.
+        // Explicitly remove the padding field because, calculatedOptions already accounts for padding by setting zoom and center accordingly.
         delete options.padding;
         return options.linear ?
             this.easeTo(options, eventData) :
@@ -49982,21 +50710,14 @@ class Camera extends performance.Evented {
      * an animated transition. The map will retain its current values for any
      * details not specified in `options`.
      *
-     * @memberof Map#
-     * @param options Options object
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires pitchstart
-     * @fires rotate
-     * @fires move
-     * @fires zoom
-     * @fires pitch
-     * @fires moveend
-     * @fires zoomend
-     * @fires pitchend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, `zoomend`, `pitchstart`,
+     * `pitch`, `pitchend`, and `rotate`.
+     *
+     * @param options - Options object
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
+     * ```ts
      * // jump to coordinates at current zoom
      * map.jumpTo({center: [0, 0]});
      * // jump with zoom, pitch, and bearing options
@@ -50006,12 +50727,13 @@ class Camera extends performance.Evented {
      *   pitch: 45,
      *   bearing: 90
      * });
-     * @see [Jump to a series of locations](https://maplibre.org/maplibre-gl-js-docs/example/jump-to/)
-     * @see [Update a feature in realtime](https://maplibre.org/maplibre-gl-js-docs/example/live-update-feature/)
+     * ```
+     * @see [Jump to a series of locations](https://maplibre.org/maplibre-gl-js/docs/examples/jump-to/)
+     * @see [Update a feature in realtime](https://maplibre.org/maplibre-gl-js/docs/examples/live-update-feature/)
      */
     jumpTo(options, eventData) {
         this.stop();
-        const tr = this.transform;
+        const tr = this._getTransformForUpdate();
         let zoomChanged = false, bearingChanged = false, pitchChanged = false;
         if ('zoom' in options && tr.zoom !== +options.zoom) {
             zoomChanged = true;
@@ -50031,6 +50753,7 @@ class Camera extends performance.Evented {
         if (options.padding != null && !tr.isPaddingEqual(options.padding)) {
             tr.padding = options.padding;
         }
+        this._applyUpdatedTransform(tr);
         this.fire(new performance.Event('movestart', eventData))
             .fire(new performance.Event('move', eventData));
         if (zoomChanged) {
@@ -50051,14 +50774,13 @@ class Camera extends performance.Evented {
         return this.fire(new performance.Event('moveend', eventData));
     }
     /**
-     * Calculates pitch, zoom and bearing for looking at @param newCenter with the camera position being @param newCenter
-     * and returns them as Cameraoptions.
-     * @memberof Map#
-     * @param from The camera to look from
-     * @param altitudeFrom The altitude of the camera to look from
-     * @param to The center to look at
-     * @param altitudeTo Optional altitude of the center to look at. If none given the ground height will be used.
-     * @returns {CameraOptions} the calculated camera options
+     * Calculates pitch, zoom and bearing for looking at `newCenter` with the camera position being `newCenter`
+     * and returns them as {@link CameraOptions}.
+     * @param from - The camera to look from
+     * @param altitudeFrom - The altitude of the camera to look from
+     * @param to - The center to look at
+     * @param altitudeTo - Optional altitude of the center to look at. If none given the ground height will be used.
+     * @returns the calculated camera options
      */
     calculateCameraOptionsFromTo(from, altitudeFrom, to, altitudeTo = 0) {
         const fromMerc = performance.MercatorCoordinate.fromLngLat(from, altitudeFrom);
@@ -50087,37 +50809,29 @@ class Camera extends performance.Evented {
      * details not specified in `options`.
      *
      * Note: The transition will happen instantly if the user has enabled
-     * the `reduced motion` accesibility feature enabled in their operating system,
+     * the `reduced motion` accessibility feature enabled in their operating system,
      * unless `options` includes `essential: true`.
      *
-     * @memberof Map#
-     * @param options Options describing the destination and animation of the transition.
-     *            Accepts {@link CameraOptions} and {@link AnimationOptions}.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires pitchstart
-     * @fires rotate
-     * @fires move
-     * @fires zoom
-     * @fires pitch
-     * @fires moveend
-     * @fires zoomend
-     * @fires pitchend
-     * @returns {Map} `this`
-     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js-docs/example/game-controls/)
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, `zoomend`, `pitchstart`,
+     * `pitch`, `pitchend`, and `rotate`.
+     *
+     * @param options - Options describing the destination and animation of the transition.
+     * Accepts {@link CameraOptions} and {@link AnimationOptions}.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
+     * @see [Navigate the map with game-like controls](https://maplibre.org/maplibre-gl-js/docs/examples/game-controls/)
      */
     easeTo(options, eventData) {
         this._stop(false, options.easeId);
         options = performance.extend({
             offset: [0, 0],
             duration: 500,
-            easing: performance.ease
+            easing: performance.defaultEasing
         }, options);
-        if (options.animate === false || (!options.essential && performance.exported.prefersReducedMotion))
+        if (options.animate === false || (!options.essential && performance.browser.prefersReducedMotion))
             options.duration = 0;
-        const tr = this.transform, startZoom = this.getZoom(), startBearing = this.getBearing(), startPitch = this.getPitch(), startPadding = this.getPadding(), zoom = 'zoom' in options ? +options.zoom : startZoom, bearing = 'bearing' in options ? this._normalizeBearing(options.bearing, startBearing) : startBearing, pitch = 'pitch' in options ? +options.pitch : startPitch, padding = 'padding' in options ? options.padding : tr.padding;
-        const offsetAsPoint = performance.pointGeometry.convert(options.offset);
+        const tr = this._getTransformForUpdate(), startZoom = this.getZoom(), startBearing = this.getBearing(), startPitch = this.getPitch(), startPadding = this.getPadding(), zoom = 'zoom' in options ? +options.zoom : startZoom, bearing = 'bearing' in options ? this._normalizeBearing(options.bearing, startBearing) : startBearing, pitch = 'pitch' in options ? +options.pitch : startPitch, padding = 'padding' in options ? options.padding : tr.padding;
+        const offsetAsPoint = performance.Point.convert(options.offset);
         let pointAtOffset = tr.centerPoint.add(offsetAsPoint);
         const locationAtOffset = tr.pointLocation(pointAtOffset);
         const center = performance.LngLat.convert(options.center || locationAtOffset);
@@ -50146,17 +50860,17 @@ class Camera extends performance.Evented {
             this._prepareElevation(center);
         this._ease((k) => {
             if (this._zooming) {
-                tr.zoom = performance.interpolates.number(startZoom, zoom, k);
+                tr.zoom = performance.interpolate.number(startZoom, zoom, k);
             }
             if (this._rotating) {
-                tr.bearing = performance.interpolates.number(startBearing, bearing, k);
+                tr.bearing = performance.interpolate.number(startBearing, bearing, k);
             }
             if (this._pitching) {
-                tr.pitch = performance.interpolates.number(startPitch, pitch, k);
+                tr.pitch = performance.interpolate.number(startPitch, pitch, k);
             }
             if (this._padding) {
                 tr.interpolatePadding(startPadding, padding, k);
-                // When padding is being applied, Transform#centerPoint is changing continously,
+                // When padding is being applied, Transform#centerPoint is changing continuously,
                 // thus we need to recalculate offsetPoint every frame
                 pointAtOffset = tr.centerPoint.add(offsetAsPoint);
             }
@@ -50174,6 +50888,7 @@ class Camera extends performance.Evented {
                 const newCenter = tr.unproject(from.add(delta.mult(k * speedup)).mult(scale));
                 tr.setLocationAtPoint(tr.renderWorldCopies ? newCenter.wrap() : newCenter, pointAtOffset);
             }
+            this._applyUpdatedTransform(tr);
             this._fireMoveEvents(eventData);
         }, (interruptingEaseId) => {
             if (this.terrain)
@@ -50200,11 +50915,12 @@ class Camera extends performance.Evented {
     _prepareElevation(center) {
         this._elevationCenter = center;
         this._elevationStart = this.transform.elevation;
-        this._elevationTarget = this.transform.getElevation(center, this.terrain);
-        this.transform.freezeElevation = true;
+        this._elevationTarget = this.terrain.getElevationForLngLatZoom(center, this.transform.tileZoom);
+        this._elevationFreeze = true;
     }
     _updateElevation(k) {
-        const elevation = this.transform.getElevation(this._elevationCenter, this.terrain);
+        this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this._elevationCenter, this.transform.tileZoom);
+        const elevation = this.terrain.getElevationForLngLatZoom(this._elevationCenter, this.transform.tileZoom);
         // target terrain updated during flight, slowly move camera to new height
         if (k < 1 && elevation !== this._elevationTarget) {
             const pitch1 = this._elevationTarget - this._elevationStart;
@@ -50212,11 +50928,50 @@ class Camera extends performance.Evented {
             this._elevationStart += k * (pitch1 - pitch2);
             this._elevationTarget = elevation;
         }
-        this.transform.elevation = performance.interpolates.number(this._elevationStart, this._elevationTarget, k);
+        this.transform.elevation = performance.interpolate.number(this._elevationStart, this._elevationTarget, k);
     }
     _finalizeElevation() {
-        this.transform.freezeElevation = false;
+        this._elevationFreeze = false;
         this.transform.recalculateZoom(this.terrain);
+    }
+    /**
+     * @internal
+     * Called when the camera is about to be manipulated.
+     * If `transformCameraUpdate` is specified, a copy of the current transform is created to track the accumulated changes.
+     * This underlying transform represents the "desired state" proposed by input handlers / animations / UI controls.
+     * It may differ from the state used for rendering (`this.transform`).
+     * @returns Transform to apply changes to
+     */
+    _getTransformForUpdate() {
+        if (!this.transformCameraUpdate)
+            return this.transform;
+        if (!this._requestedCameraState) {
+            this._requestedCameraState = this.transform.clone();
+        }
+        return this._requestedCameraState;
+    }
+    /**
+     * @internal
+     * Called after the camera is done being manipulated.
+     * @param tr - the requested camera end state
+     * Call `transformCameraUpdate` if present, and then apply the "approved" changes.
+     */
+    _applyUpdatedTransform(tr) {
+        if (!this.transformCameraUpdate)
+            return;
+        const nextTransform = tr.clone();
+        const { center, zoom, pitch, bearing, elevation } = this.transformCameraUpdate(nextTransform);
+        if (center)
+            nextTransform.center = center;
+        if (zoom !== undefined)
+            nextTransform.zoom = zoom;
+        if (pitch !== undefined)
+            nextTransform.pitch = pitch;
+        if (bearing !== undefined)
+            nextTransform.bearing = bearing;
+        if (elevation !== undefined)
+            nextTransform.elevation = elevation;
+        this.transform.apply(nextTransform);
     }
     _fireMoveEvents(eventData) {
         this.fire(new performance.Event('move', eventData));
@@ -50262,43 +51017,19 @@ class Camera extends performance.Evented {
      * the user maintain her bearings even after traversing a great distance.
      *
      * Note: The animation will be skipped, and this will behave equivalently to `jumpTo`
-     * if the user has the `reduced motion` accesibility feature enabled in their operating system,
+     * if the user has the `reduced motion` accessibility feature enabled in their operating system,
      * unless 'options' includes `essential: true`.
      *
-     * @memberof Map#
-     * @param {FlyToOptions} options Options describing the destination and animation of the transition.
-     *     Accepts {@link CameraOptions}, {@link AnimationOptions},
-     *     and the following additional options.
-     * @param {number} [options.curve=1.42] The zooming "curve" that will occur along the
-     *     flight path. A high value maximizes zooming for an exaggerated animation, while a low
-     *     value minimizes zooming for an effect closer to {@link Map#easeTo}. 1.42 is the average
-     *     value selected by participants in the user study discussed in
-     *     [van Wijk (2003)](https://www.win.tue.nl/~vanwijk/zoompan.pdf). A value of
-     *     `Math.pow(6, 0.25)` would be equivalent to the root mean squared average velocity. A
-     *     value of 1 would produce a circular motion.
-     * @param {number} [options.minZoom] The zero-based zoom level at the peak of the flight path. If
-     *     `options.curve` is specified, this option is ignored.
-     * @param {number} [options.speed=1.2] The average speed of the animation defined in relation to
-     *     `options.curve`. A speed of 1.2 means that the map appears to move along the flight path
-     *     by 1.2 times `options.curve` screenfuls every second. A _screenful_ is the map's visible span.
-     *     It does not correspond to a fixed physical distance, but varies by zoom level.
-     * @param {number} [options.screenSpeed] The average speed of the animation measured in screenfuls
-     *     per second, assuming a linear timing curve. If `options.speed` is specified, this option is ignored.
-     * @param {number} [options.maxDuration] The animation's maximum duration, measured in milliseconds.
-     *     If duration exceeds maximum duration, it resets to 0.
-     * @param eventData Additional properties to be added to event objects of events triggered by this method.
-     * @fires movestart
-     * @fires zoomstart
-     * @fires pitchstart
-     * @fires move
-     * @fires zoom
-     * @fires rotate
-     * @fires pitch
-     * @fires moveend
-     * @fires zoomend
-     * @fires pitchend
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, `zoomstart`, `zoom`, `zoomend`, `pitchstart`,
+     * `pitch`, `pitchend`, and `rotate`.
+     *
+     * @param options - Options describing the destination and animation of the transition.
+     * Accepts {@link CameraOptions}, {@link AnimationOptions},
+     * and the following additional options.
+     * @param eventData - Additional properties to be added to event objects of events triggered by this method.
+     * @returns `this`
      * @example
+     * ```ts
      * // fly with default options to null island
      * map.flyTo({center: [0, 0], zoom: 9});
      * // using flyTo options
@@ -50311,13 +51042,14 @@ class Camera extends performance.Evented {
      *     return t;
      *   }
      * });
-     * @see [Fly to a location](https://maplibre.org/maplibre-gl-js-docs/example/flyto/)
-     * @see [Slowly fly to a location](https://maplibre.org/maplibre-gl-js-docs/example/flyto-options/)
-     * @see [Fly to a location based on scroll position](https://maplibre.org/maplibre-gl-js-docs/example/scroll-fly-to/)
+     * ```
+     * @see [Fly to a location](https://maplibre.org/maplibre-gl-js/docs/examples/flyto/)
+     * @see [Slowly fly to a location](https://maplibre.org/maplibre-gl-js/docs/examples/flyto-options/)
+     * @see [Fly to a location based on scroll position](https://maplibre.org/maplibre-gl-js/docs/examples/scroll-fly-to/)
      */
     flyTo(options, eventData) {
         // Fall through to jumpTo if user has set prefers-reduced-motion
-        if (!options.essential && performance.exported.prefersReducedMotion) {
+        if (!options.essential && performance.browser.prefersReducedMotion) {
             const coercedOptions = performance.pick(options, ['center', 'zoom', 'bearing', 'pitch', 'around']);
             return this.jumpTo(coercedOptions, eventData);
         }
@@ -50333,15 +51065,15 @@ class Camera extends performance.Evented {
             offset: [0, 0],
             speed: 1.2,
             curve: 1.42,
-            easing: performance.ease
+            easing: performance.defaultEasing
         }, options);
-        const tr = this.transform, startZoom = this.getZoom(), startBearing = this.getBearing(), startPitch = this.getPitch(), startPadding = this.getPadding();
+        const tr = this._getTransformForUpdate(), startZoom = this.getZoom(), startBearing = this.getBearing(), startPitch = this.getPitch(), startPadding = this.getPadding();
         const zoom = 'zoom' in options ? performance.clamp(+options.zoom, tr.minZoom, tr.maxZoom) : startZoom;
         const bearing = 'bearing' in options ? this._normalizeBearing(options.bearing, startBearing) : startBearing;
         const pitch = 'pitch' in options ? +options.pitch : startPitch;
         const padding = 'padding' in options ? options.padding : tr.padding;
         const scale = tr.zoomScale(zoom - startZoom);
-        const offsetAsPoint = performance.pointGeometry.convert(options.offset);
+        const offsetAsPoint = performance.Point.convert(options.offset);
         let pointAtOffset = tr.centerPoint.add(offsetAsPoint);
         const locationAtOffset = tr.pointLocation(pointAtOffset);
         const center = performance.LngLat.convert(options.center || locationAtOffset);
@@ -50368,18 +51100,17 @@ class Camera extends performance.Evented {
         /**
          * rᵢ: Returns the zoom-out factor at one end of the animation.
          *
-         * @param i 0 for the ascent or 1 for the descent.
-         * @private
+         * @param descent - `true` for the descent, `false` for the ascent
          */
-        function r(i) {
-            const b = (w1 * w1 - w0 * w0 + (i ? -1 : 1) * rho2 * rho2 * u1 * u1) / (2 * (i ? w1 : w0) * rho2 * u1);
+        function zoomOutFactor(descent) {
+            const b = (w1 * w1 - w0 * w0 + (descent ? -1 : 1) * rho2 * rho2 * u1 * u1) / (2 * (descent ? w1 : w0) * rho2 * u1);
             return Math.log(Math.sqrt(b * b + 1) - b);
         }
         function sinh(n) { return (Math.exp(n) - Math.exp(-n)) / 2; }
         function cosh(n) { return (Math.exp(n) + Math.exp(-n)) / 2; }
         function tanh(n) { return sinh(n) / cosh(n); }
         // r₀: Zoom-out factor during ascent.
-        const r0 = r(0);
+        const r0 = zoomOutFactor(false);
         // w(s): Returns the visible span on the ground, measured in pixels with respect to the
         // initial scale. Assumes an angular field of view of 2 arctan ½ ≈ 53°.
         let w = function (s) {
@@ -50391,7 +51122,7 @@ class Camera extends performance.Evented {
             return w0 * ((cosh(r0) * tanh(r0 + rho * s) - sinh(r0)) / rho2) / u1;
         };
         // S: Total length of the flight path, measured in ρ-screenfuls.
-        let S = (r(1) - r0) / rho;
+        let S = (zoomOutFactor(true) - r0) / rho;
         // When u₀ = u₁, the optimal path doesn’t require both ascent and descent.
         if (Math.abs(u1) < 0.000001 || !isFinite(S)) {
             // Perform a more or less instantaneous transition if the path is too short.
@@ -50425,14 +51156,14 @@ class Camera extends performance.Evented {
             const scale = 1 / w(s);
             tr.zoom = k === 1 ? zoom : startZoom + tr.scaleZoom(scale);
             if (this._rotating) {
-                tr.bearing = performance.interpolates.number(startBearing, bearing, k);
+                tr.bearing = performance.interpolate.number(startBearing, bearing, k);
             }
             if (this._pitching) {
-                tr.pitch = performance.interpolates.number(startPitch, pitch, k);
+                tr.pitch = performance.interpolate.number(startPitch, pitch, k);
             }
             if (this._padding) {
                 tr.interpolatePadding(startPadding, padding, k);
-                // When padding is being applied, Transform#centerPoint is changing continously,
+                // When padding is being applied, Transform#centerPoint is changing continuously,
                 // thus we need to recalculate offsetPoint every frame
                 pointAtOffset = tr.centerPoint.add(offsetAsPoint);
             }
@@ -50440,6 +51171,7 @@ class Camera extends performance.Evented {
                 this._updateElevation(k);
             const newCenter = k === 1 ? center : tr.unproject(from.add(delta.mult(u(s))).mult(scale));
             tr.setLocationAtPoint(tr.renderWorldCopies ? newCenter.wrap() : newCenter, pointAtOffset);
+            this._applyUpdatedTransform(tr);
             this._fireMoveEvents(eventData);
         }, () => {
             if (this.terrain)
@@ -50454,8 +51186,7 @@ class Camera extends performance.Evented {
     /**
      * Stops any animated transition underway.
      *
-     * @memberof Map#
-     * @returns {Map} `this`
+     * @returns `this`
      */
     stop() {
         return this._stop();
@@ -50487,22 +51218,11 @@ class Camera extends performance.Evented {
             finish();
         }
         else {
-            this._easeStart = performance.exported.now();
+            this._easeStart = performance.browser.now();
             this._easeOptions = options;
             this._onEaseFrame = frame;
             this._onEaseEnd = finish;
             this._easeFrameId = this._requestRenderFrame(this._renderFrameCallback);
-        }
-    }
-    // Callback for map._requestRenderFrame
-    _renderFrameCallback() {
-        const t = Math.min((performance.exported.now() - this._easeStart) / this._easeOptions.duration, 1);
-        this._onEaseFrame(this._easeOptions.easing(t));
-        if (t < 1) {
-            this._easeFrameId = this._requestRenderFrame(this._renderFrameCallback);
-        }
-        else {
-            this.stop();
         }
     }
     // convert bearing so that it's numerically close to the current one so that it interpolates properly
@@ -50528,17 +51248,16 @@ class Camera extends performance.Evented {
     }
     /**
      * Query the current elevation of location. It return null if terrain is not enabled. the elevation is in meters relative to mean sea-level
-     * @memberof Map#
-     * @param lngLatLike [x,y] or LngLat coordinates of the location
-     * @returns {number} elevation in meters
+     * @param lngLatLike - [x,y] or LngLat coordinates of the location
+     * @returns elevation in meters
      */
     queryTerrainElevation(lngLatLike) {
         if (!this.terrain) {
             return null;
         }
-        const elevation = this.transform.getElevation(performance.LngLat.convert(lngLatLike), this.terrain);
+        const elevation = this.terrain.getElevationForLngLatZoom(performance.LngLat.convert(lngLatLike), this.transform.tileZoom);
         /**
-         * Different zoomlevels with different terrain-tiles the elvation-values are not the same.
+         * Different zoomlevels with different terrain-tiles the elevation-values are not the same.
          * map.transform.elevation variable with the center-altitude.
          * In maplibre the proj-matrix is translated by this value in negative z-direction.
          * So we need to add this value to the elevation to get the correct value.
@@ -50546,53 +51265,70 @@ class Camera extends performance.Evented {
         return elevation - this.transform.elevation;
     }
 }
-// In debug builds, check that camera change events are fired in the correct order.
-// - ___start events needs to be fired before ___ and ___end events
-// - another ___start event can't be fired before a ___end event has been fired for the previous one
-function addAssertions(camera) {
-    Debug.run(() => {
-        const inProgress = {};
-        ['drag', 'zoom', 'rotate', 'pitch', 'move'].forEach(name => {
-            inProgress[name] = false;
-            camera.on(`${name}start`, () => {
-                inProgress[name] = true;
-            });
-            camera.on(`${name}end`, () => {
-                inProgress[name] = false;
-            });
-        });
-        // Canary used to test whether this function is stripped in prod build
-        canary = 'canary debug run';
-    });
-}
-let canary; // eslint-disable-line
 
 /**
  * An `AttributionControl` control presents the map's attribution information. By default, the attribution control is expanded (regardless of map width).
- *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {boolean} [options.compact] If `true`, the attribution control will always collapse when moving the map. If `false`, force the expanded attribution control. The default is a responsive attribution that collapses when the user moves the map on maps less than 640 pixels wide.  **Attribution should not be collapsed if it can comfortably fit on the map. `compact` should only be used to modify default attribution when map size makes it impossible to fit default attribution and when the automatic compact resizing for default settings are not sufficient.**
- * @param {string | Array<string>} [options.customAttribution] String or strings to show in addition to any other attributions.
+ * @group Markers and Controls
  * @example
- * var map = new maplibregl.Map({attributionControl: false})
+ * ```ts
+ * let map = new maplibregl.Map({attributionControl: false})
  *     .addControl(new maplibregl.AttributionControl({
  *         compact: true
  *     }));
+ * ```
  */
 class AttributionControl {
+    /**
+     * @param options - the attribution options
+     */
     constructor(options = {}) {
+        this._toggleAttribution = () => {
+            if (this._container.classList.contains('maplibregl-compact')) {
+                if (this._container.classList.contains('maplibregl-compact-show')) {
+                    this._container.setAttribute('open', '');
+                    this._container.classList.remove('maplibregl-compact-show');
+                }
+                else {
+                    this._container.classList.add('maplibregl-compact-show');
+                    this._container.removeAttribute('open');
+                }
+            }
+        };
+        this._updateData = (e) => {
+            if (e && (e.sourceDataType === 'metadata' || e.sourceDataType === 'visibility' || e.dataType === 'style' || e.type === 'terrain')) {
+                this._updateAttributions();
+            }
+        };
+        this._updateCompact = () => {
+            if (this._map.getCanvasContainer().offsetWidth <= 640 || this._compact) {
+                if (this._compact === false) {
+                    this._container.setAttribute('open', '');
+                }
+                else if (!this._container.classList.contains('maplibregl-compact') && !this._container.classList.contains('maplibregl-attrib-empty')) {
+                    this._container.setAttribute('open', '');
+                    this._container.classList.add('maplibregl-compact', 'maplibregl-compact-show');
+                }
+            }
+            else {
+                this._container.setAttribute('open', '');
+                if (this._container.classList.contains('maplibregl-compact')) {
+                    this._container.classList.remove('maplibregl-compact', 'maplibregl-compact-show');
+                }
+            }
+        };
+        this._updateCompactMinimize = () => {
+            if (this._container.classList.contains('maplibregl-compact')) {
+                if (this._container.classList.contains('maplibregl-compact-show')) {
+                    this._container.classList.remove('maplibregl-compact-show');
+                }
+            }
+        };
         this.options = options;
-        performance.bindAll([
-            '_toggleAttribution',
-            '_updateData',
-            '_updateCompact',
-            '_updateCompactMinimize'
-        ], this);
     }
     getDefaultPosition() {
         return 'bottom-right';
     }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         this._compact = this.options && this.options.compact;
@@ -50610,6 +51346,7 @@ class AttributionControl {
         this._map.on('drag', this._updateCompactMinimize);
         return this._container;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         DOM.remove(this._container);
         this._map.off('styledata', this._updateData);
@@ -50625,23 +51362,6 @@ class AttributionControl {
         const str = this._map._getUIString(`AttributionControl.${title}`);
         element.title = str;
         element.setAttribute('aria-label', str);
-    }
-    _toggleAttribution() {
-        if (this._container.classList.contains('maplibregl-compact')) {
-            if (this._container.classList.contains('maplibregl-compact-show')) {
-                this._container.setAttribute('open', '');
-                this._container.classList.remove('maplibregl-compact-show');
-            }
-            else {
-                this._container.classList.add('maplibregl-compact-show');
-                this._container.removeAttribute('open');
-            }
-        }
-    }
-    _updateData(e) {
-        if (e && (e.sourceDataType === 'metadata' || e.sourceDataType === 'visibility' || e.dataType === 'style' || e.type === 'terrain')) {
-            this._updateAttributions();
-        }
     }
     _updateAttributions() {
         if (!this._map.style)
@@ -50703,49 +51423,40 @@ class AttributionControl {
         // remove old DOM node from _editLink
         this._editLink = null;
     }
-    _updateCompact() {
-        if (this._map.getCanvasContainer().offsetWidth <= 640 || this._compact) {
-            if (this._compact === false) {
-                this._container.setAttribute('open', '');
-            }
-            else if (!this._container.classList.contains('maplibregl-compact') && !this._container.classList.contains('maplibregl-attrib-empty')) {
-                this._container.setAttribute('open', '');
-                this._container.classList.add('maplibregl-compact', 'maplibregl-compact-show');
-            }
-        }
-        else {
-            this._container.setAttribute('open', '');
-            if (this._container.classList.contains('maplibregl-compact')) {
-                this._container.classList.remove('maplibregl-compact', 'maplibregl-compact-show');
-            }
-        }
-    }
-    _updateCompactMinimize() {
-        if (this._container.classList.contains('maplibregl-compact')) {
-            if (this._container.classList.contains('maplibregl-compact-show')) {
-                this._container.classList.remove('maplibregl-compact-show');
-            }
-        }
-    }
 }
 
 /**
  * A `LogoControl` is a control that adds the watermark.
  *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {boolean} [options.compact] If `true`, force a compact logo. If `false`, force the full logo. The default is a responsive logo that collapses when the map is less than 640 pixels wide.
+ * @group Markers and Controls
+ *
+ * @example
+ * ```ts
+ * map.addControl(new maplibregl.LogoControl({compact: false}));
+ * ```
  **/
 class LogoControl {
     constructor(options = {}) {
+        this._updateCompact = () => {
+            const containerChildren = this._container.children;
+            if (containerChildren.length) {
+                const anchor = containerChildren[0];
+                if (this._map.getCanvasContainer().offsetWidth <= 640 || this._compact) {
+                    if (this._compact !== false) {
+                        anchor.classList.add('maplibregl-compact');
+                    }
+                }
+                else {
+                    anchor.classList.remove('maplibregl-compact');
+                }
+            }
+        };
         this.options = options;
-        performance.bindAll([
-            '_updateCompact'
-        ], this);
     }
     getDefaultPosition() {
         return 'bottom-left';
     }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         this._compact = this.options && this.options.compact;
@@ -50762,25 +51473,12 @@ class LogoControl {
         this._updateCompact();
         return this._container;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         DOM.remove(this._container);
         this._map.off('resize', this._updateCompact);
         this._map = undefined;
         this._compact = undefined;
-    }
-    _updateCompact() {
-        const containerChildren = this._container.children;
-        if (containerChildren.length) {
-            const anchor = containerChildren[0];
-            if (this._map.getCanvasContainer().offsetWidth <= 640 || this._compact) {
-                if (this._compact !== false) {
-                    anchor.classList.add('maplibregl-compact');
-                }
-            }
-            else {
-                anchor.classList.remove('maplibregl-compact');
-            }
-        }
     }
 }
 
@@ -50857,6 +51555,7 @@ var pos3dAttributes = performance.createLayout([
 ]);
 
 /**
+ * @internal
  * This class is a helper for the Terrain-class, it:
  *   - loads raster-dem tiles
  *   - manages all renderToTexture tiles.
@@ -50884,8 +51583,8 @@ class TerrainSourceCache extends performance.Evented {
     }
     /**
      * Load Terrain Tiles, create internal render-to-texture tiles, free GPU memory.
-     * @param {Transform} transform - the operation to do
-     * @param {Terrain} terrain - the terrain
+     * @param transform - the operation to do
+     * @param terrain - the terrain
      */
     update(transform, terrain) {
         // load raster-dem tiles for the current scene.
@@ -50916,7 +51615,7 @@ class TerrainSourceCache extends performance.Evented {
     }
     /**
      * Free render to texture cache
-     * @param {TileID} tileID optional, free only corresponding to tileID.
+     * @param tileID - optional, free only corresponding to tileID.
      */
     freeRtt(tileID) {
         for (const key in this._tiles) {
@@ -50927,7 +51626,7 @@ class TerrainSourceCache extends performance.Evented {
     }
     /**
      * get a list of tiles, which are loaded and should be rendered in the current scene
-     * @returns {Array<Tile>} the renderable tiles
+     * @returns the renderable tiles
      */
     getRenderableTiles() {
         return this._renderableTilesKeys.map(key => this.getTileByID(key));
@@ -50935,15 +51634,15 @@ class TerrainSourceCache extends performance.Evented {
     /**
      * get terrain tile by the TileID key
      * @param id - the tile id
-     * @returns {Tile} - the tile
+     * @returns the tile
      */
     getTileByID(id) {
         return this._tiles[id];
     }
     /**
      * Searches for the corresponding current renderable terrain-tiles
-     * @param {OverscaledTileID} tileID - the tile to look for
-     * @returns {Record<string, OverscaledTileID>} - the tiles that were found
+     * @param tileID - the tile to look for
+     * @returns the tiles that were found
      */
     getTerrainCoords(tileID) {
         const coords = {};
@@ -50983,9 +51682,9 @@ class TerrainSourceCache extends performance.Evented {
     }
     /**
      * find the covering raster-dem tile
-     * @param {OverscaledTileID} tileID - the tile to look for
-     * @param {boolean} searchForDEM Optinal parameter to search for (parent) souretiles with loaded dem.
-     * @returns {Tile} - the tile
+     * @param tileID - the tile to look for
+     * @param searchForDEM - Optinal parameter to search for (parent) souretiles with loaded dem.
+     * @returns the tile
      */
     getSourceTile(tileID, searchForDEM) {
         const source = this.sourceCache._source;
@@ -51006,8 +51705,8 @@ class TerrainSourceCache extends performance.Evented {
     }
     /**
      * get a list of tiles, loaded after a spezific time. This is used to update depth & coords framebuffers.
-     * @param {Date} time - the time
-     * @returns {Array<Tile>} - the relevant tiles
+     * @param time - the time
+     * @returns the relevant tiles
      */
     tilesAfterTime(time = Date.now()) {
         return Object.values(this._tiles).filter(t => t.timeAdded >= time);
@@ -51015,12 +51714,13 @@ class TerrainSourceCache extends performance.Evented {
 }
 
 /**
- * This is the main class which handles most of the 3D Terrain logic. It has the follwing topics:
+ * @internal
+ * This is the main class which handles most of the 3D Terrain logic. It has the following topics:
  *    1) loads raster-dem tiles via the internal sourceCache this.sourceCache
  *    2) creates a depth-framebuffer, which is used to calculate the visibility of coordinates
  *    3) creates a coords-framebuffer, which is used the get to tile-coordinate for a screen-pixel
  *    4) stores all render-to-texture tiles in the this.sourceCache._tiles
- *    5) calculates the elevation for a spezific tile-coordinate
+ *    5) calculates the elevation for a specific tile-coordinate
  *    6) creates a terrain-mesh
  *
  *    A note about the GPU resource-usage:
@@ -51055,48 +51755,58 @@ class Terrain {
     }
     /**
      * get the elevation-value from original dem-data for a given tile-coordinate
-     * @param {OverscaledTileID} tileID - the tile to get elevation for
-     * @param {number} x between 0 .. EXTENT
-     * @param {number} y between 0 .. EXTENT
-     * @param {number} extent optional, default 8192
-     * @returns {number} - the elevation
+     * @param tileID - the tile to get elevation for
+     * @param x - between 0 .. EXTENT
+     * @param y - between 0 .. EXTENT
+     * @param extent - optional, default 8192
+     * @returns the elevation
      */
     getDEMElevation(tileID, x, y, extent = performance.EXTENT) {
+        var _a;
         if (!(x >= 0 && x < extent && y >= 0 && y < extent))
             return 0;
-        let elevation = 0;
         const terrain = this.getTerrainData(tileID);
-        if (terrain.tile && terrain.tile.dem) {
-            const pos = performance.transformMat4$1([], [x / extent * performance.EXTENT, y / extent * performance.EXTENT], terrain.u_terrain_matrix);
-            const coord = [pos[0] * terrain.tile.dem.dim, pos[1] * terrain.tile.dem.dim];
-            const c = [Math.floor(coord[0]), Math.floor(coord[1])];
-            const tl = terrain.tile.dem.get(c[0], c[1]);
-            const tr = terrain.tile.dem.get(c[0], c[1] + 1);
-            const bl = terrain.tile.dem.get(c[0] + 1, c[1]);
-            const br = terrain.tile.dem.get(c[0] + 1, c[1] + 1);
-            elevation = performance.interpolates.number(performance.interpolates.number(tl, tr, coord[0] - c[0]), performance.interpolates.number(bl, br, coord[0] - c[0]), coord[1] - c[1]);
-        }
-        return elevation;
+        const dem = (_a = terrain.tile) === null || _a === void 0 ? void 0 : _a.dem;
+        if (!dem)
+            return 0;
+        const pos = performance.transformMat4$1([], [x / extent * performance.EXTENT, y / extent * performance.EXTENT], terrain.u_terrain_matrix);
+        const coord = [pos[0] * dem.dim, pos[1] * dem.dim];
+        // bilinear interpolation
+        const cx = Math.floor(coord[0]), cy = Math.floor(coord[1]), tx = coord[0] - cx, ty = coord[1] - cy;
+        return (dem.get(cx, cy) * (1 - tx) * (1 - ty) +
+            dem.get(cx + 1, cy) * (tx) * (1 - ty) +
+            dem.get(cx, cy + 1) * (1 - tx) * (ty) +
+            dem.get(cx + 1, cy + 1) * (tx) * (ty));
     }
     /**
-     * get the Elevation for given coordinate in respect of exaggeration.
-     * @param {OverscaledTileID} tileID - the tile id
-     * @param {number} x between 0 .. EXTENT
-     * @param {number} y between 0 .. EXTENT
-     * @param {number} extent optional, default 8192
-     * @returns {number} - the elevation
+     * Get the elevation for given {@link LngLat} in respect of exaggeration.
+     * @param lnglat - the location
+     * @param zoom - the zoom
+     * @returns the elevation
+     */
+    getElevationForLngLatZoom(lnglat, zoom) {
+        const { tileID, mercatorX, mercatorY } = this._getOverscaledTileIDFromLngLatZoom(lnglat, zoom);
+        return this.getElevation(tileID, mercatorX % performance.EXTENT, mercatorY % performance.EXTENT, performance.EXTENT);
+    }
+    /**
+     * Get the elevation for given coordinate in respect of exaggeration.
+     * @param tileID - the tile id
+     * @param x - between 0 .. EXTENT
+     * @param y - between 0 .. EXTENT
+     * @param extent - optional, default 8192
+     * @returns the elevation
      */
     getElevation(tileID, x, y, extent = performance.EXTENT) {
         return this.getDEMElevation(tileID, x, y, extent) * this.exaggeration;
     }
     /**
      * returns a Terrain Object for a tile. Unless the tile corresponds to data (e.g. tile is loading), return a flat dem object
-     * @param {OverscaledTileID} tileID - the tile to get the terrain for
-     * @returns {TerrainData} the terrain data to use in the program
+     * @param tileID - the tile to get the terrain for
+     * @returns the terrain data to use in the program
      */
     getTerrainData(tileID) {
-        // create empty DEM Obejcts, which will used while raster-dem tiles are loading.
-        // creates an empty depth-buffer texture which is needed, during the initialisation process of the 3d mesh..
+        // create empty DEM Objects, which will used while raster-dem tiles are loading.
+        // creates an empty depth-buffer texture which is needed, during the initialization process of the 3d mesh..
         if (!this._emptyDemTexture) {
             const context = this.painter.context;
             const image = new performance.RGBAImage({ width: 1, height: 1 }, new Uint8Array(1 * 4));
@@ -51150,8 +51860,8 @@ class Terrain {
     }
     /**
      * get a framebuffer as big as the map-div, which will be used to render depth & coords into a texture
-     * @param {string} texture - the texture
-     * @returns {Framebuffer} the frame buffer
+     * @param texture - the texture
+     * @returns the frame buffer
      */
     getFramebuffer(texture) {
         const painter = this.painter;
@@ -51174,7 +51884,7 @@ class Terrain {
             this._fboDepthTexture.bind(painter.context.gl.NEAREST, painter.context.gl.CLAMP_TO_EDGE);
         }
         if (!this._fbo) {
-            this._fbo = painter.context.createFramebuffer(width, height, true);
+            this._fbo = painter.context.createFramebuffer(width, height, true, false);
             this._fbo.depthAttachment.set(painter.context.createRenderbuffer(painter.context.gl.DEPTH_COMPONENT16, width, height));
         }
         this._fbo.colorAttachment.set(texture === 'coords' ? this._fboCoordsTexture.texture : this._fboDepthTexture.texture);
@@ -51188,7 +51898,7 @@ class Terrain {
      *   - 4 higher bits for x
      *   - 4 higher bits for y
      *   - 8 bits for coordsIndex (1 .. 255) (= number of terraintile), is later setted in draw_terrain uniform value
-     * @returns {Texture} - the texture
+     * @returns the texture
      */
     getCoordsTexture() {
         const context = this.painter.context;
@@ -51210,8 +51920,8 @@ class Terrain {
     }
     /**
      * Reads a pixel from the coords-framebuffer and translate this to mercator.
-     * @param {Point} p Screen-Coordinate
-     * @returns {MercatorCoordinate} mercator coordinate for a screen pixel
+     * @param p - Screen-Coordinate
+     * @returns mercator coordinate for a screen pixel
      */
     pointCoordinate(p) {
         const rgba = new Uint8Array(4);
@@ -51233,7 +51943,7 @@ class Terrain {
     }
     /**
      * create a regular mesh which will be used by all terrain-tiles
-     * @returns {TerrainMesh} - the created regular mesh
+     * @returns the created regular mesh
      */
     getTerrainMesh() {
         if (this._mesh)
@@ -51286,19 +51996,24 @@ class Terrain {
     /**
      * Calculates a height of the frame around the terrain-mesh to avoid stiching between
      * tile boundaries in different zoomlevels.
-     * @param zoom current zoomlevel
+     * @param zoom - current zoomlevel
      * @returns the elevation delta in meters
      */
     getMeshFrameDelta(zoom) {
         // divide by 5 is evaluated by trial & error to get a frame in the right height
         return 2 * Math.PI * performance.earthRadius / Math.pow(2, zoom) / 5;
     }
+    getMinTileElevationForLngLatZoom(lnglat, zoom) {
+        var _a;
+        const { tileID } = this._getOverscaledTileIDFromLngLatZoom(lnglat, zoom);
+        return (_a = this.getMinMaxElevation(tileID).minElevation) !== null && _a !== void 0 ? _a : 0;
+    }
     /**
      * Get the minimum and maximum elevation contained in a tile. This includes any
      * exaggeration included in the terrain.
      *
-     * @param tileID Id of the tile to be used as a source for the min/max elevation
-     * @returns {Object} Minimum and maximum elevation found in the tile, including the terrain's
+     * @param tileID - ID of the tile to be used as a source for the min/max elevation
+     * @returns the minimum and maximum elevation found in the tile, including the terrain's
      * exaggeration
      */
     getMinMaxElevation(tileID) {
@@ -51310,10 +52025,24 @@ class Terrain {
         }
         return minMax;
     }
+    _getOverscaledTileIDFromLngLatZoom(lnglat, zoom) {
+        const mercatorCoordinate = performance.MercatorCoordinate.fromLngLat(lnglat.wrap());
+        const worldSize = (1 << zoom) * performance.EXTENT;
+        const mercatorX = mercatorCoordinate.x * worldSize;
+        const mercatorY = mercatorCoordinate.y * worldSize;
+        const tileX = Math.floor(mercatorX / performance.EXTENT), tileY = Math.floor(mercatorY / performance.EXTENT);
+        const tileID = new performance.OverscaledTileID(zoom, 0, zoom, tileX, tileY);
+        return {
+            tileID,
+            mercatorX,
+            mercatorY
+        };
+    }
 }
 
 /**
- * RenderPool a resource pool for textures and framebuffers
+ * @internal
+ * `RenderPool` is a resource pool for textures and framebuffers
  */
 class RenderPool {
     constructor(_context, _size, _tileSize) {
@@ -51331,10 +52060,10 @@ class RenderPool {
         }
     }
     _createObject(id) {
-        const fbo = this._context.createFramebuffer(this._tileSize, this._tileSize, true);
+        const fbo = this._context.createFramebuffer(this._tileSize, this._tileSize, true, true);
         const texture = new Texture(this._context, { width: this._tileSize, height: this._tileSize, data: null }, this._context.gl.RGBA);
         texture.bind(this._context.gl.LINEAR, this._context.gl.CLAMP_TO_EDGE);
-        fbo.depthAttachment.set(this._context.createRenderbuffer(this._context.gl.DEPTH_COMPONENT16, this._tileSize, this._tileSize));
+        fbo.depthAttachment.set(this._context.createRenderbuffer(this._context.gl.DEPTH_STENCIL, this._tileSize, this._tileSize));
         fbo.colorAttachment.set(texture.texture);
         return { id, fbo, texture, stamp: -1, inUse: false };
     }
@@ -51377,7 +52106,9 @@ class RenderPool {
     }
 }
 
-// lookup table which layers should rendered to texture
+/**
+ * lookup table which layers should rendered to texture
+ */
 const LAYERS = {
     background: true,
     fill: true,
@@ -51386,7 +52117,8 @@ const LAYERS = {
     hillshade: true
 };
 /**
- * RenderToTexture
+ * @internal
+ * A helper class to help define what should be rendered to texture and how
  */
 class RenderToTexture {
     constructor(painter, terrain) {
@@ -51447,8 +52179,8 @@ class RenderToTexture {
      * Because of the stylesheet possibility to mixing render-to-texture layers
      * and 'live'-layers (f.e. symbols) it is necessary to create more stacks. For example
      * a symbol-layer is in between of fill-layers.
-     * @param {StyleLayer} layer the layer to render
-     * @returns {boolean} if true layer is rendered to texture, otherwise false
+     * @param layer - the layer to render
+     * @returns if true layer is rendered to texture, otherwise false
      */
     renderLayer(layer) {
         if (layer.isHidden(this.painter.transform.zoom))
@@ -51495,7 +52227,8 @@ class RenderToTexture {
                 tile.rtt[stack] = { id: obj.id, stamp: obj.stamp };
                 // prepare PoolObject for rendering
                 painter.context.bindFramebuffer.set(obj.fbo.framebuffer);
-                painter.context.clear({ color: performance.Color.transparent });
+                painter.context.clear({ color: performance.Color.transparent, stencil: 0 });
+                painter.currentStencilSource = undefined;
                 for (let l = 0; l < layers.length; l++) {
                     const layer = painter.style._layers[layers[l]];
                     const coords = layer.source ? this._coordsDescendingInv[layer.source][tile.tileID.key] : [tile.tileID];
@@ -51554,95 +52287,29 @@ const defaultOptions$4 = {
     renderWorldCopies: true,
     refreshExpiredTiles: true,
     maxTileCacheSize: null,
+    maxTileCacheZoomLevels: performance.config.MAX_TILE_CACHE_ZOOM_LEVELS,
     localIdeographFontFamily: 'sans-serif',
     transformRequest: null,
+    transformCameraUpdate: null,
     fadeDuration: 300,
-    crossSourceCollisions: true
+    crossSourceCollisions: true,
+    validateStyle: true,
+    /**Because GL MAX_TEXTURE_SIZE is usually at least 4096px. */
+    maxCanvasSize: [4096, 4096]
 };
 /**
  * The `Map` object represents the map on your page. It exposes methods
  * and properties that enable you to programmatically change the map,
  * and fires events as users interact with it.
  *
- * You create a `Map` by specifying a `container` and other options.
- * Then MapLibre GL JS initializes the map on the page and returns your `Map`
- * object.
+ * You create a `Map` by specifying a `container` and other options, see {@link MapOptions} for the full list.
+ * Then MapLibre GL JS initializes the map on the page and returns your `Map` object.
  *
- * @extends Evented
- * @param {Object} options
- * @param {HTMLElement|string} options.container The HTML element in which MapLibre GL JS will render the map, or the element's string `id`. The specified element must have no children.
- * @param {number} [options.minZoom=0] The minimum zoom level of the map (0-24).
- * @param {number} [options.maxZoom=22] The maximum zoom level of the map (0-24).
- * @param {number} [options.minPitch=0] The minimum pitch of the map (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
- * @param {number} [options.maxPitch=60] The maximum pitch of the map (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
- * @param {Object|string} [options.style] The map's MapLibre style. This must be an a JSON object conforming to
- * the schema described in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/), or a URL to
- * such JSON.
+ * @group Main
  *
- *
- * @param {(boolean|string)} [options.hash=false] If `true`, the map's position (zoom, center latitude, center longitude, bearing, and pitch) will be synced with the hash fragment of the page's URL.
- *   For example, `http://path/to/my/page.html#2.59/39.26/53.07/-24.1/60`.
- *   An additional string may optionally be provided to indicate a parameter-styled hash,
- *   e.g. http://path/to/my/page.html#map=2.59/39.26/53.07/-24.1/60&foo=bar, where foo
- *   is a custom parameter and bar is an arbitrary hash distinct from the map hash.
- * @param {boolean} [options.interactive=true] If `false`, no mouse, touch, or keyboard listeners will be attached to the map, so it will not respond to interaction.
- * @param {number} [options.bearingSnap=7] The threshold, measured in degrees, that determines when the map's
- *   bearing will snap to north. For example, with a `bearingSnap` of 7, if the user rotates
- *   the map within 7 degrees of north, the map will automatically snap to exact north.
- * @param {boolean} [options.pitchWithRotate=true] If `false`, the map's pitch (tilt) control with "drag to rotate" interaction will be disabled.
- * @param {number} [options.clickTolerance=3] The max number of pixels a user can shift the mouse pointer during a click for it to be considered a valid click (as opposed to a mouse drag).
- * @param {boolean} [options.attributionControl=true] If `true`, an {@link AttributionControl} will be added to the map.
- * @param {string | Array<string>} [options.customAttribution] String or strings to show in an {@link AttributionControl}. Only applicable if `options.attributionControl` is `true`.
- * @param {boolean} [options.maplibreLogo=false] If `true`, the MapLibre logo will be shown.
- * @param {string} [options.logoPosition='bottom-left'] A string representing the position of the MapLibre wordmark on the map. Valid options are `top-left`,`top-right`, `bottom-left`, `bottom-right`.
- * @param {boolean} [options.failIfMajorPerformanceCaveat=false] If `true`, map creation will fail if the performance of MapLibre
- *   GL JS would be dramatically worse than expected (i.e. a software renderer would be used).
- * @param {boolean} [options.preserveDrawingBuffer=false] If `true`, the map's canvas can be exported to a PNG using `map.getCanvas().toDataURL()`. This is `false` by default as a performance optimization.
- * @param {boolean} [options.antialias] If `true`, the gl context will be created with MSAA antialiasing, which can be useful for antialiasing custom layers. this is `false` by default as a performance optimization.
- * @param {boolean} [options.refreshExpiredTiles=true] If `false`, the map won't attempt to re-request tiles once they expire per their HTTP `cacheControl`/`expires` headers.
- * @param {LngLatBoundsLike} [options.maxBounds] If set, the map will be constrained to the given bounds.
- * @param {boolean|Object} [options.scrollZoom=true] If `true`, the "scroll to zoom" interaction is enabled. An `Object` value is passed as options to {@link ScrollZoomHandler#enable}.
- * @param {boolean} [options.boxZoom=true] If `true`, the "box zoom" interaction is enabled (see {@link BoxZoomHandler}).
- * @param {boolean} [options.dragRotate=true] If `true`, the "drag to rotate" interaction is enabled (see {@link DragRotateHandler}).
- * @param {boolean|Object} [options.dragPan=true] If `true`, the "drag to pan" interaction is enabled. An `Object` value is passed as options to {@link DragPanHandler#enable}.
- * @param {boolean} [options.keyboard=true] If `true`, keyboard shortcuts are enabled (see {@link KeyboardHandler}).
- * @param {boolean} [options.doubleClickZoom=true] If `true`, the "double click to zoom" interaction is enabled (see {@link DoubleClickZoomHandler}).
- * @param {boolean|Object} [options.touchZoomRotate=true] If `true`, the "pinch to rotate and zoom" interaction is enabled. An `Object` value is passed as options to {@link TwoFingersTouchZoomRotateHandler#enable}.
- * @param {boolean|Object} [options.touchPitch=true] If `true`, the "drag to pitch" interaction is enabled. An `Object` value is passed as options to {@link TwoFingersTouchPitchHandler#enable}.
- * @param {boolean|GestureOptions} [options.cooperativeGestures=undefined] If `true` or set to an options object, map is only accessible on desktop while holding Command/Ctrl and only accessible on mobile with two fingers. Interacting with the map using normal gestures will trigger an informational screen. With this option enabled, "drag to pitch" requires a three-finger gesture. Cooperative gestures are disabled when a map enters fullscreen using {@link #FullscreenControl}.
- * A valid options object includes the following properties to customize the text on the informational screen. The values below are the defaults.
- * {
- *   windowsHelpText: "Use Ctrl + scroll to zoom the map",
- *   macHelpText: "Use ⌘ + scroll to zoom the map",
- *   mobileHelpText: "Use two fingers to move the map",
- * }
- * @param {boolean} [options.trackResize=true] If `true`, the map will automatically resize when the browser window resizes.
- * @param {LngLatLike} [options.center=[0, 0]] The initial geographical centerpoint of the map. If `center` is not specified in the constructor options, MapLibre GL JS will look for it in the map's style object. If it is not specified in the style, either, it will default to `[0, 0]` Note: MapLibre GL uses longitude, latitude coordinate order (as opposed to latitude, longitude) to match GeoJSON.
- * @param {number} [options.zoom=0] The initial zoom level of the map. If `zoom` is not specified in the constructor options, MapLibre GL JS will look for it in the map's style object. If it is not specified in the style, either, it will default to `0`.
- * @param {number} [options.bearing=0] The initial bearing (rotation) of the map, measured in degrees counter-clockwise from north. If `bearing` is not specified in the constructor options, MapLibre GL JS will look for it in the map's style object. If it is not specified in the style, either, it will default to `0`.
- * @param {number} [options.pitch=0] The initial pitch (tilt) of the map, measured in degrees away from the plane of the screen (0-85). If `pitch` is not specified in the constructor options, MapLibre GL JS will look for it in the map's style object. If it is not specified in the style, either, it will default to `0`. Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
- * @param {LngLatBoundsLike} [options.bounds] The initial bounds of the map. If `bounds` is specified, it overrides `center` and `zoom` constructor options.
- * @param {Object} [options.fitBoundsOptions] A {@link Map#fitBounds} options object to use _only_ when fitting the initial `bounds` provided above.
- * @param {boolean} [options.renderWorldCopies=true] If `true`, multiple copies of the world will be rendered side by side beyond -180 and 180 degrees longitude. If set to `false`:
- * - When the map is zoomed out far enough that a single representation of the world does not fill the map's entire
- * container, there will be blank space beyond 180 and -180 degrees longitude.
- * - Features that cross 180 and -180 degrees longitude will be cut in two (with one portion on the right edge of the
- * map and the other on the left edge of the map) at every zoom level.
- * @param {number} [options.maxTileCacheSize=null] The maximum number of tiles stored in the tile cache for a given source. If omitted, the cache will be dynamically sized based on the current viewport.
- * @param {string} [options.localIdeographFontFamily='sans-serif'] Defines a CSS
- *   font-family for locally overriding generation of glyphs in the 'CJK Unified Ideographs', 'Hiragana', 'Katakana' and 'Hangul Syllables' ranges.
- *   In these ranges, font settings from the map's style will be ignored, except for font-weight keywords (light/regular/medium/bold).
- *   Set to `false`, to enable font settings from the map's style for these glyph ranges.
- *   The purpose of this option is to avoid bandwidth-intensive glyph server requests. (See [Use locally generated ideographs](https://maplibre.org/maplibre-gl-js-docs/example/local-ideographs).)
- * @param {RequestTransformFunction} [options.transformRequest=null] A callback run before the Map makes a request for an external URL. The callback can be used to modify the url, set headers, or set the credentials property for cross-origin requests.
- *   Expected to return an object with a `url` property and optionally `headers` and `credentials` properties.
- * @param {boolean} [options.collectResourceTiming=false] If `true`, Resource Timing API information will be collected for requests made by GeoJSON and Vector Tile web workers (this information is normally inaccessible from the main Javascript thread). Information will be returned in a `resourceTiming` property of relevant `data` events.
- * @param {number} [options.fadeDuration=300] Controls the duration of the fade-in/fade-out animation for label collisions, in milliseconds. This setting affects all symbol layers. This setting does not affect the duration of runtime styling transitions or raster tile cross-fading.
- * @param {boolean} [options.crossSourceCollisions=true] If `true`, symbols from multiple sources can collide with each other during collision detection. If `false`, collision detection is run separately for the symbols in each source.
- * @param {Object} [options.locale=null] A patch to apply to the default localization table for UI strings, e.g. control tooltips. The `locale` object maps namespaced UI string IDs to translated strings in the target language; see `src/ui/default_locale.js` for an example with all supported string IDs. The object may specify all UI strings (thereby adding support for a new translation) or only a subset of strings (thereby patching the default translation table).
- * @param {number} [options.pixelRatio] The pixel ratio. The canvas' `width` attribute will be `container.clientWidth * pixelRatio` and its `height` attribute will be `container.clientHeight * pixelRatio`. Defaults to `devicePixelRatio` if not specified.
  * @example
- * var map = new maplibregl.Map({
+ * ```ts
+ * let map = new maplibregl.Map({
  *   container: 'map',
  *   center: [-122.420679, 37.772537],
  *   zoom: 13,
@@ -51658,11 +52325,11 @@ const defaultOptions$4 = {
  *     }
  *   }
  * });
- * @see [Display a map](https://maplibre.org/maplibre-gl-js-docs/example/simple-map/)
+ * ```
+ * @see [Display a map](https://maplibre.org/maplibre-gl-js/docs/examples/simple-map/)
  */
 let Map$1 = class Map extends Camera {
     constructor(options) {
-        var _a;
         performance.PerformanceUtils.mark(performance.PerformanceMarkers.create);
         options = performance.extend({}, defaultOptions$4, options);
         if (options.minZoom != null && options.maxZoom != null && options.minZoom > options.maxZoom) {
@@ -51679,10 +52346,39 @@ let Map$1 = class Map extends Camera {
         }
         const transform = new Transform(options.minZoom, options.maxZoom, options.minPitch, options.maxPitch, options.renderWorldCopies);
         super(transform, { bearingSnap: options.bearingSnap });
+        this._cooperativeGesturesOnWheel = (event) => {
+            this._onCooperativeGesture(event, event[this._metaKey], 1);
+        };
+        this._contextLost = (event) => {
+            event.preventDefault();
+            if (this._frame) {
+                this._frame.cancel();
+                this._frame = null;
+            }
+            this.fire(new performance.Event('webglcontextlost', { originalEvent: event }));
+        };
+        this._contextRestored = (event) => {
+            this._setupPainter();
+            this.resize();
+            this._update();
+            this.fire(new performance.Event('webglcontextrestored', { originalEvent: event }));
+        };
+        this._onMapScroll = (event) => {
+            if (event.target !== this._container)
+                return;
+            // Revert any scroll which would move the canvas outside of the view
+            this._container.scrollTop = 0;
+            this._container.scrollLeft = 0;
+            return false;
+        };
+        this._onWindowOnline = () => {
+            this._update();
+        };
         this._interactive = options.interactive;
         this._cooperativeGestures = options.cooperativeGestures;
         this._metaKey = navigator.platform.indexOf('Mac') === 0 ? 'metaKey' : 'ctrlKey';
         this._maxTileCacheSize = options.maxTileCacheSize;
+        this._maxTileCacheZoomLevels = options.maxTileCacheZoomLevels;
         this._failIfMajorPerformanceCaveat = options.failIfMajorPerformanceCaveat;
         this._preserveDrawingBuffer = options.preserveDrawingBuffer;
         this._antialias = options.antialias;
@@ -51698,8 +52394,10 @@ let Map$1 = class Map extends Camera {
         this._mapId = performance.uniqueId();
         this._locale = performance.extend({}, defaultLocale, options.locale);
         this._clickTolerance = options.clickTolerance;
-        this._pixelRatio = (_a = options.pixelRatio) !== null && _a !== void 0 ? _a : devicePixelRatio;
-        this._imageQueueHandle = ImageRequest$1.addThrottleControl(() => this.isMoving());
+        this._overridePixelRatio = options.pixelRatio;
+        this._maxCanvasSize = options.maxCanvasSize;
+        this.transformCameraUpdate = options.transformCameraUpdate;
+        this._imageQueueHandle = ImageRequest.addThrottleControl(() => this.isMoving());
         this._requestManager = new RequestManager(options.transformRequest);
         if (typeof options.container === 'string') {
             this._container = document.getElementById(options.container);
@@ -51716,13 +52414,6 @@ let Map$1 = class Map extends Camera {
         if (options.maxBounds) {
             this.setMaxBounds(options.maxBounds);
         }
-        performance.bindAll([
-            '_onWindowOnline',
-            '_onMapScroll',
-            '_cooperativeGesturesOnWheel',
-            '_contextLost',
-            '_contextRestored'
-        ], this);
         this._setupContainer();
         this._setupPainter();
         this.on('move', () => this._update(false));
@@ -51732,12 +52423,21 @@ let Map$1 = class Map extends Camera {
             this.painter.terrainFacilitator.dirty = true;
             this._update(true);
         });
+        this.once('idle', () => { this._idleTriggered = true; });
         if (typeof window !== 'undefined') {
             addEventListener('online', this._onWindowOnline, false);
-            this._resizeObserver = new ResizeObserver((entries) => {
-                if (this._trackResize) {
+            let initialResizeEventCaptured = false;
+            const throttledResizeCallback = throttle((entries) => {
+                if (this._trackResize && !this._removed) {
                     this.resize(entries)._update();
                 }
+            }, 50);
+            this._resizeObserver = new ResizeObserver((entries) => {
+                if (!initialResizeEventCaptured) {
+                    initialResizeEventCaptured = true;
+                    return;
+                }
+                throttledResizeCallback(entries);
             });
             this._resizeObserver.observe(this._container);
         }
@@ -51762,6 +52462,7 @@ let Map$1 = class Map extends Camera {
         }
         this.resize();
         this._localIdeographFontFamily = options.localIdeographFontFamily;
+        this._validateStyle = options.validateStyle;
         if (options.style)
             this.setStyle(options.style, { localIdeographFontFamily: options.localIdeographFontFamily });
         if (options.attributionControl)
@@ -51784,26 +52485,30 @@ let Map$1 = class Map extends Camera {
             this.fire(new performance.Event('sourcedataabort', event));
         });
     }
-    /*
-    * Returns a unique number for this map instance which is used for the MapLoadEvent
-    * to make sure we only fire one event per instantiated map object.
-    * @private
-    * @returns {number}
-    */
+    /**
+     * @internal
+     * Returns a unique number for this map instance which is used for the MapLoadEvent
+     * to make sure we only fire one event per instantiated map object.
+     * @returns the uniq map ID
+     */
     _getMapId() {
         return this._mapId;
     }
     /**
      * Adds an {@link IControl} to the map, calling `control.onAdd(this)`.
      *
-     * @param {IControl} control The {@link IControl} to add.
-     * @param {string} [position] position on the map to which the control will be added.
+     * An {@link ErrorEvent} will be fired if the image parameter is invald.
+     *
+     * @param control - The {@link IControl} to add.
+     * @param position - position on the map to which the control will be added.
      * Valid values are `'top-left'`, `'top-right'`, `'bottom-left'`, and `'bottom-right'`. Defaults to `'top-right'`.
-     * @returns {Map} `this`
+     * @returns `this`
      * @example
-     * // Add zoom and rotation controls to the map.
+     * Add zoom and rotation controls to the map.
+     * ```ts
      * map.addControl(new maplibregl.NavigationControl());
-     * @see [Display map navigation controls](https://maplibre.org/maplibre-gl-js-docs/example/navigation/)
+     * ```
+     * @see [Display map navigation controls](https://maplibre.org/maplibre-gl-js/docs/examples/navigation/)
      */
     addControl(control, position) {
         if (position === undefined) {
@@ -51831,15 +52536,19 @@ let Map$1 = class Map extends Camera {
     /**
      * Removes the control from the map.
      *
-     * @param {IControl} control The {@link IControl} to remove.
-     * @returns {Map} `this`
+     * An {@link ErrorEvent} will be fired if the image parameter is invald.
+     *
+     * @param control - The {@link IControl} to remove.
+     * @returns `this`
      * @example
+     * ```ts
      * // Define a new navigation control.
-     * var navigation = new maplibregl.NavigationControl();
+     * let navigation = new maplibregl.NavigationControl();
      * // Add zoom and rotation controls to the map.
      * map.addControl(navigation);
      * // Remove zoom and rotation controls from the map.
      * map.removeControl(navigation);
+     * ```
      */
     removeControl(control) {
         if (!control || !control.onRemove) {
@@ -51854,22 +52563,24 @@ let Map$1 = class Map extends Camera {
     /**
      * Checks if a control exists on the map.
      *
-     * @param {IControl} control The {@link IControl} to check.
-     * @returns {boolean} True if map contains control.
+     * @param control - The {@link IControl} to check.
+     * @returns true if map contains control.
      * @example
+     * ```ts
      * // Define a new navigation control.
-     * var navigation = new maplibregl.NavigationControl();
+     * let navigation = new maplibregl.NavigationControl();
      * // Add zoom and rotation controls to the map.
      * map.addControl(navigation);
      * // Check that the navigation control exists on the map.
      * map.hasControl(navigation);
+     * ```
      */
     hasControl(control) {
         return this._controls.indexOf(control) > -1;
     }
     calculateCameraOptionsFromTo(from, altitudeFrom, to, altitudeTo) {
         if (altitudeTo == null && this.terrain) {
-            altitudeTo = this.transform.getElevation(to, this.terrain);
+            altitudeTo = this.terrain.getElevationForLngLatZoom(to, this.transform.tileZoom);
         }
         return super.calculateCameraOptionsFromTo(from, altitudeFrom, to, altitudeTo);
     }
@@ -51881,23 +52592,38 @@ let Map$1 = class Map extends Camera {
      * This method must be called after the map's `container` is resized programmatically
      * or when the map is shown after being initially hidden with CSS.
      *
-     * @param eventData Additional properties to be passed to `movestart`, `move`, `resize`, and `moveend`
-     *   events that get triggered as a result of resize. This can be useful for differentiating the
-     *   source of an event (for example, user-initiated or programmatically-triggered events).
-     * @returns {Map} `this`
+     * Triggers the following events: `movestart`, `move`, `moveend`, and `resize`.
+     *
+     * @param eventData - Additional properties to be passed to `movestart`, `move`, `resize`, and `moveend`
+     * events that get triggered as a result of resize. This can be useful for differentiating the
+     * source of an event (for example, user-initiated or programmatically-triggered events).
+     * @returns `this`
      * @example
-     * // Resize the map when the map container is shown
-     * // after being initially hidden with CSS.
-     * var mapDiv = document.getElementById('map');
+     * Resize the map when the map container is shown after being initially hidden with CSS.
+     * ```ts
+     * let mapDiv = document.getElementById('map');
      * if (mapDiv.style.visibility === true) map.resize();
+     * ```
      */
     resize(eventData) {
+        var _a;
         const dimensions = this._containerDimensions();
         const width = dimensions[0];
         const height = dimensions[1];
-        this._resizeCanvas(width, height, this.getPixelRatio());
+        const clampedPixelRatio = this._getClampedPixelRatio(width, height);
+        this._resizeCanvas(width, height, clampedPixelRatio);
+        this.painter.resize(width, height, clampedPixelRatio);
+        // check if we've reached GL limits, in that case further clamps pixelRatio
+        if (this.painter.overLimit()) {
+            const gl = this.painter.context.gl;
+            // store updated _maxCanvasSize value
+            this._maxCanvasSize = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+            const clampedPixelRatio = this._getClampedPixelRatio(width, height);
+            this._resizeCanvas(width, height, clampedPixelRatio);
+            this.painter.resize(width, height, clampedPixelRatio);
+        }
         this.transform.resize(width, height);
-        this.painter.resize(width, height, this.getPixelRatio());
+        (_a = this._requestedCameraState) === null || _a === void 0 ? void 0 : _a.resize(width, height);
         const fireMoving = !this._moving;
         if (fireMoving) {
             this.stop();
@@ -51910,30 +52636,48 @@ let Map$1 = class Map extends Camera {
         return this;
     }
     /**
+     * @internal
+     * Return the map's pixel ratio eventually scaled down to respect maxCanvasSize.
+     * Internally you should use this and not getPixelRatio().
+     */
+    _getClampedPixelRatio(width, height) {
+        const { 0: maxCanvasWidth, 1: maxCanvasHeight } = this._maxCanvasSize;
+        const pixelRatio = this.getPixelRatio();
+        const canvasWidth = width * pixelRatio;
+        const canvasHeight = height * pixelRatio;
+        const widthScaleFactor = canvasWidth > maxCanvasWidth ? (maxCanvasWidth / canvasWidth) : 1;
+        const heightScaleFactor = canvasHeight > maxCanvasHeight ? (maxCanvasHeight / canvasHeight) : 1;
+        return Math.min(widthScaleFactor, heightScaleFactor) * pixelRatio;
+    }
+    /**
      * Returns the map's pixel ratio.
-     * @returns {number} The pixel ratio.
+     * Note that the pixel ratio actually applied may be lower to respect maxCanvasSize.
+     * @returns The pixel ratio.
      */
     getPixelRatio() {
-        return this._pixelRatio;
+        var _a;
+        return (_a = this._overridePixelRatio) !== null && _a !== void 0 ? _a : devicePixelRatio;
     }
     /**
      * Sets the map's pixel ratio. This allows to override `devicePixelRatio`.
      * After this call, the canvas' `width` attribute will be `container.clientWidth * pixelRatio`
      * and its height attribute will be `container.clientHeight * pixelRatio`.
-     * @param {number} pixelRatio The pixel ratio.
+     * Set this to null to disable `devicePixelRatio` override.
+     * Note that the pixel ratio actually applied may be lower to respect maxCanvasSize.
+     * @param pixelRatio - The pixel ratio.
      */
     setPixelRatio(pixelRatio) {
-        const [width, height] = this._containerDimensions();
-        this._pixelRatio = pixelRatio;
-        this._resizeCanvas(width, height, pixelRatio);
-        this.painter.resize(width, height, pixelRatio);
+        this._overridePixelRatio = pixelRatio;
+        this.resize();
     }
     /**
      * Returns the map's geographical bounds. When the bearing or pitch is non-zero, the visible region is not
      * an axis-aligned rectangle, and the result is the smallest bounds that encompasses the visible region.
-     * @returns {LngLatBounds} The geographical bounds of the map as {@link LngLatBounds}.
+     * @returns The geographical bounds of the map as {@link LngLatBounds}.
      * @example
-     * var bounds = map.getBounds();
+     * ```ts
+     * let bounds = map.getBounds();
+     * ```
      */
     getBounds() {
         return this.transform.getBounds();
@@ -51942,7 +52686,9 @@ let Map$1 = class Map extends Camera {
      * Returns the maximum geographical bounds the map is constrained to, or `null` if none set.
      * @returns The map object.
      * @example
-     * var maxBounds = map.getMaxBounds();
+     * ```ts
+     * let maxBounds = map.getMaxBounds();
+     * ```
      */
     getMaxBounds() {
         return this.transform.getMaxBounds();
@@ -51957,16 +52703,17 @@ let Map$1 = class Map extends Camera {
      * as close as possible to the operation's request while still
      * remaining within the bounds.
      *
-     * @param {LngLatBoundsLike | null | undefined} bounds The maximum bounds to set. If `null` or `undefined` is provided, the function removes the map's maximum bounds.
-     * @returns {Map} `this`
+     * @param bounds - The maximum bounds to set. If `null` or `undefined` is provided, the function removes the map's maximum bounds.
+     * @returns `this`
      * @example
-     * // Define bounds that conform to the `LngLatBoundsLike` object.
-     * var bounds = [
+     * Define bounds that conform to the `LngLatBoundsLike` object as set the max bounds.
+     * ```ts
+     * let bounds = [
      *   [-74.04728, 40.68392], // [west, south]
      *   [-73.91058, 40.87764]  // [east, north]
      * ];
-     * // Set the map's max bounds.
      * map.setMaxBounds(bounds);
+     * ```
      */
     setMaxBounds(bounds) {
         this.transform.setMaxBounds(LngLatBounds.convert(bounds));
@@ -51982,11 +52729,15 @@ let Map$1 = class Map extends Camera {
      * if the map is 512px tall it will not be possible to zoom below zoom 0
      * no matter what the `minZoom` is set to.
      *
-     * @param {number | null | undefined} minZoom The minimum zoom level to set (-2 - 24).
-     *   If `null` or `undefined` is provided, the function removes the current minimum zoom (i.e. sets it to -2).
-     * @returns {Map} `this`
+     * A {@link ErrorEvent} event will be fired if minZoom is out of bounds.
+     *
+     * @param minZoom - The minimum zoom level to set (-2 - 24).
+     * If `null` or `undefined` is provided, the function removes the current minimum zoom (i.e. sets it to -2).
+     * @returns `this`
      * @example
+     * ```ts
      * map.setMinZoom(12.25);
+     * ```
      */
     setMinZoom(minZoom) {
         minZoom = minZoom === null || minZoom === undefined ? defaultMinZoom : minZoom;
@@ -52003,9 +52754,11 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's minimum allowable zoom level.
      *
-     * @returns {number} minZoom
+     * @returns minZoom
      * @example
-     * var minZoom = map.getMinZoom();
+     * ```ts
+     * let minZoom = map.getMinZoom();
+     * ```
      */
     getMinZoom() { return this.transform.minZoom; }
     /**
@@ -52013,11 +52766,15 @@ let Map$1 = class Map extends Camera {
      * If the map's current zoom level is higher than the new maximum,
      * the map will zoom to the new maximum.
      *
-     * @param {number | null | undefined} maxZoom The maximum zoom level to set.
-     *   If `null` or `undefined` is provided, the function removes the current maximum zoom (sets it to 22).
-     * @returns {Map} `this`
+     * A {@link ErrorEvent} event will be fired if minZoom is out of bounds.
+     *
+     * @param maxZoom - The maximum zoom level to set.
+     * If `null` or `undefined` is provided, the function removes the current maximum zoom (sets it to 22).
+     * @returns `this`
      * @example
+     * ```ts
      * map.setMaxZoom(18.75);
+     * ```
      */
     setMaxZoom(maxZoom) {
         maxZoom = maxZoom === null || maxZoom === undefined ? defaultMaxZoom : maxZoom;
@@ -52034,9 +52791,11 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's maximum allowable zoom level.
      *
-     * @returns {number} maxZoom
+     * @returns The maxZoom
      * @example
-     * var maxZoom = map.getMaxZoom();
+     * ```ts
+     * let maxZoom = map.getMaxZoom();
+     * ```
      */
     getMaxZoom() { return this.transform.maxZoom; }
     /**
@@ -52044,9 +52803,11 @@ let Map$1 = class Map extends Camera {
      * If the map's current pitch is lower than the new minimum,
      * the map will pitch to the new minimum.
      *
-     * @param {number | null | undefined} minPitch The minimum pitch to set (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
-     *   If `null` or `undefined` is provided, the function removes the current minimum pitch (i.e. sets it to 0).
-     * @returns {Map} `this`
+     * A {@link ErrorEvent} event will be fired if minPitch is out of bounds.
+     *
+     * @param minPitch - The minimum pitch to set (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
+     * If `null` or `undefined` is provided, the function removes the current minimum pitch (i.e. sets it to 0).
+     * @returns `this`
      */
     setMinPitch(minPitch) {
         minPitch = minPitch === null || minPitch === undefined ? defaultMinPitch : minPitch;
@@ -52066,7 +52827,7 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's minimum allowable pitch.
      *
-     * @returns {number} minPitch
+     * @returns The minPitch
      */
     getMinPitch() { return this.transform.minPitch; }
     /**
@@ -52074,9 +52835,11 @@ let Map$1 = class Map extends Camera {
      * If the map's current pitch is higher than the new maximum,
      * the map will pitch to the new maximum.
      *
-     * @param {number | null | undefined} maxPitch The maximum pitch to set (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
-     *   If `null` or `undefined` is provided, the function removes the current maximum pitch (sets it to 60).
-     * @returns {Map} `this`
+     * A {@link ErrorEvent} event will be fired if maxPitch is out of bounds.
+     *
+     * @param maxPitch - The maximum pitch to set (0-85). Values greater than 60 degrees are experimental and may result in rendering issues. If you encounter any, please raise an issue with details in the MapLibre project.
+     * If `null` or `undefined` is provided, the function removes the current maximum pitch (sets it to 60).
+     * @returns `this`
      */
     setMaxPitch(maxPitch) {
         maxPitch = maxPitch === null || maxPitch === undefined ? defaultMaxPitch : maxPitch;
@@ -52096,7 +52859,7 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's maximum allowable pitch.
      *
-     * @returns {number} maxPitch
+     * @returns The maxPitch
      */
     getMaxPitch() { return this.transform.maxPitch; }
     /**
@@ -52105,26 +52868,30 @@ let Map$1 = class Map extends Camera {
      * container, there will be blank space beyond 180 and -180 degrees longitude.
      * - Features that cross 180 and -180 degrees longitude will be cut in two (with one portion on the right edge of the
      * map and the other on the left edge of the map) at every zoom level.
-     * @returns {boolean} renderWorldCopies
+     * @returns The renderWorldCopies
      * @example
-     * var worldCopiesRendered = map.getRenderWorldCopies();
-     * @see [Render world copies](https://maplibre.org/maplibre-gl-js-docs/example/render-world-copies/)
+     * ```ts
+     * let worldCopiesRendered = map.getRenderWorldCopies();
+     * ```
+     * @see [Render world copies](https://maplibre.org/maplibre-gl-js/docs/examples/render-world-copies/)
      */
     getRenderWorldCopies() { return this.transform.renderWorldCopies; }
     /**
      * Sets the state of `renderWorldCopies`.
      *
-     * @param {boolean} renderWorldCopies If `true`, multiple copies of the world will be rendered side by side beyond -180 and 180 degrees longitude. If set to `false`:
+     * @param renderWorldCopies - If `true`, multiple copies of the world will be rendered side by side beyond -180 and 180 degrees longitude. If set to `false`:
      * - When the map is zoomed out far enough that a single representation of the world does not fill the map's entire
      * container, there will be blank space beyond 180 and -180 degrees longitude.
      * - Features that cross 180 and -180 degrees longitude will be cut in two (with one portion on the right edge of the
      * map and the other on the left edge of the map) at every zoom level.
      *
      * `undefined` is treated as `true`, `null` is treated as `false`.
-     * @returns {Map} `this`
+     * @returns `this`
      * @example
+     * ```ts
      * map.setRenderWorldCopies(true);
-     * @see [Render world copies](https://maplibre.org/maplibre-gl-js-docs/example/render-world-copies/)
+     * ```
+     * @see [Render world copies](https://maplibre.org/maplibre-gl-js/docs/examples/render-world-copies/)
      */
     setRenderWorldCopies(renderWorldCopies) {
         this.transform.renderWorldCopies = renderWorldCopies;
@@ -52133,7 +52900,7 @@ let Map$1 = class Map extends Camera {
     /**
      * Gets the map's cooperativeGestures option
      *
-     * @returns {GestureOptions} gestureOptions
+     * @returns The gestureOptions
      */
     getCooperativeGestures() {
         return this._cooperativeGestures;
@@ -52141,8 +52908,8 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets or clears the map's cooperativeGestures option
      *
-     * @param {GestureOptions | null | undefined} gestureOptions If `true` or set to an options object, map is only accessible on desktop while holding Command/Ctrl and only accessible on mobile with two fingers. Interacting with the map using normal gestures will trigger an informational screen. With this option enabled, "drag to pitch" requires a three-finger gesture.
-     * @returns {Map} `this`
+     * @param gestureOptions - If `true` or set to an options object, map is only accessible on desktop while holding Command/Ctrl and only accessible on mobile with two fingers. Interacting with the map using normal gestures will trigger an informational screen. With this option enabled, "drag to pitch" requires a three-finger gesture.
+     * @returns `this`
      */
     setCooperativeGestures(gestureOptions) {
         this._cooperativeGestures = gestureOptions;
@@ -52158,11 +52925,13 @@ let Map$1 = class Map extends Camera {
      * Returns a [Point](https://github.com/mapbox/point-geometry) representing pixel coordinates, relative to the map's `container`,
      * that correspond to the specified geographical location.
      *
-     * @param {LngLatLike} lnglat The geographical location to project.
-     * @returns {Point} The [Point](https://github.com/mapbox/point-geometry) corresponding to `lnglat`, relative to the map's `container`.
+     * @param lnglat - The geographical location to project.
+     * @returns The [Point](https://github.com/mapbox/point-geometry) corresponding to `lnglat`, relative to the map's `container`.
      * @example
-     * var coordinate = [-122.420679, 37.772537];
-     * var point = map.project(coordinate);
+     * ```ts
+     * let coordinate = [-122.420679, 37.772537];
+     * let point = map.project(coordinate);
+     * ```
      */
     project(lnglat) {
         return this.transform.locationPoint(performance.LngLat.convert(lnglat), this.style && this.terrain);
@@ -52171,22 +52940,26 @@ let Map$1 = class Map extends Camera {
      * Returns a {@link LngLat} representing geographical coordinates that correspond
      * to the specified pixel coordinates.
      *
-     * @param {PointLike} point The pixel coordinates to unproject.
-     * @returns {LngLat} The {@link LngLat} corresponding to `point`.
+     * @param point - The pixel coordinates to unproject.
+     * @returns The {@link LngLat} corresponding to `point`.
      * @example
+     * ```ts
      * map.on('click', function(e) {
      *   // When the map is clicked, get the geographic coordinate.
-     *   var coordinate = map.unproject(e.point);
+     *   let coordinate = map.unproject(e.point);
      * });
+     * ```
      */
     unproject(point) {
-        return this.transform.pointLocation(performance.pointGeometry.convert(point), this.terrain);
+        return this.transform.pointLocation(performance.Point.convert(point), this.terrain);
     }
     /**
      * Returns true if the map is panning, zooming, rotating, or pitching due to a camera animation or user gesture.
-     * @returns {boolean} True if the map is moving.
+     * @returns true if the map is moving.
      * @example
-     * var isMoving = map.isMoving();
+     * ```ts
+     * let isMoving = map.isMoving();
+     * ```
      */
     isMoving() {
         var _a;
@@ -52194,9 +52967,11 @@ let Map$1 = class Map extends Camera {
     }
     /**
      * Returns true if the map is zooming due to a camera animation or user gesture.
-     * @returns {boolean} True if the map is zooming.
+     * @returns true if the map is zooming.
      * @example
-     * var isZooming = map.isZooming();
+     * ```ts
+     * let isZooming = map.isZooming();
+     * ```
      */
     isZooming() {
         var _a;
@@ -52204,9 +52979,11 @@ let Map$1 = class Map extends Camera {
     }
     /**
      * Returns true if the map is rotating due to a camera animation or user gesture.
-     * @returns {boolean} True if the map is rotating.
+     * @returns true if the map is rotating.
      * @example
+     * ```ts
      * map.isRotating();
+     * ```
      */
     isRotating() {
         var _a;
@@ -52312,21 +53089,15 @@ let Map$1 = class Map extends Camera {
      * Returns an array of MapGeoJSONFeature objects
      * representing visible features that satisfy the query parameters.
      *
-     * @param {PointLike|Array<PointLike>|QueryRenderedFeaturesOptions} [geometryOrOptions] (optional) The geometry of the query region:
+     * @param geometryOrOptions - (optional) The geometry of the query region:
      * either a single point or southwest and northeast points describing a bounding box.
      * Omitting this parameter (i.e. calling {@link Map#queryRenderedFeatures} with zero arguments,
      * or with only a `options` argument) is equivalent to passing a bounding box encompassing the entire
      * map viewport.
-     * The geometryOrOptions can receive a QueryRenderedFeaturesOptions only to support a situation where the function receives only one parameter which is the options parameter.
-     * @param {QueryRenderedFeaturesOptions} [options] (optional) Options object.
-     * @param {Array<string>} [options.layers] (optional) An array of [style layer IDs](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layer-id) for the query to inspect.
-     *   Only features within these layers will be returned. If this parameter is undefined, all layers will be checked.
-     * @param {FilterSpecification} [options.filter] (optional) A [filter](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#filter)
-     *   to limit query results.
-     * @param {Array<string>} [options.availableImages] (optional) An array of string representing the available images
-     * @param {boolean} [options.validate=true] (optional) Whether to check if the [options.filter] conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
+     * The geometryOrOptions can receive a {@link QueryRenderedFeaturesOptions} only to support a situation where the function receives only one parameter which is the options parameter.
+     * @param options - (optional) Options object.
      *
-     * @returns {Array<MapGeoJSONFeature>} An array of MapGeoJSONFeature objects.
+     * @returns An array of MapGeoJSONFeature objects.
      *
      * The `properties` value of each returned feature object contains the properties of its source feature. For GeoJSON sources, only
      * string and numeric property values are supported (i.e. `null`, `Array`, and `Object` values are not supported).
@@ -52358,48 +53129,56 @@ let Map$1 = class Map extends Camera {
      * tiles due to tile buffering.
      *
      * @example
-     * // Find all features at a point
-     * var features = map.queryRenderedFeatures(
+     * Find all features at a point
+     * ```ts
+     * let features = map.queryRenderedFeatures(
      *   [20, 35],
      *   { layers: ['my-layer-name'] }
      * );
+     * ```
      *
      * @example
-     * // Find all features within a static bounding box
-     * var features = map.queryRenderedFeatures(
+     * Find all features within a static bounding box
+     * ```ts
+     * let features = map.queryRenderedFeatures(
      *   [[10, 20], [30, 50]],
      *   { layers: ['my-layer-name'] }
      * );
+     * ```
      *
      * @example
-     * // Find all features within a bounding box around a point
-     * var width = 10;
-     * var height = 20;
-     * var features = map.queryRenderedFeatures([
+     * Find all features within a bounding box around a point
+     * ```ts
+     * let width = 10;
+     * let height = 20;
+     * let features = map.queryRenderedFeatures([
      *   [point.x - width / 2, point.y - height / 2],
      *   [point.x + width / 2, point.y + height / 2]
      * ], { layers: ['my-layer-name'] });
+     * ```
      *
      * @example
-     * // Query all rendered features from a single layer
-     * var features = map.queryRenderedFeatures({ layers: ['my-layer-name'] });
-     * @see [Get features under the mouse pointer](https://maplibre.org/maplibre-gl-js-docs/example/queryrenderedfeatures/)
+     * Query all rendered features from a single layer
+     * ```ts
+     * let features = map.queryRenderedFeatures({ layers: ['my-layer-name'] });
+     * ```
+     * @see [Get features under the mouse pointer](https://maplibre.org/maplibre-gl-js/docs/examples/queryrenderedfeatures/)
      */
     queryRenderedFeatures(geometryOrOptions, options) {
         if (!this.style) {
             return [];
         }
         let queryGeometry;
-        const isGeometry = geometryOrOptions instanceof performance.pointGeometry || Array.isArray(geometryOrOptions);
+        const isGeometry = geometryOrOptions instanceof performance.Point || Array.isArray(geometryOrOptions);
         const geometry = isGeometry ? geometryOrOptions : [[0, 0], [this.transform.width, this.transform.height]];
         options = options || (isGeometry ? {} : geometryOrOptions) || {};
-        if (geometry instanceof performance.pointGeometry || typeof geometry[0] === 'number') {
-            queryGeometry = [performance.pointGeometry.convert(geometry)];
+        if (geometry instanceof performance.Point || typeof geometry[0] === 'number') {
+            queryGeometry = [performance.Point.convert(geometry)];
         }
         else {
-            const tl = performance.pointGeometry.convert(geometry[0]);
-            const br = performance.pointGeometry.convert(geometry[1]);
-            queryGeometry = [tl, new performance.pointGeometry(br.x, tl.y), br, new performance.pointGeometry(tl.x, br.y), tl];
+            const tl = performance.Point.convert(geometry[0]);
+            const br = performance.Point.convert(geometry[1]);
+            queryGeometry = [tl, new performance.Point(br.x, tl.y), br, new performance.Point(tl.x, br.y), tl];
         }
         return this.style.queryRenderedFeatures(queryGeometry, options, this.transform);
     }
@@ -52407,15 +53186,9 @@ let Map$1 = class Map extends Camera {
      * Returns an array of MapGeoJSONFeature objects
      * representing features within the specified vector tile or GeoJSON source that satisfy the query parameters.
      *
-     * @param {string} sourceId The ID of the vector tile or GeoJSON source to query.
-     * @param {Object} [parameters] Options object.
-     * @param {string} [parameters.sourceLayer] The name of the source layer
-     *   to query. *For vector tile sources, this parameter is required.* For GeoJSON sources, it is ignored.
-     * @param {Array} [parameters.filter] A [filter](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#filter)
-     *   to limit query results.
-     * @param {boolean} [parameters.validate=true] Whether to check if the [parameters.filter] conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     *
-     * @returns {Array<MapGeoJSONFeature>} An array of MapGeoJSONFeature objects.
+     * @param sourceId - The ID of the vector tile or GeoJSON source to query.
+     * @param parameters - The options object.
+     * @returns An array of MapGeoJSONFeature objects.
      *
      * In contrast to {@link Map#queryRenderedFeatures}, this function returns all features matching the query parameters,
      * whether or not they are rendered by the current style (i.e. visible). The domain of the query includes all currently-loaded
@@ -52431,10 +53204,12 @@ let Map$1 = class Map extends Camera {
      * tiles due to tile buffering.
      *
      * @example
-     * // Find all features in one source layer in a vector source
-     * var features = map.querySourceFeatures('your-source-id', {
+     * Find all features in one source layer in a vector source
+     * ```ts
+     * let features = map.querySourceFeatures('your-source-id', {
      *   sourceLayer: 'your-source-layer'
      * });
+     * ```
      *
      */
     querySourceFeatures(sourceId, parameters) {
@@ -52450,21 +53225,13 @@ let Map$1 = class Map extends Camera {
      * the given one from scratch.
      *
      *
-     * @param style A JSON object conforming to the schema described in the
-     *   [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/), or a URL to such JSON.
-     * @param {Object} [options] Options object.
-     * @param {boolean} [options.diff=true] If false, force a 'full' update, removing the current style
-     *   and building the given one instead of attempting a diff-based update.
-     * @param {string} [options.localIdeographFontFamily='sans-serif'] Defines a CSS
-     *   font-family for locally overriding generation of glyphs in the 'CJK Unified Ideographs', 'Hiragana', 'Katakana' and 'Hangul Syllables' ranges.
-     *   In these ranges, font settings from the map's style will be ignored, except for font-weight keywords (light/regular/medium/bold).
-     *   Set to `false`, to enable font settings from the map's style for these glyph ranges.
-     *   Forces a full update.
-     * @param {TransformStyleFunction} [options.transformStyle=undefined] transformStyle is a convenience function
-     *   that allows to modify a style after it is fetched but before it is committed to the map state. Refer to {@link TransformStyleFunction}.
-     * @returns {Map} `this`
+     * @param style - A JSON object conforming to the schema described in the
+     * [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/), or a URL to such JSON.
+     * @param options - The options object.
+     * @returns `this`
      *
      * @example
+     * ```ts
      * map.setStyle("https://demotiles.maplibre.org/style.json");
      *
      * map.setStyle('https://demotiles.maplibre.org/style.json', {
@@ -52494,9 +53261,13 @@ let Map$1 = class Map extends Camera {
      *       ]
      *   })
      * });
+     * ```
      */
     setStyle(style, options) {
-        options = performance.extend({}, { localIdeographFontFamily: this._localIdeographFontFamily }, options);
+        options = performance.extend({}, {
+            localIdeographFontFamily: this._localIdeographFontFamily,
+            validate: this._validateStyle
+        }, options);
         if ((options.diff !== false && options.localIdeographFontFamily === this._localIdeographFontFamily) && this.style && style) {
             this._diffStyle(style, options);
             return this;
@@ -52509,13 +53280,15 @@ let Map$1 = class Map extends Camera {
     /**
      *  Updates the requestManager's transform request with a new function
      *
-     * @param transformRequest A callback run before the Map makes a request for an external URL. The callback can be used to modify the url, set headers, or set the credentials property for cross-origin requests.
-     *    Expected to return an object with a `url` property and optionally `headers` and `credentials` properties
+     * @param transformRequest - A callback run before the Map makes a request for an external URL. The callback can be used to modify the url, set headers, or set the credentials property for cross-origin requests.
+     * Expected to return an object with a `url` property and optionally `headers` and `credentials` properties
      *
-     * @returns {Map} `this`
+     * @returns `this`
      *
-     *  @example
-     *  map.setTransformRequest((url: string, resourceType: string) => {});
+     * @example
+     * ```ts
+     * map.setTransformRequest((url: string, resourceType: string) => {});
+     * ```
      */
     setTransformRequest(transformRequest) {
         this._requestManager.setTransformRequest(transformRequest);
@@ -52594,10 +53367,12 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's MapLibre style object, a JSON object which can be used to recreate the map's style.
      *
-     * @returns {Object} The map's style JSON object.
+     * @returns The map's style JSON object.
      *
      * @example
-     * var styleJson = map.getStyle();
+     * ```ts
+     * let styleJson = map.getStyle();
+     * ```
      *
      */
     getStyle() {
@@ -52608,10 +53383,12 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns a Boolean indicating whether the map's style is fully loaded.
      *
-     * @returns {boolean} A Boolean indicating whether the style is fully loaded.
+     * @returns A Boolean indicating whether the style is fully loaded.
      *
      * @example
-     * var styleLoadStatus = map.isStyleLoaded();
+     * ```ts
+     * let styleLoadStatus = map.isStyleLoaded();
+     * ```
      */
     isStyleLoaded() {
         if (!this.style)
@@ -52621,18 +53398,24 @@ let Map$1 = class Map extends Camera {
     /**
      * Adds a source to the map's style.
      *
-     * @param {string} id The ID of the source to add. Must not conflict with existing sources.
-     * @param {Object} source The source object, conforming to the
-     * MapLibre Style Specification's [source definition](https://maplibre.org/maplibre-gl-js-docs/style-spec/#sources) or
-     * {@link CanvasSourceOptions}.
-     * @fires source.add
-     * @returns {Map} `this`
+     * Events triggered:
+     *
+     * Triggers the `source.add` event.
+     *
+     * @param id - The ID of the source to add. Must not conflict with existing sources.
+     * @param source - The source object, conforming to the
+     * MapLibre Style Specification's [source definition](https://maplibre.org/maplibre-style-spec/sources) or
+     * {@link CanvasSourceSpecification}.
+     * @returns `this`
      * @example
+     * ```ts
      * map.addSource('my-data', {
      *   type: 'vector',
      *   url: 'https://demotiles.maplibre.org/tiles/tiles.json'
      * });
+     * ```
      * @example
+     * ```ts
      * map.addSource('my-data', {
      *   "type": "geojson",
      *   "data": {
@@ -52647,7 +53430,8 @@ let Map$1 = class Map extends Camera {
      *     }
      *   }
      * });
-     * @see GeoJSON source: [Add live realtime data](https://maplibre.org/maplibre-gl-js-docs/example/live-geojson/)
+     * ```
+     * @see GeoJSON source: [Add live realtime data](https://maplibre.org/maplibre-gl-js/docs/examples/live-geojson/)
      */
     addSource(id, source) {
         this._lazyInitEmptyStyle();
@@ -52658,10 +53442,14 @@ let Map$1 = class Map extends Camera {
      * Returns a Boolean indicating whether the source is loaded. Returns `true` if the source with
      * the given ID in the map's style has no outstanding network requests, otherwise `false`.
      *
-     * @param {string} id The ID of the source to be checked.
-     * @returns {boolean} A Boolean indicating whether the source is loaded.
+     * A {@link ErrorEvent} event will be fired if there is no source wit the specified ID.
+     *
+     * @param id - The ID of the source to be checked.
+     * @returns A Boolean indicating whether the source is loaded.
      * @example
-     * var sourceLoaded = map.isSourceLoaded('bathymetry-data');
+     * ```ts
+     * let sourceLoaded = map.isSourceLoaded('bathymetry-data');
+     * ```
      */
     isSourceLoaded(id) {
         const source = this.style && this.style.sourceCaches[id];
@@ -52673,10 +53461,15 @@ let Map$1 = class Map extends Camera {
     }
     /**
      * Loads a 3D terrain mesh, based on a "raster-dem" source.
-     * @param {TerrainSpecification} [options] Options object.
-     * @returns {Map} `this`
+     *
+     * Triggers the `terrain` event.
+     *
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setTerrain({ source: 'terrain' });
+     * ```
      */
     setTerrain(options) {
         this.style._checkLoaded();
@@ -52691,23 +53484,34 @@ let Map$1 = class Map extends Camera {
             if (this.painter.renderToTexture)
                 this.painter.renderToTexture.destruct();
             this.painter.renderToTexture = null;
-            this.transform.updateElevation(this.terrain);
+            this.transform._minEleveationForCurrentTile = 0;
+            this.transform.elevation = 0;
         }
         else {
             // add terrain
             const sourceCache = this.style.sourceCaches[options.source];
             if (!sourceCache)
                 throw new Error(`cannot load terrain, because there exists no source with ID: ${options.source}`);
+            // Warn once if user is using the same source for hillshade and terrain
+            for (const index in this.style._layers) {
+                const thisLayer = this.style._layers[index];
+                if (thisLayer.type === 'hillshade' && thisLayer.source === options.source) {
+                    performance.warnOnce('You are using the same source for a hillshade layer and for 3D terrain. Please consider using two separate sources to improve rendering quality.');
+                }
+            }
             this.terrain = new Terrain(this.painter, sourceCache, options);
             this.painter.renderToTexture = new RenderToTexture(this.painter, this.terrain);
-            this.transform.updateElevation(this.terrain);
+            this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
             this._terrainDataCallback = e => {
                 if (e.dataType === 'style') {
                     this.terrain.sourceCache.freeRtt();
                 }
                 else if (e.dataType === 'source' && e.tile) {
-                    if (e.sourceId === options.source)
-                        this.transform.updateElevation(this.terrain);
+                    if (e.sourceId === options.source && !this._elevationFreeze) {
+                        this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+                        this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+                    }
                     this.terrain.sourceCache.freeRtt(e.tile.tileID);
                 }
             };
@@ -52718,20 +53522,25 @@ let Map$1 = class Map extends Camera {
     }
     /**
      * Get the terrain-options if terrain is loaded
-     * @returns {TerrainSpecification} the TerrainSpecification passed to setTerrain
+     * @returns the TerrainSpecification passed to setTerrain
      * @example
+     * ```ts
      * map.getTerrain(); // { source: 'terrain' };
+     * ```
      */
     getTerrain() {
-        return this.terrain && this.terrain.options;
+        var _a, _b;
+        return (_b = (_a = this.terrain) === null || _a === void 0 ? void 0 : _a.options) !== null && _b !== void 0 ? _b : null;
     }
     /**
      * Returns a Boolean indicating whether all tiles in the viewport from all sources on
      * the style are loaded.
      *
-     * @returns {boolean} A Boolean indicating whether all tiles are loaded.
+     * @returns A Boolean indicating whether all tiles are loaded.
      * @example
-     * var tilesLoaded = map.areTilesLoaded();
+     * ```ts
+     * let tilesLoaded = map.areTilesLoaded();
+     * ```
      */
     areTilesLoaded() {
         const sources = this.style && this.style.sourceCaches;
@@ -52749,10 +53558,9 @@ let Map$1 = class Map extends Camera {
     /**
      * Adds a [custom source type](#Custom Sources), making it available for use with
      * {@link Map#addSource}.
-     * @private
-     * @param {string} name The name of the source type; source definition objects use this name in the `{type: ...}` field.
-     * @param {Function} SourceType A {@link Source} constructor.
-     * @param {Callback<void>} callback Called when the source type is ready or with an error argument if there is an error.
+     * @param name - The name of the source type; source definition objects use this name in the `{type: ...}` field.
+     * @param SourceType - A {@link Source} constructor.
+     * @param callback - Called when the source type is ready or with an error argument if there is an error.
      */
     addSourceType(name, SourceType, callback) {
         this._lazyInitEmptyStyle();
@@ -52761,10 +53569,12 @@ let Map$1 = class Map extends Camera {
     /**
      * Removes a source from the map's style.
      *
-     * @param {string} id The ID of the source to remove.
-     * @returns {Map} `this`
+     * @param id - The ID of the source to remove.
+     * @returns `this`
      * @example
+     * ```ts
      * map.removeSource('bathymetry-data');
+     * ```
      */
     removeSource(id) {
         this.style.removeSource(id);
@@ -52778,49 +53588,46 @@ let Map$1 = class Map extends Camera {
      * For example, setting the `data` for a GeoJSON source or updating the `url` and `coordinates`
      * of an image source.
      *
-     * @param {string} id The ID of the source to get.
-     * @returns {Source | undefined} The style source with the specified ID or `undefined` if the ID
+     * @param id - The ID of the source to get.
+     * @returns The style source with the specified ID or `undefined` if the ID
      * corresponds to no existing sources.
      * The shape of the object varies by source type.
      * A list of options for each source type is available on the MapLibre Style Specification's
-     * [Sources](https://maplibre.org/maplibre-gl-js-docs/style-spec/sources/) page.
+     * [Sources](https://maplibre.org/maplibre-style-spec/sources/) page.
      * @example
-     * var sourceObject = map.getSource('points');
-     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-point/)
-     * @see [Animate a point](https://maplibre.org/maplibre-gl-js-docs/example/animate-point-along-line/)
-     * @see [Add live realtime data](https://maplibre.org/maplibre-gl-js-docs/example/live-geojson/)
+     * ```ts
+     * let sourceObject = map.getSource('points');
+     * ```
+     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-point/)
+     * @see [Animate a point](https://maplibre.org/maplibre-gl-js/docs/examples/animate-point-along-line/)
+     * @see [Add live realtime data](https://maplibre.org/maplibre-gl-js/docs/examples/live-geojson/)
      */
     getSource(id) {
         return this.style.getSource(id);
     }
-    // eslint-disable-next-line jsdoc/require-returns
     /**
      * Add an image to the style. This image can be displayed on the map like any other icon in the style's
      * sprite using the image's ID with
-     * [`icon-image`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layout-symbol-icon-image),
-     * [`background-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-background-background-pattern),
-     * [`fill-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-fill-fill-pattern),
-     * or [`line-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-line-line-pattern).
-     * A {@link Map.event:error} event will be fired if there is not enough space in the sprite to add this image.
+     * [`icon-image`](https://maplibre.org/maplibre-style-spec/layers/#layout-symbol-icon-image),
+     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-background-background-pattern),
+     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-fill-fill-pattern),
+     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-line-line-pattern).
      *
-     * @param id The ID of the image.
-     * @param image The image as an `HTMLImageElement`, `ImageData`, `ImageBitmap` or object with `width`, `height`, and `data`
+     * A {@link ErrorEvent} event will be fired if the image parameter is invalid or there is not enough space in the sprite to add this image.
+     *
+     * @param id - The ID of the image.
+     * @param image - The image as an `HTMLImageElement`, `ImageData`, `ImageBitmap` or object with `width`, `height`, and `data`
      * properties with the same format as `ImageData`.
-     * @param options Options object.
-     * @param options.pixelRatio The ratio of pixels in the image to physical pixels on the screen
-     * @param options.sdf Whether the image should be interpreted as an SDF image
-     * @param options.content `[x1, y1, x2, y2]`  If `icon-text-fit` is used in a layer with this image, this option defines the part of the image that can be covered by the content in `text-field`.
-     * @param options.stretchX `[[x1, x2], ...]` If `icon-text-fit` is used in a layer with this image, this option defines the part(s) of the image that can be stretched horizontally.
-     * @param options.stretchY `[[y1, y2], ...]` If `icon-text-fit` is used in a layer with this image, this option defines the part(s) of the image that can be stretched vertically.
-     *
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * // If the style's sprite does not already contain an image with ID 'cat',
      * // add the image 'cat-icon.png' to the style's sprite with the ID 'cat'.
      * map.loadImage('https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Cat_silhouette.svg/400px-Cat_silhouette.svg.png', function(error, image) {
      *    if (error) throw error;
      *    if (!map.hasImage('cat')) map.addImage('cat', image);
      * });
-     *
      *
      * // Add a stretchable image that can be used with `icon-text-fit`
      * // In this example, the image is 600px wide by 400px high.
@@ -52834,16 +53641,16 @@ let Map$1 = class Map extends Camera {
      *      });
      *    }
      * });
-     *
-     *
-     * @see Use `HTMLImageElement`: [Add an icon to the map](https://maplibre.org/maplibre-gl-js-docs/example/add-image/)
-     * @see Use `ImageData`: [Add a generated icon to the map](https://maplibre.org/maplibre-gl-js-docs/example/add-image-generated/)
+     * ```
+     * @see Use `HTMLImageElement`: [Add an icon to the map](https://maplibre.org/maplibre-gl-js/docs/examples/add-image/)
+     * @see Use `ImageData`: [Add a generated icon to the map](https://maplibre.org/maplibre-gl-js/docs/examples/add-image-generated/)
      */
-    addImage(id, image, { pixelRatio = 1, sdf = false, stretchX, stretchY, content } = {}) {
+    addImage(id, image, options = {}) {
+        const { pixelRatio = 1, sdf = false, stretchX, stretchY, content } = options;
         this._lazyInitEmptyStyle();
         const version = 0;
         if (image instanceof HTMLImageElement || performance.isImageBitmap(image)) {
-            const { width, height, data } = performance.exported.getImageData(image);
+            const { width, height, data } = performance.browser.getImageData(image);
             this.style.addImage(id, { data: new performance.RGBAImage({ width, height }, data), pixelRatio, stretchX, stretchY, content, sdf, version });
         }
         else if (image.width === undefined || image.height === undefined) {
@@ -52866,25 +53673,29 @@ let Map$1 = class Map extends Camera {
             if (userImage.onAdd) {
                 userImage.onAdd(this, id);
             }
+            return this;
         }
     }
-    // eslint-disable-next-line jsdoc/require-returns
     /**
      * Update an existing image in a style. This image can be displayed on the map like any other icon in the style's
      * sprite using the image's ID with
-     * [`icon-image`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layout-symbol-icon-image),
-     * [`background-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-background-background-pattern),
-     * [`fill-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-fill-fill-pattern),
-     * or [`line-pattern`](https://maplibre.org/maplibre-gl-js-docs/style-spec/#paint-line-line-pattern).
+     * [`icon-image`](https://maplibre.org/maplibre-style-spec/layers/#layout-symbol-icon-image),
+     * [`background-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-background-background-pattern),
+     * [`fill-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-fill-fill-pattern),
+     * or [`line-pattern`](https://maplibre.org/maplibre-style-spec/layers/#paint-line-line-pattern).
      *
-     * @param id The ID of the image.
-     * @param image The image as an `HTMLImageElement`, `ImageData`, `ImageBitmap` or object with `width`, `height`, and `data`
+     * An {@link ErrorEvent} will be fired if the image parameter is invald.
+     *
+     * @param id - The ID of the image.
+     * @param image - The image as an `HTMLImageElement`, `ImageData`, `ImageBitmap` or object with `width`, `height`, and `data`
      * properties with the same format as `ImageData`.
-     *
+     * @returns `this`
      * @example
+     * ```ts
      * // If an image with the ID 'cat' already exists in the style's sprite,
      * // replace that image with a new image, 'other-cat-icon.png'.
      * if (map.hasImage('cat')) map.updateImage('cat', './other-cat-icon.png');
+     * ```
      */
     updateImage(id, image) {
         const existingImage = this.style.getImage(id);
@@ -52892,7 +53703,7 @@ let Map$1 = class Map extends Camera {
             return this.fire(new performance.ErrorEvent(new Error('The map has no image with that id. If you are adding a new image use `map.addImage(...)` instead.')));
         }
         const imageData = (image instanceof HTMLImageElement || performance.isImageBitmap(image)) ?
-            performance.exported.getImageData(image) :
+            performance.browser.getImageData(image) :
             image;
         const { width, height, data } = imageData;
         if (width === undefined || height === undefined) {
@@ -52905,18 +53716,20 @@ let Map$1 = class Map extends Camera {
         const copy = !(image instanceof HTMLImageElement || performance.isImageBitmap(image));
         existingImage.data.replace(data, copy);
         this.style.updateImage(id, existingImage);
+        return this;
     }
     /**
      * Returns an image, specified by ID, currently available in the map.
      * This includes both images from the style's original sprite
      * and any images that have been added at runtime using {@link Map#addImage}.
      *
-     * @param id The ID of the image.
-     * @returns {StyleImage} An image in the map with the specified ID.
+     * @param id - The ID of the image.
+     * @returns An image in the map with the specified ID.
      *
      * @example
-     * var coffeeShopIcon = map.getImage("coffee_cup");
-     *
+     * ```ts
+     * let coffeeShopIcon = map.getImage("coffee_cup");
+     * ```
      */
     getImage(id) {
         return this.style.getImage(id);
@@ -52926,13 +53739,16 @@ let Map$1 = class Map extends Camera {
      * in the style's original sprite and any images
      * that have been added at runtime using {@link Map#addImage}.
      *
-     * @param id The ID of the image.
+     * An {@link ErrorEvent} will be fired if the image parameter is invald.
      *
-     * @returns {boolean} A Boolean indicating whether the image exists.
+     * @param id - The ID of the image.
+     *
+     * @returns A Boolean indicating whether the image exists.
      * @example
-     * // Check if an image with the ID 'cat' exists in
-     * // the style's sprite.
-     * var catIconExists = map.hasImage('cat');
+     * Check if an image with the ID 'cat' exists in the style's sprite.
+     * ```ts
+     * let catIconExists = map.hasImage('cat');
+     * ```
      */
     hasImage(id) {
         if (!id) {
@@ -52946,12 +53762,14 @@ let Map$1 = class Map extends Camera {
      * sprite or any images
      * that have been added at runtime using {@link Map#addImage}.
      *
-     * @param id The ID of the image.
+     * @param id - The ID of the image.
      *
      * @example
+     * ```ts
      * // If an image with the ID 'cat' exists in
      * // the style's sprite, remove it.
      * if (map.hasImage('cat')) map.removeImage('cat');
+     * ```
      */
     removeImage(id) {
         this.style.removeImage(id);
@@ -52960,93 +53778,60 @@ let Map$1 = class Map extends Camera {
      * Load an image from an external URL to be used with {@link Map#addImage}. External
      * domains must support [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS).
      *
-     * @param {string} url The URL of the image file. Image file must be in png, webp, or jpg format.
-     * @param {Callback<HTMLImageElement | ImageBitmap>} callback Expecting `callback(error, data)`. Called when the image has loaded or with an error argument if there is an error.
+     * @param url - The URL of the image file. Image file must be in png, webp, or jpg format.
+     * @param callback - Expecting `callback(error, data)`. Called when the image has loaded or with an error argument if there is an error.
      *
      * @example
-     * // Load an image from an external URL.
+     * Load an image from an external URL.
+     * ```ts
      * map.loadImage('http://placekitten.com/50/50', function(error, image) {
      *   if (error) throw error;
      *   // Add the loaded image to the style's sprite with the ID 'kitten'.
      *   map.addImage('kitten', image);
      * });
-     *
-     * @see [Add an icon to the map](https://maplibre.org/maplibre-gl-js-docs/example/add-image/)
+     * ```
+     * @see [Add an icon to the map](https://maplibre.org/maplibre-gl-js/docs/examples/add-image/)
      */
     loadImage(url, callback) {
-        ImageRequest$1.getImage(this._requestManager.transformRequest(url, ResourceType.Image), callback);
+        ImageRequest.getImage(this._requestManager.transformRequest(url, ResourceType.Image), callback);
     }
     /**
      * Returns an Array of strings containing the IDs of all images currently available in the map.
      * This includes both images from the style's original sprite
      * and any images that have been added at runtime using {@link Map#addImage}.
      *
-     * @returns {Array<string>} An Array of strings containing the names of all sprites/images currently available in the map.
+     * @returns An Array of strings containing the names of all sprites/images currently available in the map.
      *
      * @example
-     * var allImages = map.listImages();
-     *
+     * ```ts
+     * let allImages = map.listImages();
+     * ```
      */
     listImages() {
         return this.style.listImages();
     }
     /**
-     * Adds a [MapLibre style layer](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layers)
+     * Adds a [MapLibre style layer](https://maplibre.org/maplibre-style-spec/layers)
      * to the map's style.
      *
      * A layer defines how data from a specified source will be styled. Read more about layer types
-     * and available paint and layout properties in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layers).
+     * and available paint and layout properties in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/layers).
      *
-     * TODO: JSDoc can't pass @param {(LayerSpecification & {source?: string | SourceSpecification}) | CustomLayerInterface} layer The layer to add,
-     * @param {Object} layer
-     * conforming to either the MapLibre Style Specification's [layer definition](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layers) or,
-     * less commonly, the {@link CustomLayerInterface} specification.
+     * @param layer - The layer to add,
+     * conforming to either the MapLibre Style Specification's [layer definition](https://maplibre.org/maplibre-style-spec/layers) or,
+     * less commonly, the {@link CustomLayerInterface} specification. Can also be a layer definition with an embedded source definition.
      * The MapLibre Style Specification's layer definition is appropriate for most layers.
      *
-     * @param {string} layer.id A unique identifer that you define.
-     * @param {string} layer.type The type of layer (for example `fill` or `symbol`).
-     * A list of layer types is available in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#type).
-     *
-     * (This can also be `custom`. For more information, see {@link CustomLayerInterface}.)
-     * @param {string | SourceSpecification} [layer.source] The data source for the layer.
-     * Reference a source that has _already been defined_ using the source's unique id.
-     * Reference a _new source_ using a source object (as defined in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/sources/)) directly.
-     * This is **required** for all `layer.type` options _except_ for `custom` and `background`.
-     * @param {string} [layer.sourceLayer] (optional) The name of the source layer within the specified `layer.source` to use for this style layer.
-     * This is only applicable for vector tile sources and is **required** when `layer.source` is of the type `vector`.
-     * @param {array} [layer.filter] (optional) An expression specifying conditions on source features.
-     * Only features that match the filter are displayed.
-     * The MapLibre Style Specification includes more information on the limitations of the [`filter`](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#filter) parameter
-     * and a complete list of available [expressions](https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/).
-     * If no filter is provided, all features in the source (or source layer for vector tilesets) will be displayed.
-     * @param {Object} [layer.paint] (optional) Paint properties for the layer.
-     * Available paint properties vary by `layer.type`.
-     * A full list of paint properties for each layer type is available in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/).
-     * If no paint properties are specified, default values will be used.
-     * @param {Object} [layer.layout] (optional) Layout properties for the layer.
-     * Available layout properties vary by `layer.type`.
-     * A full list of layout properties for each layer type is available in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/).
-     * If no layout properties are specified, default values will be used.
-     * @param {number} [layer.maxzoom] (optional) The maximum zoom level for the layer.
-     * At zoom levels equal to or greater than the maxzoom, the layer will be hidden.
-     * The value can be any number between `0` and `24` (inclusive).
-     * If no maxzoom is provided, the layer will be visible at all zoom levels for which there are tiles available.
-     * @param {number} [layer.minzoom] (optional) The minimum zoom level for the layer.
-     * At zoom levels less than the minzoom, the layer will be hidden.
-     * The value can be any number between `0` and `24` (inclusive).
-     * If no minzoom is provided, the layer will be visible at all zoom levels for which there are tiles available.
-     * @param {Object} [layer.metadata] (optional) Arbitrary properties useful to track with the layer, but do not influence rendering.
-     * @param {string} [layer.renderingMode] This is only applicable for layers with the type `custom`.
-     * See {@link CustomLayerInterface} for more information.
-     * @param {string} [beforeId] The ID of an existing layer to insert the new layer before,
+     * @param beforeId - The ID of an existing layer to insert the new layer before,
      * resulting in the new layer appearing visually beneath the existing layer.
      * If this argument is not specified, the layer will be appended to the end of the layers array
      * and appear visually above all other layers.
      *
-     * @returns {Map} `this`
+     * @returns `this`
      *
      * @example
-     * // Add a circle layer with a vector source
+     * Add a circle layer with a vector source
+     * ```ts
      * map.addLayer({
      *   id: 'points-of-interest',
      *   source: {
@@ -53062,9 +53847,11 @@ let Map$1 = class Map extends Camera {
      *     // MapLibre Style Specification layout properties
      *   }
      * });
+     * ```
      *
      * @example
-     * // Define a source before using it to create a new layer
+     * Define a source before using it to create a new layer
+     * ```ts
      * map.addSource('state-data', {
      *   type: 'geojson',
      *   data: 'path/to/data.geojson'
@@ -53082,9 +53869,11 @@ let Map$1 = class Map extends Camera {
      *     text-field: ['get', 'name']
      *   }
      * });
+     * ```
      *
      * @example
-     * // Add a new symbol layer before an existing layer
+     * Add a new symbol layer before an existing layer
+     * ```ts
      * map.addLayer({
      *   id: 'states',
      *   // References a source that's already been defined
@@ -53097,10 +53886,10 @@ let Map$1 = class Map extends Camera {
      *   }
      * // Add the layer before the existing `cities` layer
      * }, 'cities');
-     *
-     * @see [Create and style clusters](https://maplibre.org/maplibre-gl-js-docs/example/cluster/)
-     * @see [Add a vector tile source](https://maplibre.org/maplibre-gl-js-docs/example/vector-source/)
-     * @see [Add a WMS source](https://maplibre.org/maplibre-gl-js-docs/example/wms/)
+     * ```
+     * @see [Create and style clusters](https://maplibre.org/maplibre-gl-js/docs/examples/cluster/)
+     * @see [Add a vector tile source](https://maplibre.org/maplibre-gl-js/docs/examples/vector-source/)
+     * @see [Add a WMS source](https://maplibre.org/maplibre-gl-js/docs/examples/wms/)
      */
     addLayer(layer, beforeId) {
         this._lazyInitEmptyStyle();
@@ -53110,30 +53899,33 @@ let Map$1 = class Map extends Camera {
     /**
      * Moves a layer to a different z-position.
      *
-     * @param {string} id The ID of the layer to move.
-     * @param {string} [beforeId] The ID of an existing layer to insert the new layer before. When viewing the map, the `id` layer will appear beneath the `beforeId` layer. If `beforeId` is omitted, the layer will be appended to the end of the layers array and appear above all other layers on the map.
-     * @returns {Map} `this`
+     * @param id - The ID of the layer to move.
+     * @param beforeId - The ID of an existing layer to insert the new layer before. When viewing the map, the `id` layer will appear beneath the `beforeId` layer. If `beforeId` is omitted, the layer will be appended to the end of the layers array and appear above all other layers on the map.
+     * @returns `this`
      *
      * @example
-     * // Move a layer with ID 'polygon' before the layer with ID 'country-label'. The `polygon` layer will appear beneath the `country-label` layer on the map.
+     * Move a layer with ID 'polygon' before the layer with ID 'country-label'. The `polygon` layer will appear beneath the `country-label` layer on the map.
+     * ```ts
      * map.moveLayer('polygon', 'country-label');
+     * ```
      */
     moveLayer(id, beforeId) {
         this.style.moveLayer(id, beforeId);
         return this._update(true);
     }
-    // eslint-disable-next-line jsdoc/require-returns
     /**
      * Removes the layer with the given ID from the map's style.
      *
-     * If no such layer exists, an `error` event is fired.
+     * An {@link ErrorEvent} will be fired if the image parameter is invald.
      *
-     * @param {string} id id of the layer to remove
-     * @fires error
+     * @param id - The ID of the layer to remove
+     * @returns `this`
      *
      * @example
-     * // If a layer with ID 'state-data' exists, remove it.
+     * If a layer with ID 'state-data' exists, remove it.
+     * ```ts
      * if (map.getLayer('state-data')) map.removeLayer('state-data');
+     * ```
      */
     removeLayer(id) {
         this.style.removeLayer(id);
@@ -53142,23 +53934,24 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the layer with the specified ID in the map's style.
      *
-     * @param {string} id The ID of the layer to get.
-     * @returns {StyleLayer} The layer with the specified ID, or `undefined`
-     *   if the ID corresponds to no existing layers.
+     * @param id - The ID of the layer to get.
+     * @returns The layer with the specified ID, or `undefined`
+     * if the ID corresponds to no existing layers.
      *
      * @example
-     * var stateDataLayer = map.getLayer('state-data');
-     *
-     * @see [Filter symbols by toggling a list](https://maplibre.org/maplibre-gl-js-docs/example/filter-markers/)
-     * @see [Filter symbols by text input](https://maplibre.org/maplibre-gl-js-docs/example/filter-markers-by-input/)
+     * ```ts
+     * let stateDataLayer = map.getLayer('state-data');
+     * ```
+     * @see [Filter symbols by toggling a list](https://maplibre.org/maplibre-gl-js/docs/examples/filter-markers/)
+     * @see [Filter symbols by text input](https://maplibre.org/maplibre-gl-js/docs/examples/filter-markers-by-input/)
      */
     getLayer(id) {
         return this.style.getLayer(id);
     }
     /**
      * Sets the zoom extent for the specified style layer. The zoom extent includes the
-     * [minimum zoom level](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layer-minzoom)
-     * and [maximum zoom level](https://maplibre.org/maplibre-gl-js-docs/style-spec/#layer-maxzoom))
+     * [minimum zoom level](https://maplibre.org/maplibre-style-spec/layers/#minzoom)
+     * and [maximum zoom level](https://maplibre.org/maplibre-style-spec/layers/#maxzoom))
      * at which the layer will be rendered.
      *
      * Note: For style layers using vector sources, style layers cannot be rendered at zoom levels lower than the
@@ -53166,14 +53959,15 @@ let Map$1 = class Map extends Camera {
      * zoom level of the source layer is higher than the minimum zoom level defined in the style layer, the style
      * layer will not be rendered at all zoom levels in the zoom range.
      *
-     * @param {string} layerId The ID of the layer to which the zoom extent will be applied.
-     * @param {number} minzoom The minimum zoom to set (0-24).
-     * @param {number} maxzoom The maximum zoom to set (0-24).
-     * @returns {Map} `this`
+     * @param layerId - The ID of the layer to which the zoom extent will be applied.
+     * @param minzoom - The minimum zoom to set (0-24).
+     * @param maxzoom - The maximum zoom to set (0-24).
+     * @returns `this`
      *
      * @example
+     * ```ts
      * map.setLayerZoomRange('my-layer', 2, 5);
-     *
+     * ```
      */
     setLayerZoomRange(layerId, minzoom, maxzoom) {
         this.style.setLayerZoomRange(layerId, minzoom, maxzoom);
@@ -53190,24 +53984,28 @@ let Map$1 = class Map extends Camera {
      *
      * To clear the filter, pass `null` or `undefined` as the second parameter.
      *
-     * @param {string} layerId The ID of the layer to which the filter will be applied.
-     * @param {Array | null | undefined} filter The filter, conforming to the MapLibre Style Specification's
-     *   [filter definition](https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#filter).  If `null` or `undefined` is provided, the function removes any existing filter from the layer.
-     * @param {Object} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if the filter conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param layerId - The ID of the layer to which the filter will be applied.
+     * @param filter - The filter, conforming to the MapLibre Style Specification's
+     * [filter definition](https://maplibre.org/maplibre-style-spec/layers/#filter).  If `null` or `undefined` is provided, the function removes any existing filter from the layer.
+     * @param options - Options object.
+     * @returns `this`
      *
      * @example
-     * // display only features with the 'name' property 'USA'
+     * Display only features with the 'name' property 'USA'
+     * ```ts
      * map.setFilter('my-layer', ['==', ['get', 'name'], 'USA']);
+     * ```
      * @example
-     * // display only features with five or more 'available-spots'
+     * Display only features with five or more 'available-spots'
+     * ```ts
      * map.setFilter('bike-docks', ['>=', ['get', 'available-spots'], 5]);
+     * ```
      * @example
-     * // remove the filter for the 'bike-docks' style layer
+     * Remove the filter for the 'bike-docks' style layer
+     * ```ts
      * map.setFilter('bike-docks', null);
-     *
-     * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js-docs/example/timeline-animation/)
+     * ```
+     * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js/docs/examples/timeline-animation/)
      */
     setFilter(layerId, filter, options = {}) {
         this.style.setFilter(layerId, filter, options);
@@ -53216,8 +54014,8 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the filter applied to the specified style layer.
      *
-     * @param {string} layerId The ID of the style layer whose filter to get.
-     * @returns {Array} The layer's filter.
+     * @param layerId - The ID of the style layer whose filter to get.
+     * @returns The layer's filter.
      */
     getFilter(layerId) {
         return this.style.getFilter(layerId);
@@ -53225,17 +54023,19 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets the value of a paint property in the specified style layer.
      *
-     * @param {string} layerId The ID of the layer to set the paint property in.
-     * @param {string} name The name of the paint property to set.
-     * @param {*} value The value of the paint property to set.
-     *   Must be of a type appropriate for the property, as defined in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/).
-     * @param {Object} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if `value` conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param layerId - The ID of the layer to set the paint property in.
+     * @param name - The name of the paint property to set.
+     * @param value - The value of the paint property to set.
+     * Must be of a type appropriate for the property, as defined in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+     * Pass `null` to unset the existing value.
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setPaintProperty('my-layer', 'fill-color', '#faafee');
-     * @see [Change a layer's color with buttons](https://maplibre.org/maplibre-gl-js-docs/example/color-switcher/)
-     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-point/)
+     * ```
+     * @see [Change a layer's color with buttons](https://maplibre.org/maplibre-gl-js/docs/examples/color-switcher/)
+     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-point/)
      */
     setPaintProperty(layerId, name, value, options = {}) {
         this.style.setPaintProperty(layerId, name, value, options);
@@ -53244,9 +54044,9 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the value of a paint property in the specified style layer.
      *
-     * @param {string} layerId The ID of the layer to get the paint property from.
-     * @param {string} name The name of a paint property to get.
-     * @returns {*} The value of the specified paint property.
+     * @param layerId - The ID of the layer to get the paint property from.
+     * @param name - The name of a paint property to get.
+     * @returns The value of the specified paint property.
      */
     getPaintProperty(layerId, name) {
         return this.style.getPaintProperty(layerId, name);
@@ -53254,14 +54054,15 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets the value of a layout property in the specified style layer.
      *
-     * @param {string} layerId The ID of the layer to set the layout property in.
-     * @param {string} name The name of the layout property to set.
-     * @param {*} value The value of the layout property. Must be of a type appropriate for the property, as defined in the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/).
-     * @param {Object} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if `value` conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param layerId - The ID of the layer to set the layout property in.
+     * @param name - The name of the layout property to set.
+     * @param value - The value of the layout property. Must be of a type appropriate for the property, as defined in the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/).
+     * @param options - The options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setLayoutProperty('my-layer', 'visibility', 'none');
+     * ```
      */
     setLayoutProperty(layerId, name, value, options = {}) {
         this.style.setLayoutProperty(layerId, name, value, options);
@@ -53270,9 +54071,9 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the value of a layout property in the specified style layer.
      *
-     * @param {string} layerId The ID of the layer to get the layout property from.
-     * @param {string} name The name of the layout property to get.
-     * @returns {*} The value of the specified layout property.
+     * @param layerId - The ID of the layer to get the layout property from.
+     * @param name - The name of the layout property to get.
+     * @returns The value of the specified layout property.
      */
     getLayoutProperty(layerId, name) {
         return this.style.getLayoutProperty(layerId, name);
@@ -53280,12 +54081,13 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets the value of the style's glyphs property.
      *
-     * @param glyphsUrl Glyph URL to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/glyphs/).
-     * @param {StyleSetterOptions} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if the filter conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param glyphsUrl - Glyph URL to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/glyphs/).
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setGlyphs('https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf');
+     * ```
      */
     setGlyphs(glyphsUrl, options = {}) {
         this._lazyInitEmptyStyle();
@@ -53295,21 +54097,22 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the value of the style's glyphs URL
      *
-     * @returns {string | null} glyphs Style's glyphs url
+     * @returns glyphs Style's glyphs url
      */
     getGlyphs() {
         return this.style.getGlyphsUrl();
     }
     /**
-     * Adds a sprite to the map's style.
+     * Adds a sprite to the map's style. Fires the `style` event.
      *
-     * @param {string} id The ID of the sprite to add. Must not conflict with existing sprites.
-     * @param {string} url The URL to load the sprite from
-     * @param {StyleSetterOptions} [options] Options object.
-     * @fires style
-     * @returns {Map} `this`
+     * @param id - The ID of the sprite to add. Must not conflict with existing sprites.
+     * @param url - The URL to load the sprite from
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.addSprite('sprite-two', 'http://example.com/sprite-two');
+     * ```
      */
     addSprite(id, url, options = {}) {
         this._lazyInitEmptyStyle();
@@ -53321,15 +54124,15 @@ let Map$1 = class Map extends Camera {
         return this;
     }
     /**
-     * Removes the sprite from the map's style.
+     * Removes the sprite from the map's style. Fires the `style` event.
      *
-     * @param {string} id The ID of the sprite to remove. If the sprite is declared as a single URL, the ID must be "default".
-     * @fires style
-     * @returns {Map} `this`
+     * @param id - The ID of the sprite to remove. If the sprite is declared as a single URL, the ID must be "default".
+     * @returns `this`
      * @example
+     * ```ts
      * map.removeSprite('sprite-two');
-     * @example
      * map.removeSprite('default');
+     * ```
      */
     removeSprite(id) {
         this._lazyInitEmptyStyle();
@@ -53339,7 +54142,7 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the as-is value of the style's sprite.
      *
-     * @returns {SpriteSpecification | undefined} style's sprite url or a list of id-url pairs
+     * @returns style's sprite list of id-url pairs
      */
     getSprite() {
         return this.style.getSprite();
@@ -53347,12 +54150,13 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets the value of the style's sprite property.
      *
-     * @param spriteUrl Sprite URL to set.
-     * @param {StyleSetterOptions} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if the filter conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param spriteUrl - Sprite URL to set.
+     * @param options - Options object.
+     * @returns `this`
      * @example
+     * ```ts
      * map.setSprite('YOUR_SPRITE_URL');
+     * ```
      */
     setSprite(spriteUrl, options = {}) {
         this._lazyInitEmptyStyle();
@@ -53366,12 +54170,14 @@ let Map$1 = class Map extends Camera {
     /**
      * Sets the any combination of light values.
      *
-     * @param light Light properties to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/#light).
-     * @param {Object} [options] Options object.
-     * @param {boolean} [options.validate=true] Whether to check if the filter conforms to the MapLibre GL Style Specification. Disabling validation is a performance optimization that should only be used if you have previously validated the values you will be passing to this function.
-     * @returns {Map} `this`
+     * @param light - Light properties to set. Must conform to the [MapLibre Style Specification](https://maplibre.org/maplibre-style-spec/light).
+     * @param options - Options object.
+     * @returns `this`
+     *
      * @example
-     * var layerVisibility = map.getLayoutProperty('my-layer', 'visibility');
+     * ```ts
+     * let layerVisibility = map.getLayoutProperty('my-layer', 'visibility');
+     * ```
      */
     setLight(light, options = {}) {
         this._lazyInitEmptyStyle();
@@ -53381,12 +54187,11 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the value of the light object.
      *
-     * @returns {Object} light Light properties of the style.
+     * @returns light Light properties of the style.
      */
     getLight() {
         return this.style.getLight();
     }
-    // eslint-disable-next-line jsdoc/require-returns
     /**
      * Sets the `state` of a feature.
      * A feature's `state` is a set of user-defined key-value pairs that are assigned to a feature at runtime.
@@ -53395,19 +54200,18 @@ let Map$1 = class Map extends Camera {
      *
      * This method can only be used with sources that have a `feature.id` attribute. The `feature.id` attribute can be defined in three ways:
      * - For vector or GeoJSON sources, including an `id` attribute in the original data file.
-     * - For vector or GeoJSON sources, using the [`promoteId`](https://maplibre.org/maplibre-gl-js-docs/style-spec/sources/#vector-promoteId) option at the time the source is defined.
-     * - For GeoJSON sources, using the [`generateId`](https://maplibre.org/maplibre-gl-js-docs/style-spec/sources/#geojson-generateId) option to auto-assign an `id` based on the feature's index in the source data. If you change feature data using `map.getSource('some id').setData(..)`, you may need to re-apply state taking into account updated `id` values.
+     * - For vector or GeoJSON sources, using the [`promoteId`](https://maplibre.org/maplibre-style-spec/sources/#vector-promoteId) option at the time the source is defined.
+     * - For GeoJSON sources, using the [`generateId`](https://maplibre.org/maplibre-style-spec/sources/#geojson-generateId) option to auto-assign an `id` based on the feature's index in the source data. If you change feature data using `map.getSource('some id').setData(..)`, you may need to re-apply state taking into account updated `id` values.
      *
-     * _Note: You can use the [`feature-state` expression](https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#feature-state) to access the values in a feature's state object for the purposes of styling._
+     * _Note: You can use the [`feature-state` expression](https://maplibre.org/maplibre-style-spec/expressions/#feature-state) to access the values in a feature's state object for the purposes of styling._
      *
-     * @param {Object} feature Feature identifier. Feature objects returned from
+     * @param feature - Feature identifier. Feature objects returned from
      * {@link Map#queryRenderedFeatures} or event handlers can be used as feature identifiers.
-     * @param {string | number} feature.id Unique id of the feature.
-     * @param {string} feature.source The id of the vector or GeoJSON source for the feature.
-     * @param {string} [feature.sourceLayer] (optional) *For vector tile sources, `sourceLayer` is required.*
-     * @param {Object} state A set of key-value pairs. The values should be valid JSON types.
+     * @param state - A set of key-value pairs. The values should be valid JSON types.
+     * @returns `this`
      *
      * @example
+     * ```ts
      * // When the mouse moves over the `my-layer` layer, update
      * // the feature state for the feature under the mouse
      * map.on('mousemove', 'my-layer', function(e) {
@@ -53421,14 +54225,13 @@ let Map$1 = class Map extends Camera {
      *     });
      *   }
      * });
-     *
-     * @see [Create a hover effect](https://maplibre.org/maplibre-gl-js-docs/example/hover-styles/)
+     * ```
+     * @see [Create a hover effect](https://maplibre.org/maplibre-gl-js/docs/examples/hover-styles/)
      */
     setFeatureState(feature, state) {
         this.style.setFeatureState(feature, state);
         return this._update();
     }
-    // eslint-disable-next-line jsdoc/require-returns
     /**
      * Removes the `state` of a feature, setting it back to the default behavior.
      * If only a `target.source` is specified, it will remove the state for all features from that source.
@@ -53436,24 +54239,23 @@ let Map$1 = class Map extends Camera {
      * If `key` is also specified, it removes only that key from that feature's state.
      * Features are identified by their `feature.id` attribute, which can be any number or string.
      *
-     * @param {Object} target Identifier of where to remove state. It can be a source, a feature, or a specific key of feature.
+     * @param target - Identifier of where to remove state. It can be a source, a feature, or a specific key of feature.
      * Feature objects returned from {@link Map#queryRenderedFeatures} or event handlers can be used as feature identifiers.
-     * @param {string | number} target.id (optional) Unique id of the feature. Optional if key is not specified.
-     * @param {string} target.source The id of the vector or GeoJSON source for the feature.
-     * @param {string} [target.sourceLayer] (optional) *For vector tile sources, `sourceLayer` is required.*
-     * @param {string} key (optional) The key in the feature state to reset.
-     *
+     * @param key - (optional) The key in the feature state to reset.
+     * @returns `this`
      * @example
-     * // Reset the entire state object for all features
-     * // in the `my-source` source
+     * Reset the entire state object for all features in the `my-source` source
+     * ```ts
      * map.removeFeatureState({
      *   source: 'my-source'
      * });
+     * ```
      *
      * @example
-     * // When the mouse leaves the `my-layer` layer,
-     * // reset the entire state object for the
-     * // feature under the mouse
+     * When the mouse leaves the `my-layer` layer,
+     * reset the entire state object for the
+     * feature under the mouse
+     * ```ts
      * map.on('mouseleave', 'my-layer', function(e) {
      *   map.removeFeatureState({
      *     source: 'my-source',
@@ -53461,11 +54263,13 @@ let Map$1 = class Map extends Camera {
      *     id: e.features[0].id
      *   });
      * });
+     * ```
      *
      * @example
-     * // When the mouse leaves the `my-layer` layer,
-     * // reset only the `hover` key-value pair in the
-     * // state for the feature under the mouse
+     * When the mouse leaves the `my-layer` layer,
+     * reset only the `hover` key-value pair in the
+     * state for the feature under the mouse
+     * ```ts
      * map.on('mouseleave', 'my-layer', function(e) {
      *   map.removeFeatureState({
      *     source: 'my-source',
@@ -53473,7 +54277,7 @@ let Map$1 = class Map extends Camera {
      *     id: e.features[0].id
      *   }, 'hover');
      * });
-     *
+     * ```
      */
     removeFeatureState(target, key) {
         this.style.removeFeatureState(target, key);
@@ -53484,19 +54288,16 @@ let Map$1 = class Map extends Camera {
      * A feature's `state` is a set of user-defined key-value pairs that are assigned to a feature at runtime.
      * Features are identified by their `feature.id` attribute, which can be any number or string.
      *
-     * _Note: To access the values in a feature's state object for the purposes of styling the feature, use the [`feature-state` expression](https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#feature-state)._
+     * _Note: To access the values in a feature's state object for the purposes of styling the feature, use the [`feature-state` expression](https://maplibre.org/maplibre-style-spec/expressions/#feature-state)._
      *
-     * @param {Object} feature Feature identifier. Feature objects returned from
+     * @param feature - Feature identifier. Feature objects returned from
      * {@link Map#queryRenderedFeatures} or event handlers can be used as feature identifiers.
-     * @param {string | number} feature.id Unique id of the feature.
-     * @param {string} feature.source The id of the vector or GeoJSON source for the feature.
-     * @param {string} [feature.sourceLayer] (optional) *For vector tile sources, `sourceLayer` is required.*
-     *
-     * @returns {Object} The state of the feature: a set of key-value pairs that was assigned to the feature at runtime.
+     * @returns The state of the feature: a set of key-value pairs that was assigned to the feature at runtime.
      *
      * @example
-     * // When the mouse moves over the `my-layer` layer,
-     * // get the feature state for the feature under the mouse
+     * When the mouse moves over the `my-layer` layer,
+     * get the feature state for the feature under the mouse
+     * ```ts
      * map.on('mousemove', 'my-layer', function(e) {
      *   if (e.features.length > 0) {
      *     map.getFeatureState({
@@ -53506,7 +54307,7 @@ let Map$1 = class Map extends Camera {
      *     });
      *   }
      * });
-     *
+     * ```
      */
     getFeatureState(feature) {
         return this.style.getFeatureState(feature);
@@ -53514,7 +54315,7 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's containing HTML element.
      *
-     * @returns {HTMLElement} The map's container.
+     * @returns The map's container.
      */
     getContainer() {
         return this._container;
@@ -53528,8 +54329,8 @@ let Map$1 = class Map extends Camera {
      * attached. It will receive bubbled events from child elements such as the `<canvas>`, but not from
      * map controls.
      *
-     * @returns {HTMLElement} The container of the map's `<canvas>`.
-     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-point/)
+     * @returns The container of the map's `<canvas>`.
+     * @see [Create a draggable point](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-point/)
      */
     getCanvasContainer() {
         return this._canvasContainer;
@@ -53537,10 +54338,10 @@ let Map$1 = class Map extends Camera {
     /**
      * Returns the map's `<canvas>` element.
      *
-     * @returns {HTMLCanvasElement} The map's `<canvas>` element.
-     * @see [Measure distances](https://maplibre.org/maplibre-gl-js-docs/example/measure/)
-     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-hover/)
-     * @see [Center the map on a clicked symbol](https://maplibre.org/maplibre-gl-js-docs/example/center-on-symbol/)
+     * @returns The map's `<canvas>` element.
+     * @see [Measure distances](https://maplibre.org/maplibre-gl-js/docs/examples/measure/)
+     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-hover/)
+     * @see [Center the map on a clicked symbol](https://maplibre.org/maplibre-gl-js/docs/examples/center-on-symbol/)
      */
     getCanvas() {
         return this._canvas;
@@ -53568,16 +54369,14 @@ let Map$1 = class Map extends Camera {
         this._canvas.setAttribute('aria-label', 'Map');
         this._canvas.setAttribute('role', 'region');
         const dimensions = this._containerDimensions();
-        this._resizeCanvas(dimensions[0], dimensions[1], this.getPixelRatio());
+        const clampedPixelRatio = this._getClampedPixelRatio(dimensions[0], dimensions[1]);
+        this._resizeCanvas(dimensions[0], dimensions[1], clampedPixelRatio);
         const controlContainer = this._controlContainer = DOM.create('div', 'maplibregl-control-container', container);
         const positions = this._controlPositions = {};
         ['top-left', 'top-right', 'bottom-left', 'bottom-right'].forEach((positionName) => {
             positions[positionName] = DOM.create('div', `maplibregl-ctrl-${positionName} `, controlContainer);
         });
         this._container.addEventListener('scroll', this._onMapScroll, false);
-    }
-    _cooperativeGesturesOnWheel(event) {
-        this._onCooperativeGesture(event, event[this._metaKey], 1);
     }
     _setupCooperativeGestures() {
         const container = this._container;
@@ -53591,6 +54390,8 @@ let Map$1 = class Map extends Camera {
             <div class="maplibregl-desktop-message">${desktopMessage}</div>
             <div class="maplibregl-mobile-message">${mobileMessage}</div>
         `;
+        // Remove cooperative gesture screen from the accessibility tree since screenreaders cannot interact with the map using gestures
+        this._cooperativeGesturesScreen.setAttribute('aria-hidden', 'true');
         // Add event to canvas container since gesture container is pointer-events: none
         this._canvasContainer.addEventListener('wheel', this._cooperativeGesturesOnWheel, false);
         // Add a cooperative gestures class (enable touch-action: pan-x pan-y;)
@@ -53603,18 +54404,21 @@ let Map$1 = class Map extends Camera {
     }
     _resizeCanvas(width, height, pixelRatio) {
         // Request the required canvas size taking the pixelratio into account.
-        this._canvas.width = pixelRatio * width;
-        this._canvas.height = pixelRatio * height;
+        this._canvas.width = Math.floor(pixelRatio * width);
+        this._canvas.height = Math.floor(pixelRatio * height);
         // Maintain the same canvas size, potentially downscaling it for HiDPI displays
         this._canvas.style.width = `${width}px`;
         this._canvas.style.height = `${height}px`;
     }
     _setupPainter() {
-        const attributes = performance.extend({}, supported.webGLContextAttributes, {
+        const attributes = {
+            alpha: true,
+            stencil: true,
+            depth: true,
             failIfMajorPerformanceCaveat: this._failIfMajorPerformanceCaveat,
             preserveDrawingBuffer: this._preserveDrawingBuffer,
             antialias: this._antialias || false
-        });
+        };
         let webglcontextcreationerrorDetailObject = null;
         this._canvas.addEventListener('webglcontextcreationerror', (args) => {
             webglcontextcreationerrorDetailObject = { requestedAttributes: attributes };
@@ -53623,8 +54427,8 @@ let Map$1 = class Map extends Camera {
                 webglcontextcreationerrorDetailObject.type = args.type;
             }
         }, { once: true });
-        const gl = this._canvas.getContext('webgl', attributes) ||
-            this._canvas.getContext('experimental-webgl', attributes);
+        const gl = this._canvas.getContext('webgl2', attributes) ||
+            this._canvas.getContext('webgl', attributes);
         if (!gl) {
             const msg = 'Failed to initialize WebGL';
             if (webglcontextcreationerrorDetailObject) {
@@ -53636,29 +54440,7 @@ let Map$1 = class Map extends Camera {
             }
         }
         this.painter = new Painter(gl, this.transform);
-        exported$1.testSupport(gl);
-    }
-    _contextLost(event) {
-        event.preventDefault();
-        if (this._frame) {
-            this._frame.cancel();
-            this._frame = null;
-        }
-        this.fire(new performance.Event('webglcontextlost', { originalEvent: event }));
-    }
-    _contextRestored(event) {
-        this._setupPainter();
-        this.resize();
-        this._update();
-        this.fire(new performance.Event('webglcontextrestored', { originalEvent: event }));
-    }
-    _onMapScroll(event) {
-        if (event.target !== this._container)
-            return;
-        // Revert any scroll which would move the canvas outside of the view
-        this._container.scrollTop = 0;
-        this._container.scrollLeft = 0;
-        return false;
+        webpSupported.testSupport(gl);
     }
     _onCooperativeGesture(event, metaPress, touches) {
         if (!metaPress && touches < 2) {
@@ -53677,21 +54459,21 @@ let Map$1 = class Map extends Camera {
      * or if there has been a change to the sources or style that
      * has not yet fully loaded.
      *
-     * @returns {boolean} A Boolean indicating whether the map is fully loaded.
+     * @returns A Boolean indicating whether the map is fully loaded.
      */
     loaded() {
         return !this._styleDirty && !this._sourcesDirty && !!this.style && this.style.loaded();
     }
     /**
+     * @internal
      * Update this map's style and sources, and re-render the map.
      *
-     * @param {boolean} updateStyle mark the map's style for reprocessing as
+     * @param updateStyle - mark the map's style for reprocessing as
      * well as its sources
-     * @returns {Map} this
-     * @private
+     * @returns `this`
      */
     _update(updateStyle) {
-        if (!this.style)
+        if (!this.style || !this.style._loaded)
             return this;
         this._styleDirty = this._styleDirty || updateStyle;
         this._sourcesDirty = true;
@@ -53699,10 +54481,11 @@ let Map$1 = class Map extends Camera {
         return this;
     }
     /**
+     * @internal
      * Request that the given callback be executed during the next render
      * frame.  Schedule a render frame if one is not already scheduled.
+     *
      * @returns An id that can be used to cancel the callback
-     * @private
      */
     _requestRenderFrame(callback) {
         this._update();
@@ -53712,25 +54495,19 @@ let Map$1 = class Map extends Camera {
         this._renderTaskQueue.remove(id);
     }
     /**
+     * @internal
      * Call when a (re-)render of the map is required:
      * - The style has changed (`setPaintProperty()`, etc.)
      * - Source data has changed (e.g. tiles have finished loading)
      * - The map has is moving (or just finished moving)
      * - A transition is in progress
      *
-     * @param {number} paintStartTimeStamp  The time when the animation frame began executing.
+     * @param paintStartTimeStamp - The time when the animation frame began executing.
      *
-     * @returns {Map} this
-     * @private
+     * @returns `this`
      */
     _render(paintStartTimeStamp) {
-        let gpuTimer, frameStartTime = 0;
-        const extTimerQuery = this.painter.context.extTimerQuery;
-        if (this.listens('gpu-timing-frame')) {
-            gpuTimer = extTimerQuery.createQueryEXT();
-            extTimerQuery.beginQueryEXT(extTimerQuery.TIME_ELAPSED_EXT, gpuTimer);
-            frameStartTime = performance.exported.now();
-        }
+        const fadeDuration = this._idleTriggered ? this._fadeDuration : 0;
         // A custom layer may have used the context asynchronously. Mark the state as dirty.
         this.painter.context.setDirty();
         this.painter.setBaseState();
@@ -53745,11 +54522,11 @@ let Map$1 = class Map extends Camera {
         if (this.style && this._styleDirty) {
             this._styleDirty = false;
             const zoom = this.transform.zoom;
-            const now = performance.exported.now();
+            const now = performance.browser.now();
             this.style.zoomHistory.update(zoom, now);
             const parameters = new performance.EvaluationParameters(zoom, {
                 now,
-                fadeDuration: this._fadeDuration,
+                fadeDuration,
                 zoomHistory: this.style.zoomHistory,
                 transition: this.style.getTransition()
             });
@@ -53768,18 +54545,18 @@ let Map$1 = class Map extends Camera {
             this.style._updateSources(this.transform);
         }
         // update terrain stuff
-        if (this.terrain)
+        if (this.terrain) {
             this.terrain.sourceCache.update(this.transform, this.terrain);
-        this.transform.updateElevation(this.terrain);
-        // a bit of counter intuitive:
-        // - when map is moving (throttled) image queue does not auto advance so need manually process it for each render
-        // or it may miss raster tiles.
-        // - when not moving (initial load or changing styles), image queue is self-driven to finish. manual process
-        // is not doing anything but wasting time.
-        if (this.isMoving()) {
-            ImageRequest$1.processQueue();
+            this.transform._minEleveationForCurrentTile = this.terrain.getMinTileElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            if (!this._elevationFreeze) {
+                this.transform.elevation = this.terrain.getElevationForLngLatZoom(this.transform.center, this.transform.tileZoom);
+            }
         }
-        this._placementDirty = this.style && this.style._updatePlacement(this.painter.transform, this.showCollisionBoxes, this._fadeDuration, this._crossSourceCollisions);
+        else {
+            this.transform._minEleveationForCurrentTile = 0;
+            this.transform.elevation = 0;
+        }
+        this._placementDirty = this.style && this.style._updatePlacement(this.painter.transform, this.showCollisionBoxes, fadeDuration, this._crossSourceCollisions);
         // Actually draw
         this.painter.render(this.style, {
             showTileBoundaries: this.showTileBoundaries,
@@ -53787,9 +54564,8 @@ let Map$1 = class Map extends Camera {
             rotating: this.isRotating(),
             zooming: this.isZooming(),
             moving: this.isMoving(),
-            fadeDuration: this._fadeDuration,
+            fadeDuration,
             showPadding: this.showPadding,
-            gpuTiming: !!this.listens('gpu-timing-layer'),
         });
         this.fire(new performance.Event('render'));
         if (this.loaded() && !this._loaded) {
@@ -53805,29 +54581,6 @@ let Map$1 = class Map extends Camera {
             // all tiles held for fading. If we didn't do this, the tiles
             // would just sit in the SourceCaches until the next render
             this.style._releaseSymbolFadeTiles();
-        }
-        if (this.listens('gpu-timing-frame')) {
-            const renderCPUTime = performance.exported.now() - frameStartTime;
-            extTimerQuery.endQueryEXT(extTimerQuery.TIME_ELAPSED_EXT, gpuTimer);
-            setTimeout(() => {
-                const renderGPUTime = extTimerQuery.getQueryObjectEXT(gpuTimer, extTimerQuery.QUERY_RESULT_EXT) / (1000 * 1000);
-                extTimerQuery.deleteQueryEXT(gpuTimer);
-                this.fire(new performance.Event('gpu-timing-frame', {
-                    cpuTime: renderCPUTime,
-                    gpuTime: renderGPUTime
-                }));
-            }, 50); // Wait 50ms to give time for all GPU calls to finish before querying
-        }
-        if (this.listens('gpu-timing-layer')) {
-            // Resetting the Painter's per-layer timing queries here allows us to isolate
-            // the queries to individual frames.
-            const frameLayerQueries = this.painter.collectGpuTimers();
-            setTimeout(() => {
-                const renderedLayerTimes = this.painter.queryGpuTimers(frameLayerQueries);
-                this.fire(new performance.Event('gpu-timing-layer', {
-                    layerTimes: renderedLayerTimes
-                }));
-            }, 50); // Wait 50ms to give time for all GPU calls to finish before querying
         }
         // Schedule another render frame if it's needed.
         //
@@ -53849,9 +54602,11 @@ let Map$1 = class Map extends Camera {
     }
     /**
      * Force a synchronous redraw of the map.
+     * @returns `this`
      * @example
+     * ```ts
      * map.redraw();
-     * @returns {Map} `this`
+     * ```
      */
     redraw() {
         if (this.style) {
@@ -53892,7 +54647,7 @@ let Map$1 = class Map extends Camera {
         if (typeof window !== 'undefined') {
             removeEventListener('online', this._onWindowOnline, false);
         }
-        ImageRequest$1.removeThrottleControl(this._imageQueueHandle);
+        ImageRequest.removeThrottleControl(this._imageQueueHandle);
         (_a = this._resizeObserver) === null || _a === void 0 ? void 0 : _a.disconnect();
         const extension = this.painter.context.gl.getExtension('WEBGL_lose_context');
         if (extension)
@@ -53914,21 +54669,20 @@ let Map$1 = class Map extends Camera {
      * repaint the map when the layer changes. Calling this multiple times before the
      * next frame is rendered will still result in only a single frame being rendered.
      * @example
+     * ```ts
      * map.triggerRepaint();
-     * @see [Add a 3D model](https://maplibre.org/maplibre-gl-js-docs/example/add-3d-model/)
-     * @see [Add an animated icon to the map](https://maplibre.org/maplibre-gl-js-docs/example/add-image-animated/)
+     * ```
+     * @see [Add a 3D model](https://maplibre.org/maplibre-gl-js/docs/examples/add-3d-model/)
+     * @see [Add an animated icon to the map](https://maplibre.org/maplibre-gl-js/docs/examples/add-image-animated/)
      */
     triggerRepaint() {
         if (this.style && !this._frame) {
-            this._frame = performance.exported.frame((paintStartTimeStamp) => {
+            this._frame = performance.browser.frame((paintStartTimeStamp) => {
                 performance.PerformanceUtils.frame(paintStartTimeStamp);
                 this._frame = null;
                 this._render(paintStartTimeStamp);
             });
         }
-    }
-    _onWindowOnline() {
-        this._update();
     }
     /**
      * Gets and sets a Boolean indicating whether the map will render an outline
@@ -53938,12 +54692,10 @@ let Map$1 = class Map extends Camera {
      * The uncompressed file size of the first vector source is drawn in the top left
      * corner of each tile, next to the tile ID.
      *
-     * @name showTileBoundaries
-     * @type {boolean}
-     * @instance
-     * @memberof Map
      * @example
+     * ```ts
      * map.showTileBoundaries = true;
+     * ```
      */
     get showTileBoundaries() { return !!this._showTileBoundaries; }
     set showTileBoundaries(value) {
@@ -53955,11 +54707,6 @@ let Map$1 = class Map extends Camera {
     /**
      * Gets and sets a Boolean indicating whether the map will visualize
      * the padding offsets.
-     *
-     * @name showPadding
-     * @type {boolean}
-     * @instance
-     * @memberof Map
      */
     get showPadding() { return !!this._showPadding; }
     set showPadding(value) {
@@ -53973,11 +54720,6 @@ let Map$1 = class Map extends Camera {
      * around all symbols in the data source, revealing which symbols
      * were rendered or which were hidden due to collisions.
      * This information is useful for debugging.
-     *
-     * @name showCollisionBoxes
-     * @type {boolean}
-     * @instance
-     * @memberof Map
      */
     get showCollisionBoxes() { return !!this._showCollisionBoxes; }
     set showCollisionBoxes(value) {
@@ -53994,17 +54736,12 @@ let Map$1 = class Map extends Camera {
             this._update();
         }
     }
-    /*
+    /**
      * Gets and sets a Boolean indicating whether the map should color-code
      * each fragment to show how many times it has been shaded.
      * White fragments have been shaded 8 or more times.
      * Black fragments have been shaded 0 times.
      * This information is useful for debugging.
-     *
-     * @name showOverdraw
-     * @type {boolean}
-     * @instance
-     * @memberof Map
      */
     get showOverdrawInspector() { return !!this._showOverdrawInspector; }
     set showOverdrawInspector(value) {
@@ -54016,11 +54753,6 @@ let Map$1 = class Map extends Camera {
     /**
      * Gets and sets a Boolean indicating whether the map will
      * continuously repaint. This information is useful for analyzing performance.
-     *
-     * @name repaint
-     * @type {boolean}
-     * @instance
-     * @memberof Map
      */
     get repaint() { return !!this._repaint; }
     set repaint(value) {
@@ -54034,7 +54766,7 @@ let Map$1 = class Map extends Camera {
     set vertices(value) { this._vertices = value; this._update(); }
     /**
      * Returns the package version of the library
-     * @returns {string} Package version of the library
+     * @returns Package version of the library
      */
     get version() {
         return version$1;
@@ -54043,7 +54775,7 @@ let Map$1 = class Map extends Camera {
      * Returns the elevation for the point where the camera is looking.
      * This value corresponds to:
      * "meters above sea level" * "exaggeration"
-     * @returns {number} * The elevation.
+     * @returns The elevation.
      */
     getCameraTargetElevation() {
         return this.transform.elevation;
@@ -54084,36 +54816,50 @@ const defaultOptions$3 = {
 /**
  * A `NavigationControl` control contains zoom buttons and a compass.
  *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {Boolean} [options.showCompass=true] If `true` the compass button is included.
- * @param {Boolean} [options.showZoom=true] If `true` the zoom-in and zoom-out buttons are included.
- * @param {Boolean} [options.visualizePitch=false] If `true` the pitch is visualized by rotating X-axis of compass.
+ * @group Markers and Controls
+ *
  * @example
- * var nav = new maplibregl.NavigationControl();
+ * ```ts
+ * let nav = new maplibregl.NavigationControl();
  * map.addControl(nav, 'top-left');
- * @see [Display map navigation controls](https://maplibre.org/maplibre-gl-js-docs/example/navigation/)
- * @see [Add a third party vector tile source](https://maplibre.org/maplibre-gl-js-docs/example/third-party/)
+ * ```
+ * @see [Display map navigation controls](https://maplibre.org/maplibre-gl-js/docs/examples/navigation/)
  */
 class NavigationControl {
+    /**
+     * @param options - the control's options
+     */
     constructor(options) {
+        this._updateZoomButtons = () => {
+            const zoom = this._map.getZoom();
+            const isMax = zoom === this._map.getMaxZoom();
+            const isMin = zoom === this._map.getMinZoom();
+            this._zoomInButton.disabled = isMax;
+            this._zoomOutButton.disabled = isMin;
+            this._zoomInButton.setAttribute('aria-disabled', isMax.toString());
+            this._zoomOutButton.setAttribute('aria-disabled', isMin.toString());
+        };
+        this._rotateCompassArrow = () => {
+            const rotate = this.options.visualizePitch ?
+                `scale(${1 / Math.pow(Math.cos(this._map.transform.pitch * (Math.PI / 180)), 0.5)}) rotateX(${this._map.transform.pitch}deg) rotateZ(${this._map.transform.angle * (180 / Math.PI)}deg)` :
+                `rotate(${this._map.transform.angle * (180 / Math.PI)}deg)`;
+            this._compassIcon.style.transform = rotate;
+        };
+        this._setButtonTitle = (button, title) => {
+            const str = this._map._getUIString(`NavigationControl.${title}`);
+            button.title = str;
+            button.setAttribute('aria-label', str);
+        };
         this.options = performance.extend({}, defaultOptions$3, options);
         this._container = DOM.create('div', 'maplibregl-ctrl maplibregl-ctrl-group');
         this._container.addEventListener('contextmenu', (e) => e.preventDefault());
         if (this.options.showZoom) {
-            performance.bindAll([
-                '_setButtonTitle',
-                '_updateZoomButtons'
-            ], this);
             this._zoomInButton = this._createButton('maplibregl-ctrl-zoom-in', (e) => this._map.zoomIn({}, { originalEvent: e }));
             DOM.create('span', 'maplibregl-ctrl-icon', this._zoomInButton).setAttribute('aria-hidden', 'true');
             this._zoomOutButton = this._createButton('maplibregl-ctrl-zoom-out', (e) => this._map.zoomOut({}, { originalEvent: e }));
             DOM.create('span', 'maplibregl-ctrl-icon', this._zoomOutButton).setAttribute('aria-hidden', 'true');
         }
         if (this.options.showCompass) {
-            performance.bindAll([
-                '_rotateCompassArrow'
-            ], this);
             this._compass = this._createButton('maplibregl-ctrl-compass', (e) => {
                 if (this.options.visualizePitch) {
                     this._map.resetNorthPitch({}, { originalEvent: e });
@@ -54125,21 +54871,6 @@ class NavigationControl {
             this._compassIcon = DOM.create('span', 'maplibregl-ctrl-icon', this._compass);
             this._compassIcon.setAttribute('aria-hidden', 'true');
         }
-    }
-    _updateZoomButtons() {
-        const zoom = this._map.getZoom();
-        const isMax = zoom === this._map.getMaxZoom();
-        const isMin = zoom === this._map.getMinZoom();
-        this._zoomInButton.disabled = isMax;
-        this._zoomOutButton.disabled = isMin;
-        this._zoomInButton.setAttribute('aria-disabled', isMax.toString());
-        this._zoomOutButton.setAttribute('aria-disabled', isMin.toString());
-    }
-    _rotateCompassArrow() {
-        const rotate = this.options.visualizePitch ?
-            `scale(${1 / Math.pow(Math.cos(this._map.transform.pitch * (Math.PI / 180)), 0.5)}) rotateX(${this._map.transform.pitch}deg) rotateZ(${this._map.transform.angle * (180 / Math.PI)}deg)` :
-            `rotate(${this._map.transform.angle * (180 / Math.PI)}deg)`;
-        this._compassIcon.style.transform = rotate;
     }
     onAdd(map) {
         this._map = map;
@@ -54181,14 +54912,65 @@ class NavigationControl {
         a.addEventListener('click', fn);
         return a;
     }
-    _setButtonTitle(button, title) {
-        const str = this._map._getUIString(`NavigationControl.${title}`);
-        button.title = str;
-        button.setAttribute('aria-label', str);
-    }
 }
 class MouseRotateWrapper {
     constructor(map, element, pitch = false) {
+        this.mousedown = (e) => {
+            this.startMouse(performance.extend({}, e, { ctrlKey: true, preventDefault: () => e.preventDefault() }), DOM.mousePos(this.element, e));
+            DOM.addEventListener(window, 'mousemove', this.mousemove);
+            DOM.addEventListener(window, 'mouseup', this.mouseup);
+        };
+        this.mousemove = (e) => {
+            this.moveMouse(e, DOM.mousePos(this.element, e));
+        };
+        this.mouseup = (e) => {
+            this.mouseRotate.dragEnd(e);
+            if (this.mousePitch)
+                this.mousePitch.dragEnd(e);
+            this.offTemp();
+        };
+        this.touchstart = (e) => {
+            if (e.targetTouches.length !== 1) {
+                this.reset();
+            }
+            else {
+                this._startPos = this._lastPos = DOM.touchPos(this.element, e.targetTouches)[0];
+                this.startTouch(e, this._startPos);
+                DOM.addEventListener(window, 'touchmove', this.touchmove, { passive: false });
+                DOM.addEventListener(window, 'touchend', this.touchend);
+            }
+        };
+        this.touchmove = (e) => {
+            if (e.targetTouches.length !== 1) {
+                this.reset();
+            }
+            else {
+                this._lastPos = DOM.touchPos(this.element, e.targetTouches)[0];
+                this.moveTouch(e, this._lastPos);
+            }
+        };
+        this.touchend = (e) => {
+            if (e.targetTouches.length === 0 &&
+                this._startPos &&
+                this._lastPos &&
+                this._startPos.dist(this._lastPos) < this._clickTolerance) {
+                this.element.click();
+            }
+            delete this._startPos;
+            delete this._lastPos;
+            this.offTemp();
+        };
+        this.reset = () => {
+            this.mouseRotate.reset();
+            if (this.mousePitch)
+                this.mousePitch.reset();
+            this.touchRotate.reset();
+            if (this.touchPitch)
+                this.touchPitch.reset();
+            delete this._startPos;
+            delete this._lastPos;
+            this.offTemp();
+        };
         this._clickTolerance = 10;
         const mapRotateTolerance = map.dragRotate._mouseRotate.getClickTolerance();
         const mapPitchTolerance = map.dragRotate._mousePitch.getClickTolerance();
@@ -54200,7 +54982,6 @@ class MouseRotateWrapper {
             this.mousePitch = generateMousePitchHandler({ clickTolerance: mapPitchTolerance, enable: true });
             this.touchPitch = generateOneFingerTouchPitchHandler({ clickTolerance: mapPitchTolerance, enable: true });
         }
-        performance.bindAll(['mousedown', 'mousemove', 'mouseup', 'touchstart', 'touchmove', 'touchend', 'reset'], this);
         DOM.addEventListener(element, 'mousedown', this.mousedown);
         DOM.addEventListener(element, 'touchstart', this.touchstart, { passive: false });
         DOM.addEventListener(element, 'touchcancel', this.reset);
@@ -54255,61 +55036,30 @@ class MouseRotateWrapper {
         DOM.removeEventListener(window, 'touchmove', this.touchmove, { passive: false });
         DOM.removeEventListener(window, 'touchend', this.touchend);
     }
-    mousedown(e) {
-        this.startMouse(performance.extend({}, e, { ctrlKey: true, preventDefault: () => e.preventDefault() }), DOM.mousePos(this.element, e));
-        DOM.addEventListener(window, 'mousemove', this.mousemove);
-        DOM.addEventListener(window, 'mouseup', this.mouseup);
+}
+
+let supportsGeolocation;
+function checkGeolocationSupport(callback, forceRecalculation = false) {
+    if (supportsGeolocation !== undefined && !forceRecalculation) {
+        callback(supportsGeolocation);
     }
-    mousemove(e) {
-        this.moveMouse(e, DOM.mousePos(this.element, e));
+    else if (window.navigator.permissions !== undefined) {
+        // navigator.permissions has incomplete browser support
+        // http://caniuse.com/#feat=permissions-api
+        // Test for the case where a browser disables Geolocation because of an
+        // insecure origin
+        window.navigator.permissions.query({ name: 'geolocation' }).then((p) => {
+            supportsGeolocation = p.state !== 'denied';
+            callback(supportsGeolocation);
+        }).catch(() => {
+            // Fix for iOS16 which rejects query but still supports geolocation
+            supportsGeolocation = !!window.navigator.geolocation;
+            callback(supportsGeolocation);
+        });
     }
-    mouseup(e) {
-        this.mouseRotate.dragEnd(e);
-        if (this.mousePitch)
-            this.mousePitch.dragEnd(e);
-        this.offTemp();
-    }
-    touchstart(e) {
-        if (e.targetTouches.length !== 1) {
-            this.reset();
-        }
-        else {
-            this._startPos = this._lastPos = DOM.touchPos(this.element, e.targetTouches)[0];
-            this.startTouch(e, this._startPos);
-            DOM.addEventListener(window, 'touchmove', this.touchmove, { passive: false });
-            DOM.addEventListener(window, 'touchend', this.touchend);
-        }
-    }
-    touchmove(e) {
-        if (e.targetTouches.length !== 1) {
-            this.reset();
-        }
-        else {
-            this._lastPos = DOM.touchPos(this.element, e.targetTouches)[0];
-            this.moveTouch(e, this._lastPos);
-        }
-    }
-    touchend(e) {
-        if (e.targetTouches.length === 0 &&
-            this._startPos &&
-            this._lastPos &&
-            this._startPos.dist(this._lastPos) < this._clickTolerance) {
-            this.element.click();
-        }
-        delete this._startPos;
-        delete this._lastPos;
-        this.offTemp();
-    }
-    reset() {
-        this.mouseRotate.reset();
-        if (this.mousePitch)
-            this.mousePitch.reset();
-        this.touchRotate.reset();
-        if (this.touchPitch)
-            this.touchPitch.reset();
-        delete this._startPos;
-        delete this._lastPos;
-        this.offTemp();
+    else {
+        supportsGeolocation = !!window.navigator.geolocation;
+        callback(supportsGeolocation);
     }
 }
 
@@ -54325,8 +55075,6 @@ class MouseRotateWrapper {
  * possible; they should avoid shifting large distances across the screen, even when the
  * map center changes by ±360° due to automatic wrapping, and when about to go off screen,
  * should wrap just enough to avoid doing so.
- *
- * @private
  */
 function smartWrap(lngLat, priorPos, transform) {
     lngLat = new performance.LngLat(lngLat.lng, lngLat.lat);
@@ -54382,48 +55130,153 @@ function applyAnchorClass(element, anchor, prefix) {
 
 /**
  * Creates a marker component
- * @param {Object} [options]
- * @param {HTMLElement} [options.element] DOM element to use as a marker. The default is a light blue, droplet-shaped SVG marker.
- * @param {string} [options.anchor='center'] A string indicating the part of the Marker that should be positioned closest to the coordinate set via {@link Marker#setLngLat}.
- *   Options are `'center'`, `'top'`, `'bottom'`, `'left'`, `'right'`, `'top-left'`, `'top-right'`, `'bottom-left'`, and `'bottom-right'`.
- * @param {PointLike} [options.offset] The offset in pixels as a {@link PointLike} object to apply relative to the element's center. Negatives indicate left and up.
- * @param {string} [options.color='#3FB1CE'] The color to use for the default marker if options.element is not provided. The default is light blue.
- * @param {number} [options.scale=1] The scale to use for the default marker if options.element is not provided. The default scale corresponds to a height of `41px` and a width of `27px`.
- * @param {boolean} [options.draggable=false] A boolean indicating whether or not a marker is able to be dragged to a new position on the map.
- * @param {number} [options.clickTolerance=0] The max number of pixels a user can shift the mouse pointer during a click on the marker for it to be considered a valid click (as opposed to a marker drag). The default is to inherit map's clickTolerance.
- * @param {number} [options.rotation=0] The rotation angle of the marker in degrees, relative to its respective `rotationAlignment` setting. A positive value will rotate the marker clockwise.
- * @param {string} [options.pitchAlignment='auto'] `map` aligns the `Marker` to the plane of the map. `viewport` aligns the `Marker` to the plane of the viewport. `auto` automatically matches the value of `rotationAlignment`.
- * @param {string} [options.rotationAlignment='auto'] `map` aligns the `Marker`'s rotation relative to the map, maintaining a bearing as the map rotates. `viewport` aligns the `Marker`'s rotation relative to the viewport, agnostic to map rotations. `auto` is equivalent to `viewport`.
+ *
+ * @group Markers and Controls
+ *
  * @example
- * var marker = new maplibregl.Marker()
+ * ```ts
+ * let marker = new maplibregl.Marker()
  *   .setLngLat([30.5, 50.5])
  *   .addTo(map);
+ * ```
+ *
  * @example
- * // Set options
- * var marker = new maplibregl.Marker({
+ * Set options
+ * ```ts
+ * let marker = new maplibregl.Marker({
  *     color: "#FFFFFF",
  *     draggable: true
  *   }).setLngLat([30.5, 50.5])
  *   .addTo(map);
- * @see [Add custom icons with Markers](https://maplibre.org/maplibre-gl-js-docs/example/custom-marker-icons/)
- * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-marker/)
+ * ```
+ * @see [Add custom icons with Markers](https://maplibre.org/maplibre-gl-js/docs/examples/custom-marker-icons/)
+ * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-marker/)
+ *
+ * ### Events
+ *
+ * @event `dragstart` Fired when dragging starts, `marker` object that is being dragged
+ *
+ * @event `drag` Fired while dragging. `marker` object that is being dragged
+ *
+ * @event `dragend` Fired when the marker is finished being dragged, `marker` object that was dragged
  */
 class Marker extends performance.Evented {
-    constructor(options, legacyOptions) {
+    /**
+     * @param options - the options
+     */
+    constructor(options) {
         super();
-        // For backward compatibility -- the constructor used to accept the element as a
-        // required first argument, before it was made optional.
-        if (options instanceof HTMLElement || legacyOptions) {
-            options = performance.extend({ element: options }, legacyOptions);
-        }
-        performance.bindAll([
-            '_update',
-            '_onMove',
-            '_onUp',
-            '_addDragHandler',
-            '_onMapClick',
-            '_onKeyPress'
-        ], this);
+        this._onKeyPress = (e) => {
+            const code = e.code;
+            const legacyCode = e.charCode || e.keyCode;
+            if ((code === 'Space') || (code === 'Enter') ||
+                (legacyCode === 32) || (legacyCode === 13) // space or enter
+            ) {
+                this.togglePopup();
+            }
+        };
+        this._onMapClick = (e) => {
+            const targetElement = e.originalEvent.target;
+            const element = this._element;
+            if (this._popup && (targetElement === element || element.contains(targetElement))) {
+                this.togglePopup();
+            }
+        };
+        this._update = (e) => {
+            if (!this._map)
+                return;
+            const isFullyLoaded = this._map.loaded() && !this._map.isMoving();
+            if ((e === null || e === void 0 ? void 0 : e.type) === 'terrain' || ((e === null || e === void 0 ? void 0 : e.type) === 'render' && !isFullyLoaded)) {
+                this._map.once('render', this._update);
+            }
+            if (this._map.transform.renderWorldCopies) {
+                this._lngLat = smartWrap(this._lngLat, this._pos, this._map.transform);
+            }
+            this._pos = this._map.project(this._lngLat)._add(this._offset);
+            let rotation = '';
+            if (this._rotationAlignment === 'viewport' || this._rotationAlignment === 'auto') {
+                rotation = `rotateZ(${this._rotation}deg)`;
+            }
+            else if (this._rotationAlignment === 'map') {
+                rotation = `rotateZ(${this._rotation - this._map.getBearing()}deg)`;
+            }
+            let pitch = '';
+            if (this._pitchAlignment === 'viewport' || this._pitchAlignment === 'auto') {
+                pitch = 'rotateX(0deg)';
+            }
+            else if (this._pitchAlignment === 'map') {
+                pitch = `rotateX(${this._map.getPitch()}deg)`;
+            }
+            // because rounding the coordinates at every `move` event causes stuttered zooming
+            // we only round them when _update is called with `moveend` or when its called with
+            // no arguments (when the Marker is initialized or Marker#setLngLat is invoked).
+            if (!e || e.type === 'moveend') {
+                this._pos = this._pos.round();
+            }
+            DOM.setTransform(this._element, `${anchorTranslate[this._anchor]} translate(${this._pos.x}px, ${this._pos.y}px) ${pitch} ${rotation}`);
+            // in case of 3D, ask the terrain coords-framebuffer for this pos and check if the marker is visible
+            // call this logic in setTimeout with a timeout of 100ms to save performance in map-movement
+            if (this._map.terrain && !this._opacityTimeout)
+                this._opacityTimeout = setTimeout(() => {
+                    const lnglat = this._map.unproject(this._pos);
+                    const metresPerPixel = 40075016.686 * Math.abs(Math.cos(this._lngLat.lat * Math.PI / 180)) / Math.pow(2, this._map.transform.tileZoom + 8);
+                    this._element.style.opacity = lnglat.distanceTo(this._lngLat) > metresPerPixel * 20 ? '0.2' : '1.0';
+                    this._opacityTimeout = null;
+                }, 100);
+        };
+        this._onMove = (e) => {
+            if (!this._isDragging) {
+                const clickTolerance = this._clickTolerance || this._map._clickTolerance;
+                this._isDragging = e.point.dist(this._pointerdownPos) >= clickTolerance;
+            }
+            if (!this._isDragging)
+                return;
+            this._pos = e.point.sub(this._positionDelta);
+            this._lngLat = this._map.unproject(this._pos);
+            this.setLngLat(this._lngLat);
+            // suppress click event so that popups don't toggle on drag
+            this._element.style.pointerEvents = 'none';
+            // make sure dragstart only fires on the first move event after mousedown.
+            // this can't be on mousedown because that event doesn't necessarily
+            // imply that a drag is about to happen.
+            if (this._state === 'pending') {
+                this._state = 'active';
+                this.fire(new performance.Event('dragstart'));
+            }
+            this.fire(new performance.Event('drag'));
+        };
+        this._onUp = () => {
+            // revert to normal pointer event handling
+            this._element.style.pointerEvents = 'auto';
+            this._positionDelta = null;
+            this._pointerdownPos = null;
+            this._isDragging = false;
+            this._map.off('mousemove', this._onMove);
+            this._map.off('touchmove', this._onMove);
+            // only fire dragend if it was preceded by at least one drag event
+            if (this._state === 'active') {
+                this.fire(new performance.Event('dragend'));
+            }
+            this._state = 'inactive';
+        };
+        this._addDragHandler = (e) => {
+            if (this._element.contains(e.originalEvent.target)) {
+                e.preventDefault();
+                // We need to calculate the pixel distance between the click point
+                // and the marker position, with the offset accounted for. Then we
+                // can subtract this distance from the mousemove event's position
+                // to calculate the new marker position.
+                // If we don't do this, the marker 'jumps' to the click position
+                // creating a jarring UX effect.
+                this._positionDelta = e.point.sub(this._pos).add(this._offset);
+                this._pointerdownPos = e.point;
+                this._state = 'pending';
+                this._map.on('mousemove', this._onMove);
+                this._map.on('touchmove', this._onMove);
+                this._map.once('mouseup', this._onUp);
+                this._map.once('touchend', this._onUp);
+            }
+        };
         this._anchor = options && options.anchor || 'center';
         this._color = options && options.color || '#3FB1CE';
         this._scale = options && options.scale || 1;
@@ -54520,11 +55373,11 @@ class Marker extends performance.Evented {
             // the y value of the center of the shadow ellipse relative to the svg top left is "shadow transform translate-y (29.0) + ellipse cy (5.80029008)"
             // offset to the svg center "height (41 / 2)" gives (29.0 + 5.80029008) - (41 / 2) and rounded for an integer pixel offset gives 14
             // negative is used to move the marker up from the center so the tip is at the Marker lngLat
-            this._offset = performance.pointGeometry.convert(options && options.offset || [0, -14]);
+            this._offset = performance.Point.convert(options && options.offset || [0, -14]);
         }
         else {
             this._element = options.element;
-            this._offset = performance.pointGeometry.convert(options && options.offset || [0, 0]);
+            this._offset = performance.Point.convert(options && options.offset || [0, 0]);
         }
         this._element.classList.add('maplibregl-marker');
         this._element.addEventListener('dragstart', (e) => {
@@ -54535,16 +55388,23 @@ class Marker extends performance.Evented {
             e.preventDefault();
         });
         applyAnchorClass(this._element, this._anchor, 'marker');
+        if (options && options.className) {
+            for (const name of options.className.split(' ')) {
+                this._element.classList.add(name);
+            }
+        }
         this._popup = null;
     }
     /**
      * Attaches the `Marker` to a `Map` object.
-     * @param {Map} map The MapLibre GL JS map to add the marker to.
-     * @returns {Marker} `this`
+     * @param map - The MapLibre GL JS map to add the marker to.
+     * @returns `this`
      * @example
-     * var marker = new maplibregl.Marker()
+     * ```ts
+     * let marker = new maplibregl.Marker()
      *   .setLngLat([30.5, 50.5])
      *   .addTo(map); // add the marker to the map
+     * ```
      */
     addTo(map) {
         this.remove();
@@ -54552,10 +55412,11 @@ class Marker extends performance.Evented {
         map.getCanvasContainer().appendChild(this._element);
         map.on('move', this._update);
         map.on('moveend', this._update);
+        map.on('terrain', this._update);
         this.setDraggable(this._draggable);
         this._update();
         // If we attached the `click` listener to the marker element, the popup
-        // would close once the event propogated to `map` due to the
+        // would close once the event propagated to `map` due to the
         // `Popup#_onClickClose` listener.
         this._map.on('click', this._onMapClick);
         return this;
@@ -54563,9 +55424,11 @@ class Marker extends performance.Evented {
     /**
      * Removes the marker from a map
      * @example
-     * var marker = new maplibregl.Marker().addTo(map);
+     * ```ts
+     * let marker = new maplibregl.Marker().addTo(map);
      * marker.remove();
-     * @returns {Marker} `this`
+     * ```
+     * @returns `this`
      */
     remove() {
         if (this._opacityTimeout) {
@@ -54596,28 +55459,32 @@ class Marker extends performance.Evented {
      * set by `setLngLat` because `Marker` wraps the anchor longitude across copies of the world to keep
      * the marker on screen.
      *
-     * @returns {LngLat} A {@link LngLat} describing the marker's location.
+     * @returns A {@link LngLat} describing the marker's location.
      * @example
+     * ```ts
      * // Store the marker's longitude and latitude coordinates in a variable
-     * var lngLat = marker.getLngLat();
+     * let lngLat = marker.getLngLat();
      * // Print the marker's longitude and latitude values in the console
      * console.log('Longitude: ' + lngLat.lng + ', Latitude: ' + lngLat.lat )
-     * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-marker/)
+     * ```
+     * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-marker/)
      */
     getLngLat() {
         return this._lngLat;
     }
     /**
      * Set the marker's geographical position and move it.
-     * @param {LngLat} lnglat A {@link LngLat} describing where the marker should be located.
-     * @returns {Marker} `this`
+     * @param lnglat - A {@link LngLat} describing where the marker should be located.
+     * @returns `this`
      * @example
-     * // Create a new marker, set the longitude and latitude, and add it to the map
+     * Create a new marker, set the longitude and latitude, and add it to the map
+     * ```ts
      * new maplibregl.Marker()
      *   .setLngLat([-65.017, -16.457])
      *   .addTo(map);
-     * @see [Add custom icons with Markers](https://maplibre.org/maplibre-gl-js-docs/example/custom-marker-icons/)
-     * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js-docs/example/drag-a-marker/)
+     * ```
+     * @see [Add custom icons with Markers](https://maplibre.org/maplibre-gl-js/docs/examples/custom-marker-icons/)
+     * @see [Create a draggable Marker](https://maplibre.org/maplibre-gl-js/docs/examples/drag-a-marker/)
      */
     setLngLat(lnglat) {
         this._lngLat = performance.LngLat.convert(lnglat);
@@ -54629,22 +55496,24 @@ class Marker extends performance.Evented {
     }
     /**
      * Returns the `Marker`'s HTML element.
-     * @returns {HTMLElement} element
+     * @returns element
      */
     getElement() {
         return this._element;
     }
     /**
      * Binds a {@link Popup} to the {@link Marker}.
-     * @param popup An instance of the {@link Popup} class. If undefined or null, any popup
+     * @param popup - An instance of the {@link Popup} class. If undefined or null, any popup
      * set on this {@link Marker} instance is unset.
-     * @returns {Marker} `this`
+     * @returns `this`
      * @example
-     * var marker = new maplibregl.Marker()
+     * ```ts
+     * let marker = new maplibregl.Marker()
      *  .setLngLat([0, 0])
      *  .setPopup(new maplibregl.Popup().setHTML("<h1>Hello World!</h1>")) // add popup
      *  .addTo(map);
-     * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js-docs/example/set-popup/)
+     * ```
+     * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js/docs/examples/set-popup/)
      */
     setPopup(popup) {
         if (this._popup) {
@@ -54659,7 +55528,7 @@ class Marker extends performance.Evented {
             if (!('offset' in popup.options)) {
                 const markerHeight = 41 - (5.8 / 2);
                 const markerRadius = 13.5;
-                const linearOffset = Math.sqrt(Math.pow(markerRadius, 2) / 2);
+                const linearOffset = Math.abs(markerRadius) / Math.SQRT2;
                 popup.options.offset = this._defaultMarker ? {
                     'top': [0, 0],
                     'top-left': [0, 0],
@@ -54682,46 +55551,34 @@ class Marker extends performance.Evented {
         }
         return this;
     }
-    _onKeyPress(e) {
-        const code = e.code;
-        const legacyCode = e.charCode || e.keyCode;
-        if ((code === 'Space') || (code === 'Enter') ||
-            (legacyCode === 32) || (legacyCode === 13) // space or enter
-        ) {
-            this.togglePopup();
-        }
-    }
-    _onMapClick(e) {
-        const targetElement = e.originalEvent.target;
-        const element = this._element;
-        if (this._popup && (targetElement === element || element.contains(targetElement))) {
-            this.togglePopup();
-        }
-    }
     /**
      * Returns the {@link Popup} instance that is bound to the {@link Marker}.
-     * @returns {Popup} popup
+     * @returns popup
      * @example
-     * var marker = new maplibregl.Marker()
+     * ```ts
+     * let marker = new maplibregl.Marker()
      *  .setLngLat([0, 0])
      *  .setPopup(new maplibregl.Popup().setHTML("<h1>Hello World!</h1>"))
      *  .addTo(map);
      *
      * console.log(marker.getPopup()); // return the popup instance
+     * ```
      */
     getPopup() {
         return this._popup;
     }
     /**
      * Opens or closes the {@link Popup} instance that is bound to the {@link Marker}, depending on the current state of the {@link Popup}.
-     * @returns {Marker} `this`
+     * @returns `this`
      * @example
-     * var marker = new maplibregl.Marker()
+     * ```ts
+     * let marker = new maplibregl.Marker()
      *  .setLngLat([0, 0])
      *  .setPopup(new maplibregl.Popup().setHTML("<h1>Hello World!</h1>"))
      *  .addTo(map);
      *
      * marker.togglePopup(); // toggle popup open or closed
+     * ```
      */
     togglePopup() {
         const popup = this._popup;
@@ -54733,145 +55590,71 @@ class Marker extends performance.Evented {
             popup.addTo(this._map);
         return this;
     }
-    _update(e) {
-        if (!this._map)
-            return;
-        if (this._map.transform.renderWorldCopies) {
-            this._lngLat = smartWrap(this._lngLat, this._pos, this._map.transform);
-        }
-        this._pos = this._map.project(this._lngLat)._add(this._offset);
-        let rotation = '';
-        if (this._rotationAlignment === 'viewport' || this._rotationAlignment === 'auto') {
-            rotation = `rotateZ(${this._rotation}deg)`;
-        }
-        else if (this._rotationAlignment === 'map') {
-            rotation = `rotateZ(${this._rotation - this._map.getBearing()}deg)`;
-        }
-        let pitch = '';
-        if (this._pitchAlignment === 'viewport' || this._pitchAlignment === 'auto') {
-            pitch = 'rotateX(0deg)';
-        }
-        else if (this._pitchAlignment === 'map') {
-            pitch = `rotateX(${this._map.getPitch()}deg)`;
-        }
-        // because rounding the coordinates at every `move` event causes stuttered zooming
-        // we only round them when _update is called with `moveend` or when its called with
-        // no arguments (when the Marker is initialized or Marker#setLngLat is invoked).
-        if (!e || e.type === 'moveend') {
-            this._pos = this._pos.round();
-        }
-        DOM.setTransform(this._element, `${anchorTranslate[this._anchor]} translate(${this._pos.x}px, ${this._pos.y}px) ${pitch} ${rotation}`);
-        // in case of 3D, ask the terrain coords-framebuffer for this pos and check if the marker is visible
-        // call this logic in setTimeout with a timeout of 100ms to save performance in map-movement
-        if (this._map.terrain && !this._opacityTimeout)
-            this._opacityTimeout = setTimeout(() => {
-                const lnglat = this._map.unproject(this._pos);
-                const metresPerPixel = 40075016.686 * Math.abs(Math.cos(this._lngLat.lat * Math.PI / 180)) / Math.pow(2, this._map.transform.tileZoom + 8);
-                this._element.style.opacity = lnglat.distanceTo(this._lngLat) > metresPerPixel * 20 ? '0.2' : '1.0';
-                this._opacityTimeout = null;
-            }, 100);
-    }
     /**
      * Get the marker's offset.
-     * @returns {Point} The marker's screen coordinates in pixels.
+     * @returns The marker's screen coordinates in pixels.
      */
     getOffset() {
         return this._offset;
     }
     /**
      * Sets the offset of the marker
-     * @param {PointLike} offset The offset in pixels as a {@link PointLike} object to apply relative to the element's center. Negatives indicate left and up.
-     * @returns {Marker} `this`
+     * @param offset - The offset in pixels as a {@link PointLike} object to apply relative to the element's center. Negatives indicate left and up.
+     * @returns `this`
      */
     setOffset(offset) {
-        this._offset = performance.pointGeometry.convert(offset);
+        this._offset = performance.Point.convert(offset);
         this._update();
         return this;
     }
-    _onMove(e) {
-        if (!this._isDragging) {
-            const clickTolerance = this._clickTolerance || this._map._clickTolerance;
-            this._isDragging = e.point.dist(this._pointerdownPos) >= clickTolerance;
-        }
-        if (!this._isDragging)
-            return;
-        this._pos = e.point.sub(this._positionDelta);
-        this._lngLat = this._map.unproject(this._pos);
-        this.setLngLat(this._lngLat);
-        // suppress click event so that popups don't toggle on drag
-        this._element.style.pointerEvents = 'none';
-        // make sure dragstart only fires on the first move event after mousedown.
-        // this can't be on mousedown because that event doesn't necessarily
-        // imply that a drag is about to happen.
-        if (this._state === 'pending') {
-            this._state = 'active';
-            /**
-             * Fired when dragging starts
-             *
-             * @event dragstart
-             * @memberof Marker
-             * @instance
-             * @type {Object}
-             * @property {Marker} marker object that is being dragged
-             */
-            this.fire(new performance.Event('dragstart'));
-        }
-        /**
-         * Fired while dragging
-         *
-         * @event drag
-         * @memberof Marker
-         * @instance
-         * @type {Object}
-         * @property {Marker} marker object that is being dragged
-         */
-        this.fire(new performance.Event('drag'));
+    /**
+     * Adds a CSS class to the marker element.
+     *
+     * @param className - on-empty string with CSS class name to add to marker element
+     *
+     * @example
+     * ```
+     * let marker = new maplibregl.Marker()
+     * marker.addClassName('some-class')
+     * ```
+     */
+    addClassName(className) {
+        this._element.classList.add(className);
     }
-    _onUp() {
-        // revert to normal pointer event handling
-        this._element.style.pointerEvents = 'auto';
-        this._positionDelta = null;
-        this._pointerdownPos = null;
-        this._isDragging = false;
-        this._map.off('mousemove', this._onMove);
-        this._map.off('touchmove', this._onMove);
-        // only fire dragend if it was preceded by at least one drag event
-        if (this._state === 'active') {
-            /**
-             * Fired when the marker is finished being dragged
-             *
-             * @event dragend
-             * @memberof Marker
-             * @instance
-             * @type {Object}
-             * @property {Marker} marker object that was dragged
-             */
-            this.fire(new performance.Event('dragend'));
-        }
-        this._state = 'inactive';
+    /**
+     * Removes a CSS class from the marker element.
+     *
+     * @param className - Non-empty string with CSS class name to remove from marker element
+     *
+     * @example
+     * ```ts
+     * let marker = new maplibregl.Marker()
+     * marker.removeClassName('some-class')
+     * ```
+     */
+    removeClassName(className) {
+        this._element.classList.remove(className);
     }
-    _addDragHandler(e) {
-        if (this._element.contains(e.originalEvent.target)) {
-            e.preventDefault();
-            // We need to calculate the pixel distance between the click point
-            // and the marker position, with the offset accounted for. Then we
-            // can subtract this distance from the mousemove event's position
-            // to calculate the new marker position.
-            // If we don't do this, the marker 'jumps' to the click position
-            // creating a jarring UX effect.
-            this._positionDelta = e.point.sub(this._pos).add(this._offset);
-            this._pointerdownPos = e.point;
-            this._state = 'pending';
-            this._map.on('mousemove', this._onMove);
-            this._map.on('touchmove', this._onMove);
-            this._map.once('mouseup', this._onUp);
-            this._map.once('touchend', this._onUp);
-        }
+    /**
+     * Add or remove the given CSS class on the marker element, depending on whether the element currently has that class.
+     *
+     * @param className - Non-empty string with CSS class name to add/remove
+     *
+     * @returns if the class was removed return false, if class was added, then return true
+     *
+     * @example
+     * ```ts
+     * let marker = new maplibregl.Marker()
+     * marker.toggleClassName('toggleClass')
+     * ```
+     */
+    toggleClassName(className) {
+        return this._element.classList.toggle(className);
     }
     /**
      * Sets the `draggable` property and functionality of the marker
-     * @param {boolean} [shouldBeDraggable=false] Turns drag functionality on/off
-     * @returns {Marker} `this`
+     * @param shouldBeDraggable - Turns drag functionality on/off
+     * @returns `this`
      */
     setDraggable(shouldBeDraggable) {
         this._draggable = !!shouldBeDraggable; // convert possible undefined value to false
@@ -54891,15 +55674,15 @@ class Marker extends performance.Evented {
     }
     /**
      * Returns true if the marker can be dragged
-     * @returns {boolean} True if the marker is draggable.
+     * @returns True if the marker is draggable.
      */
     isDraggable() {
         return this._draggable;
     }
     /**
      * Sets the `rotation` property of the marker.
-     * @param {number} [rotation=0] The rotation angle of the marker (clockwise, in degrees), relative to its respective {@link Marker#setRotationAlignment} setting.
-     * @returns {Marker} `this`
+     * @param rotation - The rotation angle of the marker (clockwise, in degrees), relative to its respective {@link Marker#setRotationAlignment} setting.
+     * @returns `this`
      */
     setRotation(rotation) {
         this._rotation = rotation || 0;
@@ -54908,15 +55691,15 @@ class Marker extends performance.Evented {
     }
     /**
      * Returns the current rotation angle of the marker (in degrees).
-     * @returns {number} The current rotation angle of the marker.
+     * @returns The current rotation angle of the marker.
      */
     getRotation() {
         return this._rotation;
     }
     /**
      * Sets the `rotationAlignment` property of the marker.
-     * @param {string} [alignment='auto'] Sets the `rotationAlignment` property of the marker.
-     * @returns {Marker} `this`
+     * @param alignment - Sets the `rotationAlignment` property of the marker. defaults to 'auto'
+     * @returns `this`
      */
     setRotationAlignment(alignment) {
         this._rotationAlignment = alignment || 'auto';
@@ -54925,15 +55708,15 @@ class Marker extends performance.Evented {
     }
     /**
      * Returns the current `rotationAlignment` property of the marker.
-     * @returns {string} The current rotational alignment of the marker.
+     * @returns The current rotational alignment of the marker.
      */
     getRotationAlignment() {
         return this._rotationAlignment;
     }
     /**
      * Sets the `pitchAlignment` property of the marker.
-     * @param {string} [alignment] Sets the `pitchAlignment` property of the marker. If alignment is 'auto', it will automatically match `rotationAlignment`.
-     * @returns {Marker} `this`
+     * @param alignment - Sets the `pitchAlignment` property of the marker. If alignment is 'auto', it will automatically match `rotationAlignment`.
+     * @returns `this`
      */
     setPitchAlignment(alignment) {
         this._pitchAlignment = alignment && alignment !== 'auto' ? alignment : this._rotationAlignment;
@@ -54942,7 +55725,7 @@ class Marker extends performance.Evented {
     }
     /**
      * Returns the current `pitchAlignment` property of the marker.
-     * @returns {string} The current pitch alignment of the marker in degrees.
+     * @returns The current pitch alignment of the marker in degrees.
      */
     getPitchAlignment() {
         return this._pitchAlignment;
@@ -54962,26 +55745,6 @@ const defaultOptions$2 = {
     showAccuracyCircle: true,
     showUserLocation: true
 };
-let supportsGeolocation;
-function checkGeolocationSupport(callback) {
-    if (supportsGeolocation !== undefined) {
-        callback(supportsGeolocation);
-    }
-    else if (window.navigator.permissions !== undefined) {
-        // navigator.permissions has incomplete browser support
-        // http://caniuse.com/#feat=permissions-api
-        // Test for the case where a browser disables Geolocation because of an
-        // insecure origin
-        window.navigator.permissions.query({ name: 'geolocation' }).then((p) => {
-            supportsGeolocation = p.state !== 'denied';
-            callback(supportsGeolocation);
-        });
-    }
-    else {
-        supportsGeolocation = !!window.navigator.geolocation;
-        callback(supportsGeolocation);
-    }
-}
 let numberOfWatches = 0;
 let noTimeout = false;
 /**
@@ -55002,44 +55765,331 @@ let noTimeout = false;
  * * disabled - occurs if Geolocation is not available, disabled or denied.
  *
  * These interaction states can't be controlled programmatically, rather they are set based on user interactions.
- *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {Object} [options.positionOptions={enableHighAccuracy: false, timeout: 6000}] A Geolocation API [PositionOptions](https://developer.mozilla.org/en-US/docs/Web/API/PositionOptions) object.
- * @param {Object} [options.fitBoundsOptions={maxZoom: 15}] A {@link Map#fitBounds} options object to use when the map is panned and zoomed to the user's location. The default is to use a `maxZoom` of 15 to limit how far the map will zoom in for very accurate locations.
- * @param {Object} [options.trackUserLocation=false] If `true` the Geolocate Control becomes a toggle button and when active the map will receive updates to the user's location as it changes.
- * @param {Object} [options.showAccuracyCircle=true] By default, if showUserLocation is `true`, a transparent circle will be drawn around the user location indicating the accuracy (95% confidence level) of the user's location. Set to `false` to disable. Always disabled when showUserLocation is `false`.
- * @param {Object} [options.showUserLocation=true] By default a dot will be shown on the map at the user's location. Set to `false` to disable.
+ * @group Markers and Controls
  *
  * @example
+ * ```ts
  * map.addControl(new maplibregl.GeolocateControl({
  *     positionOptions: {
  *         enableHighAccuracy: true
  *     },
  *     trackUserLocation: true
  * }));
- * @see [Locate the user](https://maplibre.org/maplibre-gl-js-docs/example/locate-user/)
+ * ```
+ * @see [Locate the user](https://maplibre.org/maplibre-gl-js/docs/examples/locate-user/)
+ *
+ * ### Events
+ *
+ * @event `trackuserlocationend` - Fired when the Geolocate Control changes to the background state, which happens when a user changes the camera during an active position lock. This only applies when trackUserLocation is true. In the background state, the dot on the map will update with location updates but the camera will not.
+ *
+ * @event `trackuserlocationstart` - Fired when the Geolocate Control changes to the active lock state, which happens either upon first obtaining a successful Geolocation API position for the user (a geolocate event will follow), or the user clicks the geolocate button when in the background state which uses the last known position to recenter the map and enter active lock state (no geolocate event will follow unless the users's location changes).
+ *
+ * @event `geolocate` - Fired on each Geolocation API position update which returned as success.
+ * `data` - The returned [Position](https://developer.mozilla.org/en-US/docs/Web/API/Position) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
+ *
+ * @event `error` - Fired on each Geolocation API position update which returned as an error.
+ * `data` - The returned [PositionError](https://developer.mozilla.org/en-US/docs/Web/API/PositionError) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
+ *
+ * @event `outofmaxbounds` Fired on each Geolocation API position update which returned as success but user position is out of map maxBounds.
+ * `data` - The returned [Position](https://developer.mozilla.org/en-US/docs/Web/API/Position) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
+ *
+ * @example
+ * ```ts
+ * // Initialize the geolocate control.
+ * let geolocate = new maplibregl.GeolocateControl({
+ *   positionOptions: {
+ *       enableHighAccuracy: true
+ *   },
+ *   trackUserLocation: true
+ * });
+ * // Add the control to the map.
+ * map.addControl(geolocate);
+ * // Set an event listener that fires
+ * // when a trackuserlocationend event occurs.
+ * geolocate.on('trackuserlocationend', function() {
+ *   console.log('A trackuserlocationend event has occurred.')
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Initialize the geolocate control.
+ * let geolocate = new maplibregl.GeolocateControl({
+ *   positionOptions: {
+ *       enableHighAccuracy: true
+ *   },
+ *   trackUserLocation: true
+ * });
+ * // Add the control to the map.
+ * map.addControl(geolocate);
+ * // Set an event listener that fires
+ * // when a trackuserlocationstart event occurs.
+ * geolocate.on('trackuserlocationstart', function() {
+ *   console.log('A trackuserlocationstart event has occurred.')
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Initialize the geolocate control.
+ * let geolocate = new maplibregl.GeolocateControl({
+ *   positionOptions: {
+ *       enableHighAccuracy: true
+ *   },
+ *   trackUserLocation: true
+ * });
+ * // Add the control to the map.
+ * map.addControl(geolocate);
+ * // Set an event listener that fires
+ * // when a geolocate event occurs.
+ * geolocate.on('geolocate', function() {
+ *   console.log('A geolocate event has occurred.')
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Initialize the geolocate control.
+ * let geolocate = new maplibregl.GeolocateControl({
+ *   positionOptions: {
+ *       enableHighAccuracy: true
+ *   },
+ *   trackUserLocation: true
+ * });
+ * // Add the control to the map.
+ * map.addControl(geolocate);
+ * // Set an event listener that fires
+ * // when an error event occurs.
+ * geolocate.on('error', function() {
+ *   console.log('An error event has occurred.')
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Initialize the geolocate control.
+ * let geolocate = new maplibregl.GeolocateControl({
+ *   positionOptions: {
+ *       enableHighAccuracy: true
+ *   },
+ *   trackUserLocation: true
+ * });
+ * // Add the control to the map.
+ * map.addControl(geolocate);
+ * // Set an event listener that fires
+ * // when an outofmaxbounds event occurs.
+ * geolocate.on('outofmaxbounds', function() {
+ *   console.log('An outofmaxbounds event has occurred.')
+ * });
+ * ```
  */
 class GeolocateControl extends performance.Evented {
     constructor(options) {
         super();
+        /**
+         * When the Geolocation API returns a new location, update the GeolocateControl.
+         *
+         * @param position - the Geolocation API Position
+         */
+        this._onSuccess = (position) => {
+            if (!this._map) {
+                // control has since been removed
+                return;
+            }
+            if (this._isOutOfMapMaxBounds(position)) {
+                this._setErrorState();
+                this.fire(new performance.Event('outofmaxbounds', position));
+                this._updateMarker();
+                this._finish();
+                return;
+            }
+            if (this.options.trackUserLocation) {
+                // keep a record of the position so that if the state is BACKGROUND and the user
+                // clicks the button, we can move to ACTIVE_LOCK immediately without waiting for
+                // watchPosition to trigger _onSuccess
+                this._lastKnownPosition = position;
+                switch (this._watchState) {
+                    case 'WAITING_ACTIVE':
+                    case 'ACTIVE_LOCK':
+                    case 'ACTIVE_ERROR':
+                        this._watchState = 'ACTIVE_LOCK';
+                        this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
+                        this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active-error');
+                        this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-active');
+                        break;
+                    case 'BACKGROUND':
+                    case 'BACKGROUND_ERROR':
+                        this._watchState = 'BACKGROUND';
+                        this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
+                        this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background-error');
+                        this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-background');
+                        break;
+                    default:
+                        throw new Error(`Unexpected watchState ${this._watchState}`);
+                }
+            }
+            // if showUserLocation and the watch state isn't off then update the marker location
+            if (this.options.showUserLocation && this._watchState !== 'OFF') {
+                this._updateMarker(position);
+            }
+            // if in normal mode (not watch mode), or if in watch mode and the state is active watch
+            // then update the camera
+            if (!this.options.trackUserLocation || this._watchState === 'ACTIVE_LOCK') {
+                this._updateCamera(position);
+            }
+            if (this.options.showUserLocation) {
+                this._dotElement.classList.remove('maplibregl-user-location-dot-stale');
+            }
+            this.fire(new performance.Event('geolocate', position));
+            this._finish();
+        };
+        /**
+         * Update the camera location to center on the current position
+         *
+         * @param position - the Geolocation API Position
+         */
+        this._updateCamera = (position) => {
+            const center = new performance.LngLat(position.coords.longitude, position.coords.latitude);
+            const radius = position.coords.accuracy;
+            const bearing = this._map.getBearing();
+            const options = performance.extend({ bearing }, this.options.fitBoundsOptions);
+            const newBounds = LngLatBounds.fromLngLat(center, radius);
+            this._map.fitBounds(newBounds, options, {
+                geolocateSource: true // tag this camera change so it won't cause the control to change to background state
+            });
+        };
+        /**
+         * Update the user location dot Marker to the current position
+         *
+         * @param position - the Geolocation API Position
+         */
+        this._updateMarker = (position) => {
+            if (position) {
+                const center = new performance.LngLat(position.coords.longitude, position.coords.latitude);
+                this._accuracyCircleMarker.setLngLat(center).addTo(this._map);
+                this._userLocationDotMarker.setLngLat(center).addTo(this._map);
+                this._accuracy = position.coords.accuracy;
+                if (this.options.showUserLocation && this.options.showAccuracyCircle) {
+                    this._updateCircleRadius();
+                }
+            }
+            else {
+                this._userLocationDotMarker.remove();
+                this._accuracyCircleMarker.remove();
+            }
+        };
+        this._onZoom = () => {
+            if (this.options.showUserLocation && this.options.showAccuracyCircle) {
+                this._updateCircleRadius();
+            }
+        };
+        this._onError = (error) => {
+            if (!this._map) {
+                // control has since been removed
+                return;
+            }
+            if (this.options.trackUserLocation) {
+                if (error.code === 1) {
+                    // PERMISSION_DENIED
+                    this._watchState = 'OFF';
+                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
+                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active');
+                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active-error');
+                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background');
+                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background-error');
+                    this._geolocateButton.disabled = true;
+                    const title = this._map._getUIString('GeolocateControl.LocationNotAvailable');
+                    this._geolocateButton.title = title;
+                    this._geolocateButton.setAttribute('aria-label', title);
+                    if (this._geolocationWatchID !== undefined) {
+                        this._clearWatch();
+                    }
+                }
+                else if (error.code === 3 && noTimeout) {
+                    // this represents a forced error state
+                    // this was triggered to force immediate geolocation when a watch is already present
+                    // see https://github.com/mapbox/mapbox-gl-js/issues/8214
+                    // and https://w3c.github.io/geolocation-api/#example-5-forcing-the-user-agent-to-return-a-fresh-cached-position
+                    return;
+                }
+                else {
+                    this._setErrorState();
+                }
+            }
+            if (this._watchState !== 'OFF' && this.options.showUserLocation) {
+                this._dotElement.classList.add('maplibregl-user-location-dot-stale');
+            }
+            this.fire(new performance.Event('error', error));
+            this._finish();
+        };
+        this._finish = () => {
+            if (this._timeoutId) {
+                clearTimeout(this._timeoutId);
+            }
+            this._timeoutId = undefined;
+        };
+        this._setupUI = (supported) => {
+            // this method is called asynchronously during onAdd
+            // the control could have been removed before reaching here
+            if (!this._map) {
+                return;
+            }
+            this._container.addEventListener('contextmenu', (e) => e.preventDefault());
+            this._geolocateButton = DOM.create('button', 'maplibregl-ctrl-geolocate', this._container);
+            DOM.create('span', 'maplibregl-ctrl-icon', this._geolocateButton).setAttribute('aria-hidden', 'true');
+            this._geolocateButton.type = 'button';
+            if (supported === false) {
+                performance.warnOnce('Geolocation support is not available so the GeolocateControl will be disabled.');
+                const title = this._map._getUIString('GeolocateControl.LocationNotAvailable');
+                this._geolocateButton.disabled = true;
+                this._geolocateButton.title = title;
+                this._geolocateButton.setAttribute('aria-label', title);
+            }
+            else {
+                const title = this._map._getUIString('GeolocateControl.FindMyLocation');
+                this._geolocateButton.title = title;
+                this._geolocateButton.setAttribute('aria-label', title);
+            }
+            if (this.options.trackUserLocation) {
+                this._geolocateButton.setAttribute('aria-pressed', 'false');
+                this._watchState = 'OFF';
+            }
+            // when showUserLocation is enabled, keep the Geolocate button disabled until the device location marker is setup on the map
+            if (this.options.showUserLocation) {
+                this._dotElement = DOM.create('div', 'maplibregl-user-location-dot');
+                this._userLocationDotMarker = new Marker({ element: this._dotElement });
+                this._circleElement = DOM.create('div', 'maplibregl-user-location-accuracy-circle');
+                this._accuracyCircleMarker = new Marker({ element: this._circleElement, pitchAlignment: 'map' });
+                if (this.options.trackUserLocation)
+                    this._watchState = 'OFF';
+                this._map.on('zoom', this._onZoom);
+            }
+            this._geolocateButton.addEventListener('click', this.trigger.bind(this));
+            this._setup = true;
+            // when the camera is changed (and it's not as a result of the Geolocation Control) change
+            // the watch mode to background watch, so that the marker is updated but not the camera.
+            if (this.options.trackUserLocation) {
+                this._map.on('movestart', (event) => {
+                    const fromResize = event.originalEvent && event.originalEvent.type === 'resize';
+                    if (!event.geolocateSource && this._watchState === 'ACTIVE_LOCK' && !fromResize) {
+                        this._watchState = 'BACKGROUND';
+                        this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-background');
+                        this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active');
+                        this.fire(new performance.Event('trackuserlocationend'));
+                    }
+                });
+            }
+        };
         this.options = performance.extend({}, defaultOptions$2, options);
-        performance.bindAll([
-            '_onSuccess',
-            '_onError',
-            '_onZoom',
-            '_finish',
-            '_setupUI',
-            '_updateCamera',
-            '_updateMarker'
-        ], this);
     }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         this._container = DOM.create('div', 'maplibregl-ctrl maplibregl-ctrl-group');
         checkGeolocationSupport(this._setupUI);
         return this._container;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         // clear the geolocation watch if exists
         if (this._geolocationWatchID !== undefined) {
@@ -55062,9 +56112,8 @@ class GeolocateControl extends performance.Evented {
     /**
      * Check if the Geolocation API Position is outside the map's maxbounds.
      *
-     * @param {Position} position the Geolocation API Position
-     * @returns {boolean} Returns `true` if position is outside the map's maxbounds, otherwise returns `false`.
-     * @private
+     * @param position - the Geolocation API Position
+     * @returns `true` if position is outside the map's maxbounds, otherwise returns `false`.
      */
     _isOutOfMapMaxBounds(position) {
         const bounds = this._map.getMaxBounds();
@@ -55101,214 +56150,24 @@ class GeolocateControl extends performance.Evented {
                 throw new Error(`Unexpected watchState ${this._watchState}`);
         }
     }
-    /**
-     * When the Geolocation API returns a new location, update the GeolocateControl.
-     *
-     * @param {Position} position the Geolocation API Position
-     * @private
-     */
-    _onSuccess(position) {
-        if (!this._map) {
-            // control has since been removed
-            return;
-        }
-        if (this._isOutOfMapMaxBounds(position)) {
-            this._setErrorState();
-            this.fire(new performance.Event('outofmaxbounds', position));
-            this._updateMarker();
-            this._finish();
-            return;
-        }
-        if (this.options.trackUserLocation) {
-            // keep a record of the position so that if the state is BACKGROUND and the user
-            // clicks the button, we can move to ACTIVE_LOCK immediately without waiting for
-            // watchPosition to trigger _onSuccess
-            this._lastKnownPosition = position;
-            switch (this._watchState) {
-                case 'WAITING_ACTIVE':
-                case 'ACTIVE_LOCK':
-                case 'ACTIVE_ERROR':
-                    this._watchState = 'ACTIVE_LOCK';
-                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
-                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active-error');
-                    this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-active');
-                    break;
-                case 'BACKGROUND':
-                case 'BACKGROUND_ERROR':
-                    this._watchState = 'BACKGROUND';
-                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
-                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background-error');
-                    this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-background');
-                    break;
-                default:
-                    throw new Error(`Unexpected watchState ${this._watchState}`);
-            }
-        }
-        // if showUserLocation and the watch state isn't off then update the marker location
-        if (this.options.showUserLocation && this._watchState !== 'OFF') {
-            this._updateMarker(position);
-        }
-        // if in normal mode (not watch mode), or if in watch mode and the state is active watch
-        // then update the camera
-        if (!this.options.trackUserLocation || this._watchState === 'ACTIVE_LOCK') {
-            this._updateCamera(position);
-        }
-        if (this.options.showUserLocation) {
-            this._dotElement.classList.remove('maplibregl-user-location-dot-stale');
-        }
-        this.fire(new performance.Event('geolocate', position));
-        this._finish();
-    }
-    /**
-     * Update the camera location to center on the current position
-     *
-     * @param {Position} position the Geolocation API Position
-     * @private
-     */
-    _updateCamera(position) {
-        const center = new performance.LngLat(position.coords.longitude, position.coords.latitude);
-        const radius = position.coords.accuracy;
-        const bearing = this._map.getBearing();
-        const options = performance.extend({ bearing }, this.options.fitBoundsOptions);
-        const newBounds = LngLatBounds.fromLngLat(center, radius);
-        this._map.fitBounds(newBounds, options, {
-            geolocateSource: true // tag this camera change so it won't cause the control to change to background state
-        });
-    }
-    /**
-     * Update the user location dot Marker to the current position
-     *
-     * @param {Position} [position] the Geolocation API Position
-     * @private
-     */
-    _updateMarker(position) {
-        if (position) {
-            const center = new performance.LngLat(position.coords.longitude, position.coords.latitude);
-            this._accuracyCircleMarker.setLngLat(center).addTo(this._map);
-            this._userLocationDotMarker.setLngLat(center).addTo(this._map);
-            this._accuracy = position.coords.accuracy;
-            if (this.options.showUserLocation && this.options.showAccuracyCircle) {
-                this._updateCircleRadius();
-            }
-        }
-        else {
-            this._userLocationDotMarker.remove();
-            this._accuracyCircleMarker.remove();
-        }
-    }
     _updateCircleRadius() {
-        const y = this._map._container.clientHeight / 2;
-        const a = this._map.unproject([0, y]);
-        const b = this._map.unproject([1, y]);
-        const metersPerPixel = a.distanceTo(b);
-        const circleDiameter = Math.ceil(2.0 * this._accuracy / metersPerPixel);
+        const bounds = this._map.getBounds();
+        const southEastPoint = bounds.getSouthEast();
+        const northEastPoint = bounds.getNorthEast();
+        const mapHeightInMeters = southEastPoint.distanceTo(northEastPoint);
+        const mapHeightInPixels = this._map._container.clientHeight;
+        const circleDiameter = Math.ceil(2 * (this._accuracy / (mapHeightInMeters / mapHeightInPixels)));
         this._circleElement.style.width = `${circleDiameter}px`;
         this._circleElement.style.height = `${circleDiameter}px`;
-    }
-    _onZoom() {
-        if (this.options.showUserLocation && this.options.showAccuracyCircle) {
-            this._updateCircleRadius();
-        }
-    }
-    _onError(error) {
-        if (!this._map) {
-            // control has since been removed
-            return;
-        }
-        if (this.options.trackUserLocation) {
-            if (error.code === 1) {
-                // PERMISSION_DENIED
-                this._watchState = 'OFF';
-                this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-waiting');
-                this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active');
-                this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active-error');
-                this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background');
-                this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-background-error');
-                this._geolocateButton.disabled = true;
-                const title = this._map._getUIString('GeolocateControl.LocationNotAvailable');
-                this._geolocateButton.title = title;
-                this._geolocateButton.setAttribute('aria-label', title);
-                if (this._geolocationWatchID !== undefined) {
-                    this._clearWatch();
-                }
-            }
-            else if (error.code === 3 && noTimeout) {
-                // this represents a forced error state
-                // this was triggered to force immediate geolocation when a watch is already present
-                // see https://github.com/mapbox/mapbox-gl-js/issues/8214
-                // and https://w3c.github.io/geolocation-api/#example-5-forcing-the-user-agent-to-return-a-fresh-cached-position
-                return;
-            }
-            else {
-                this._setErrorState();
-            }
-        }
-        if (this._watchState !== 'OFF' && this.options.showUserLocation) {
-            this._dotElement.classList.add('maplibregl-user-location-dot-stale');
-        }
-        this.fire(new performance.Event('error', error));
-        this._finish();
-    }
-    _finish() {
-        if (this._timeoutId) {
-            clearTimeout(this._timeoutId);
-        }
-        this._timeoutId = undefined;
-    }
-    _setupUI(supported) {
-        this._container.addEventListener('contextmenu', (e) => e.preventDefault());
-        this._geolocateButton = DOM.create('button', 'maplibregl-ctrl-geolocate', this._container);
-        DOM.create('span', 'maplibregl-ctrl-icon', this._geolocateButton).setAttribute('aria-hidden', 'true');
-        this._geolocateButton.type = 'button';
-        if (supported === false) {
-            performance.warnOnce('Geolocation support is not available so the GeolocateControl will be disabled.');
-            const title = this._map._getUIString('GeolocateControl.LocationNotAvailable');
-            this._geolocateButton.disabled = true;
-            this._geolocateButton.title = title;
-            this._geolocateButton.setAttribute('aria-label', title);
-        }
-        else {
-            const title = this._map._getUIString('GeolocateControl.FindMyLocation');
-            this._geolocateButton.title = title;
-            this._geolocateButton.setAttribute('aria-label', title);
-        }
-        if (this.options.trackUserLocation) {
-            this._geolocateButton.setAttribute('aria-pressed', 'false');
-            this._watchState = 'OFF';
-        }
-        // when showUserLocation is enabled, keep the Geolocate button disabled until the device location marker is setup on the map
-        if (this.options.showUserLocation) {
-            this._dotElement = DOM.create('div', 'maplibregl-user-location-dot');
-            this._userLocationDotMarker = new Marker(this._dotElement);
-            this._circleElement = DOM.create('div', 'maplibregl-user-location-accuracy-circle');
-            this._accuracyCircleMarker = new Marker({ element: this._circleElement, pitchAlignment: 'map' });
-            if (this.options.trackUserLocation)
-                this._watchState = 'OFF';
-            this._map.on('zoom', this._onZoom);
-        }
-        this._geolocateButton.addEventListener('click', this.trigger.bind(this));
-        this._setup = true;
-        // when the camera is changed (and it's not as a result of the Geolocation Control) change
-        // the watch mode to background watch, so that the marker is updated but not the camera.
-        if (this.options.trackUserLocation) {
-            this._map.on('movestart', (event) => {
-                const fromResize = event.originalEvent && event.originalEvent.type === 'resize';
-                if (!event.geolocateSource && this._watchState === 'ACTIVE_LOCK' && !fromResize) {
-                    this._watchState = 'BACKGROUND';
-                    this._geolocateButton.classList.add('maplibregl-ctrl-geolocate-background');
-                    this._geolocateButton.classList.remove('maplibregl-ctrl-geolocate-active');
-                    this.fire(new performance.Event('trackuserlocationend'));
-                }
-            });
-        }
     }
     /**
      * Programmatically request and move the map to the user's location.
      *
-     * @returns {boolean} Returns `false` if called before control was added to a map, otherwise returns `true`.
+     * @returns `false` if called before control was added to a map, otherwise returns `true`.
      * @example
+     * ```ts
      * // Initialize the geolocate control.
-     * var geolocate = new maplibregl.GeolocateControl({
+     * let geolocate = new maplibregl.GeolocateControl({
      *  positionOptions: {
      *    enableHighAccuracy: true
      *  },
@@ -55319,6 +56178,7 @@ class GeolocateControl extends performance.Evented {
      * map.on('load', function() {
      *   geolocate.trigger();
      * });
+     * ```
      */
     trigger() {
         if (!this._setup) {
@@ -55413,140 +56273,6 @@ class GeolocateControl extends performance.Evented {
         }
     }
 }
-/* Geolocate Control Watch States
- * This is the private state of the control.
- *
- * OFF
- *    off/inactive
- * WAITING_ACTIVE
- *    Geolocate Control was clicked but still waiting for Geolocation API response with user location
- * ACTIVE_LOCK
- *    Showing the user location as a dot AND tracking the camera to be fixed to their location. If their location changes the map moves to follow.
- * ACTIVE_ERROR
- *    There was en error from the Geolocation API while trying to show and track the user location.
- * BACKGROUND
- *    Showing the user location as a dot but the camera doesn't follow their location as it changes.
- * BACKGROUND_ERROR
- *    There was an error from the Geolocation API while trying to show (but not track) the user location.
- */
-/**
- * Fired on each Geolocation API position update which returned as success.
- *
- * @event geolocate
- * @memberof GeolocateControl
- * @instance
- * @property {Position} data The returned [Position](https://developer.mozilla.org/en-US/docs/Web/API/Position) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
- * @example
- * // Initialize the geolocate control.
- * var geolocate = new maplibregl.GeolocateControl({
- *   positionOptions: {
- *       enableHighAccuracy: true
- *   },
- *   trackUserLocation: true
- * });
- * // Add the control to the map.
- * map.addControl(geolocate);
- * // Set an event listener that fires
- * // when a geolocate event occurs.
- * geolocate.on('geolocate', function() {
- *   console.log('A geolocate event has occurred.')
- * });
- *
- */
-/**
- * Fired on each Geolocation API position update which returned as an error.
- *
- * @event error
- * @memberof GeolocateControl
- * @instance
- * @property {PositionError} data The returned [PositionError](https://developer.mozilla.org/en-US/docs/Web/API/PositionError) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
- * @example
- * // Initialize the geolocate control.
- * var geolocate = new maplibregl.GeolocateControl({
- *   positionOptions: {
- *       enableHighAccuracy: true
- *   },
- *   trackUserLocation: true
- * });
- * // Add the control to the map.
- * map.addControl(geolocate);
- * // Set an event listener that fires
- * // when an error event occurs.
- * geolocate.on('error', function() {
- *   console.log('An error event has occurred.')
- * });
- *
- */
-/**
- * Fired on each Geolocation API position update which returned as success but user position is out of map maxBounds.
- *
- * @event outofmaxbounds
- * @memberof GeolocateControl
- * @instance
- * @property {Position} data The returned [Position](https://developer.mozilla.org/en-US/docs/Web/API/Position) object from the callback in [Geolocation.getCurrentPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition) or [Geolocation.watchPosition()](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/watchPosition).
- * @example
- * // Initialize the geolocate control.
- * var geolocate = new maplibregl.GeolocateControl({
- *   positionOptions: {
- *       enableHighAccuracy: true
- *   },
- *   trackUserLocation: true
- * });
- * // Add the control to the map.
- * map.addControl(geolocate);
- * // Set an event listener that fires
- * // when an outofmaxbounds event occurs.
- * geolocate.on('outofmaxbounds', function() {
- *   console.log('An outofmaxbounds event has occurred.')
- * });
- *
- */
-/**
- * Fired when the Geolocate Control changes to the active lock state, which happens either upon first obtaining a successful Geolocation API position for the user (a geolocate event will follow), or the user clicks the geolocate button when in the background state which uses the last known position to recenter the map and enter active lock state (no geolocate event will follow unless the users's location changes).
- *
- * @event trackuserlocationstart
- * @memberof GeolocateControl
- * @instance
- * @example
- * // Initialize the geolocate control.
- * var geolocate = new maplibregl.GeolocateControl({
- *   positionOptions: {
- *       enableHighAccuracy: true
- *   },
- *   trackUserLocation: true
- * });
- * // Add the control to the map.
- * map.addControl(geolocate);
- * // Set an event listener that fires
- * // when a trackuserlocationstart event occurs.
- * geolocate.on('trackuserlocationstart', function() {
- *   console.log('A trackuserlocationstart event has occurred.')
- * });
- *
- */
-/**
- * Fired when the Geolocate Control changes to the background state, which happens when a user changes the camera during an active position lock. This only applies when trackUserLocation is true. In the background state, the dot on the map will update with location updates but the camera will not.
- *
- * @event trackuserlocationend
- * @memberof GeolocateControl
- * @instance
- * @example
- * // Initialize the geolocate control.
- * var geolocate = new maplibregl.GeolocateControl({
- *   positionOptions: {
- *       enableHighAccuracy: true
- *   },
- *   trackUserLocation: true
- * });
- * // Add the control to the map.
- * map.addControl(geolocate);
- * // Set an event listener that fires
- * // when a trackuserlocationend event occurs.
- * geolocate.on('trackuserlocationend', function() {
- *   console.log('A trackuserlocationend event has occurred.')
- * });
- *
- */
 
 const defaultOptions$1 = {
     maxWidth: 100,
@@ -55555,33 +56281,39 @@ const defaultOptions$1 = {
 /**
  * A `ScaleControl` control displays the ratio of a distance on the map to the corresponding distance on the ground.
  *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {number} [options.maxWidth='100'] The maximum length of the scale control in pixels.
- * @param {string} [options.unit='metric'] Unit of the distance (`'imperial'`, `'metric'` or `'nautical'`).
+ * @group Markers and Controls
+ *
  * @example
- * var scale = new maplibregl.ScaleControl({
+ * ```ts
+ * let scale = new maplibregl.ScaleControl({
  *     maxWidth: 80,
  *     unit: 'imperial'
  * });
  * map.addControl(scale);
  *
  * scale.setUnit('metric');
+ * ```
  */
 class ScaleControl {
     constructor(options) {
+        this._onMove = () => {
+            updateScale(this._map, this._container, this.options);
+        };
+        /**
+         * Set the scale's unit of the distance
+         *
+         * @param unit - Unit of the distance (`'imperial'`, `'metric'` or `'nautical'`).
+         */
+        this.setUnit = (unit) => {
+            this.options.unit = unit;
+            updateScale(this._map, this._container, this.options);
+        };
         this.options = performance.extend({}, defaultOptions$1, options);
-        performance.bindAll([
-            '_onMove',
-            'setUnit'
-        ], this);
     }
     getDefaultPosition() {
         return 'bottom-left';
     }
-    _onMove() {
-        updateScale(this._map, this._container, this.options);
-    }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         this._container = DOM.create('div', 'maplibregl-ctrl maplibregl-ctrl-scale', map.getContainer());
@@ -55589,19 +56321,11 @@ class ScaleControl {
         this._onMove();
         return this._container;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         DOM.remove(this._container);
         this._map.off('move', this._onMove);
         this._map = undefined;
-    }
-    /**
-     * Set the scale's unit of the distance
-     *
-     * @param unit Unit of the distance (`'imperial'`, `'metric'` or `'nautical'`).
-     */
-    setUnit(unit) {
-        this.options.unit = unit;
-        updateScale(this._map, this._container, this.options);
     }
 }
 function updateScale(map, container, options) {
@@ -55665,27 +56389,20 @@ function getRoundNum(num) {
  * The map's `cooperativeGestures` option is temporarily disabled while the map
  * is in fullscreen mode, and is restored when the map exist fullscreen mode.
  *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {HTMLElement} [options.container] `container` is the [compatible DOM element](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullScreen#Compatible_elements) which should be made full screen. By default, the map container element will be made full screen.
+ * @group Markers and Controls
+ * @param options - the full screen control options
  *
  * @example
+ * ```ts
  * map.addControl(new maplibregl.FullscreenControl({container: document.querySelector('body')}));
- * @see [View a fullscreen map](https://maplibre.org/maplibre-gl-js-docs/example/fullscreen/)
- */
-/**
- * Fired when fullscreen mode has started
+ * ```
+ * @see [View a fullscreen map](https://maplibre.org/maplibre-gl-js/docs/examples/fullscreen/)
  *
- * @event fullscreenstart
- * @memberof FullscreenControl
- * @instance
- */
-/**
- * Fired when fullscreen mode has ended
+ * ### Events
  *
- * @event fullscreenend
- * @memberof FullscreenControl
- * @instance
+ * @event `fullscreenstart` - Fired when fullscreen mode has started
+ *
+ * @event `fullscreenend` - Fired when fullscreen mode has ended
  */
 class FullscreenControl extends performance.Evented {
     constructor(options = {}) {
@@ -55729,6 +56446,7 @@ class FullscreenControl extends performance.Evented {
             this._fullscreenchange = 'MSFullscreenChange';
         }
     }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         if (!this._container)
@@ -55737,6 +56455,7 @@ class FullscreenControl extends performance.Evented {
         this._setupUI();
         return this._controlContainer;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         DOM.remove(this._controlContainer);
         this._map = null;
@@ -55823,27 +56542,44 @@ class FullscreenControl extends performance.Evented {
 }
 
 /**
- * An `TerrainControl` control adds a button to turn terrain on and off.
+ * A `TerrainControl` control contains a button for turning the terrain on and off.
  *
- * @implements {IControl}
- * @param {Object} [options]
- * @param {string} [options.id] The ID of the raster-dem source to use.
- * @param {Object} [options.options]
- * @param {number} [options.options.exaggeration]
+ * @group Markers and Controls
+ *
  * @example
- * var map = new maplibregl.Map({TerrainControl: false})
+ * ```ts
+ * let map = new maplibregl.Map({TerrainControl: false})
  *     .addControl(new maplibregl.TerrainControl({
  *         source: "terrain"
  *     }));
+ * ```
  */
 class TerrainControl {
     constructor(options) {
+        this._toggleTerrain = () => {
+            if (this._map.getTerrain()) {
+                this._map.setTerrain(null);
+            }
+            else {
+                this._map.setTerrain(this.options);
+            }
+            this._updateTerrainIcon();
+        };
+        this._updateTerrainIcon = () => {
+            this._terrainButton.classList.remove('maplibregl-ctrl-terrain');
+            this._terrainButton.classList.remove('maplibregl-ctrl-terrain-enabled');
+            if (this._map.terrain) {
+                this._terrainButton.classList.add('maplibregl-ctrl-terrain-enabled');
+                this._terrainButton.title = this._map._getUIString('TerrainControl.disableTerrain');
+            }
+            else {
+                this._terrainButton.classList.add('maplibregl-ctrl-terrain');
+                this._terrainButton.title = this._map._getUIString('TerrainControl.enableTerrain');
+            }
+        };
         this.options = options;
-        performance.bindAll([
-            '_toggleTerrain',
-            '_updateTerrainIcon',
-        ], this);
     }
+    /** {@inheritDoc IControl.onAdd} */
     onAdd(map) {
         this._map = map;
         this._container = DOM.create('div', 'maplibregl-ctrl maplibregl-ctrl-group');
@@ -55855,31 +56591,11 @@ class TerrainControl {
         this._map.on('terrain', this._updateTerrainIcon);
         return this._container;
     }
+    /** {@inheritDoc IControl.onRemove} */
     onRemove() {
         DOM.remove(this._container);
         this._map.off('terrain', this._updateTerrainIcon);
         this._map = undefined;
-    }
-    _toggleTerrain() {
-        if (this._map.getTerrain()) {
-            this._map.setTerrain(null);
-        }
-        else {
-            this._map.setTerrain(this.options);
-        }
-        this._updateTerrainIcon();
-    }
-    _updateTerrainIcon() {
-        this._terrainButton.classList.remove('maplibregl-ctrl-terrain');
-        this._terrainButton.classList.remove('maplibregl-ctrl-terrain-enabled');
-        if (this._map.terrain) {
-            this._terrainButton.classList.add('maplibregl-ctrl-terrain-enabled');
-            this._terrainButton.title = this._map._getUIString('TerrainControl.disableTerrain');
-        }
-        else {
-            this._terrainButton.classList.add('maplibregl-ctrl-terrain');
-            this._terrainButton.title = this._map._getUIString('TerrainControl.enableTerrain');
-        }
     }
 }
 
@@ -55902,35 +56618,35 @@ const focusQuerySelector = [
 /**
  * A popup component.
  *
- * @param {Object} [options]
- * @param {boolean} [options.closeButton=true] If `true`, a close button will appear in the
- *   top right corner of the popup.
- * @param {boolean} [options.closeOnClick=true] If `true`, the popup will closed when the
- *   map is clicked.
- * @param {boolean} [options.closeOnMove=false] If `true`, the popup will closed when the
- *   map moves.
- * @param {boolean} [options.focusAfterOpen=true] If `true`, the popup will try to focus the
- *   first focusable element inside the popup.
- * @param {string} [options.anchor] - A string indicating the part of the Popup that should
- *   be positioned closest to the coordinate set via {@link Popup#setLngLat}.
- *   Options are `'center'`, `'top'`, `'bottom'`, `'left'`, `'right'`, `'top-left'`,
- *   `'top-right'`, `'bottom-left'`, and `'bottom-right'`. If unset the anchor will be
- *   dynamically set to ensure the popup falls within the map container with a preference
- *   for `'bottom'`.
- * @param {number|PointLike|Object} [options.offset] -
- *  A pixel offset applied to the popup's location specified as:
- *   - a single number specifying a distance from the popup's location
- *   - a {@link PointLike} specifying a constant offset
- *   - an object of {@link Point}s specifing an offset for each anchor position
- *  Negative offsets indicate left and up.
- * @param {string} [options.className] Space-separated CSS class names to add to popup container
- * @param {string} [options.maxWidth='240px'] -
- *  A string that sets the CSS property of the popup's maximum width, eg `'300px'`.
- *  To ensure the popup resizes to fit its content, set this property to `'none'`.
- *  Available values can be found here: https://developer.mozilla.org/en-US/docs/Web/CSS/max-width
+ * @group Markers and Controls
+ *
+ *
  * @example
- * var markerHeight = 50, markerRadius = 10, linearOffset = 25;
- * var popupOffsets = {
+ * Create a popup
+ * ```ts
+ * let popup = new maplibregl.Popup();
+ * // Set an event listener that will fire
+ * // any time the popup is opened
+ * popup.on('open', function(){
+ *   console.log('popup was opened');
+ * });
+ * ```
+ *
+ * @example
+ * Create a popup
+ * ```ts
+ * let popup = new maplibregl.Popup();
+ * // Set an event listener that will fire
+ * // any time the popup is closed
+ * popup.on('close', function(){
+ *   console.log('popup was closed');
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * let markerHeight = 50, markerRadius = 10, linearOffset = 25;
+ * let popupOffsets = {
  *  'top': [0, 0],
  *  'top-left': [0,0],
  *  'top-right': [0,0],
@@ -55940,36 +56656,146 @@ const focusQuerySelector = [
  *  'left': [markerRadius, (markerHeight - markerRadius) * -1],
  *  'right': [-markerRadius, (markerHeight - markerRadius) * -1]
  *  };
- * var popup = new maplibregl.Popup({offset: popupOffsets, className: 'my-class'})
+ * let popup = new maplibregl.Popup({offset: popupOffsets, className: 'my-class'})
  *   .setLngLat(e.lngLat)
  *   .setHTML("<h1>Hello World!</h1>")
  *   .setMaxWidth("300px")
  *   .addTo(map);
- * @see [Display a popup](https://maplibre.org/maplibre-gl-js-docs/example/popup/)
- * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-hover/)
- * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-click/)
- * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js-docs/example/set-popup/)
+ * ```
+ * @see [Display a popup](https://maplibre.org/maplibre-gl-js/docs/examples/popup/)
+ * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-hover/)
+ * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-click/)
+ * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js/docs/examples/set-popup/)
+ *
+ * ### Events
+ *
+ * @event `open` Fired when the popup is opened manually or programmatically. `popup` object that was opened
+ *
+ * @event `close` Fired when the popup is closed manually or programmatically. `popup` object that was closed
  */
 class Popup extends performance.Evented {
     constructor(options) {
         super();
+        /**
+         * Removes the popup from the map it has been added to.
+         *
+         * @example
+         * ```ts
+         * let popup = new maplibregl.Popup().addTo(map);
+         * popup.remove();
+         * ```
+         * @returns `this`
+         */
+        this.remove = () => {
+            if (this._content) {
+                DOM.remove(this._content);
+            }
+            if (this._container) {
+                DOM.remove(this._container);
+                delete this._container;
+            }
+            if (this._map) {
+                this._map.off('move', this._update);
+                this._map.off('move', this._onClose);
+                this._map.off('click', this._onClose);
+                this._map.off('remove', this.remove);
+                this._map.off('mousemove', this._onMouseMove);
+                this._map.off('mouseup', this._onMouseUp);
+                this._map.off('drag', this._onDrag);
+                delete this._map;
+            }
+            this.fire(new performance.Event('close'));
+            return this;
+        };
+        this._onMouseUp = (event) => {
+            this._update(event.point);
+        };
+        this._onMouseMove = (event) => {
+            this._update(event.point);
+        };
+        this._onDrag = (event) => {
+            this._update(event.point);
+        };
+        this._update = (cursor) => {
+            const hasPosition = this._lngLat || this._trackPointer;
+            if (!this._map || !hasPosition || !this._content) {
+                return;
+            }
+            if (!this._container) {
+                this._container = DOM.create('div', 'maplibregl-popup', this._map.getContainer());
+                this._tip = DOM.create('div', 'maplibregl-popup-tip', this._container);
+                this._container.appendChild(this._content);
+                if (this.options.className) {
+                    for (const name of this.options.className.split(' ')) {
+                        this._container.classList.add(name);
+                    }
+                }
+                if (this._trackPointer) {
+                    this._container.classList.add('maplibregl-popup-track-pointer');
+                }
+            }
+            if (this.options.maxWidth && this._container.style.maxWidth !== this.options.maxWidth) {
+                this._container.style.maxWidth = this.options.maxWidth;
+            }
+            if (this._map.transform.renderWorldCopies && !this._trackPointer) {
+                this._lngLat = smartWrap(this._lngLat, this._pos, this._map.transform);
+            }
+            if (this._trackPointer && !cursor)
+                return;
+            const pos = this._pos = this._trackPointer && cursor ? cursor : this._map.project(this._lngLat);
+            let anchor = this.options.anchor;
+            const offset = normalizeOffset(this.options.offset);
+            if (!anchor) {
+                const width = this._container.offsetWidth;
+                const height = this._container.offsetHeight;
+                let anchorComponents;
+                if (pos.y + offset.bottom.y < height) {
+                    anchorComponents = ['top'];
+                }
+                else if (pos.y > this._map.transform.height - height) {
+                    anchorComponents = ['bottom'];
+                }
+                else {
+                    anchorComponents = [];
+                }
+                if (pos.x < width / 2) {
+                    anchorComponents.push('left');
+                }
+                else if (pos.x > this._map.transform.width - width / 2) {
+                    anchorComponents.push('right');
+                }
+                if (anchorComponents.length === 0) {
+                    anchor = 'bottom';
+                }
+                else {
+                    anchor = anchorComponents.join('-');
+                }
+            }
+            const offsetedPos = pos.add(offset[anchor]).round();
+            DOM.setTransform(this._container, `${anchorTranslate[anchor]} translate(${offsetedPos.x}px,${offsetedPos.y}px)`);
+            applyAnchorClass(this._container, anchor, 'popup');
+        };
+        this._onClose = () => {
+            this.remove();
+        };
         this.options = performance.extend(Object.create(defaultOptions), options);
-        performance.bindAll(['_update', '_onClose', 'remove', '_onMouseMove', '_onMouseUp', '_onDrag'], this);
     }
     /**
      * Adds the popup to a map.
      *
-     * @param {Map} map The MapLibre GL JS map to add the popup to.
-     * @returns {Popup} `this`
+     * @param map - The MapLibre GL JS map to add the popup to.
+     * @returns `this`
      * @example
+     * ```ts
      * new maplibregl.Popup()
      *   .setLngLat([0, 0])
      *   .setHTML("<h1>Null Island</h1>")
      *   .addTo(map);
-     * @see [Display a popup](https://maplibre.org/maplibre-gl-js-docs/example/popup/)
-     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-hover/)
-     * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-click/)
-     * @see [Show polygon information on click](https://maplibre.org/maplibre-gl-js-docs/example/polygon-popup-on-click/)
+     * ```
+     * @see [Display a popup](https://maplibre.org/maplibre-gl-js/docs/examples/popup/)
+     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-hover/)
+     * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-click/)
+     * @see [Show polygon information on click](https://maplibre.org/maplibre-gl-js/docs/examples/polygon-popup-on-click/)
      */
     addTo(map) {
         if (this._map)
@@ -55995,81 +56821,14 @@ class Popup extends performance.Evented {
         else {
             this._map.on('move', this._update);
         }
-        /**
-         * Fired when the popup is opened manually or programatically.
-         *
-         * @event open
-         * @memberof Popup
-         * @instance
-         * @type {Object}
-         * @property {Popup} popup object that was opened
-         *
-         * @example
-         * // Create a popup
-         * var popup = new maplibregl.Popup();
-         * // Set an event listener that will fire
-         * // any time the popup is opened
-         * popup.on('open', function(){
-         *   console.log('popup was opened');
-         * });
-         *
-         */
         this.fire(new performance.Event('open'));
         return this;
     }
     /**
-     * @returns {boolean} `true` if the popup is open, `false` if it is closed.
+     * @returns `true` if the popup is open, `false` if it is closed.
      */
     isOpen() {
         return !!this._map;
-    }
-    /**
-     * Removes the popup from the map it has been added to.
-     *
-     * @example
-     * var popup = new maplibregl.Popup().addTo(map);
-     * popup.remove();
-     * @returns {Popup} `this`
-     */
-    remove() {
-        if (this._content) {
-            DOM.remove(this._content);
-        }
-        if (this._container) {
-            DOM.remove(this._container);
-            delete this._container;
-        }
-        if (this._map) {
-            this._map.off('move', this._update);
-            this._map.off('move', this._onClose);
-            this._map.off('click', this._onClose);
-            this._map.off('remove', this.remove);
-            this._map.off('mousemove', this._onMouseMove);
-            this._map.off('mouseup', this._onMouseUp);
-            this._map.off('drag', this._onDrag);
-            delete this._map;
-        }
-        /**
-         * Fired when the popup is closed manually or programatically.
-         *
-         * @event close
-         * @memberof Popup
-         * @instance
-         * @type {Object}
-         * @property {Popup} popup object that was closed
-         *
-         * @example
-         * // Create a popup
-         * var popup = new maplibregl.Popup();
-         * // Set an event listener that will fire
-         * // any time the popup is closed
-         * popup.on('close', function(){
-         *   console.log('popup was closed');
-         * });
-         *
-         */
-        this.fire(new performance.Event('close'));
-        return this;
     }
     /**
      * Returns the geographical location of the popup's anchor.
@@ -56078,7 +56837,7 @@ class Popup extends performance.Evented {
      * set by `setLngLat` because `Popup` wraps the anchor longitude across copies of the world to keep
      * the popup on screen.
      *
-     * @returns {LngLat} The geographical location of the popup's anchor.
+     * @returns The geographical location of the popup's anchor.
      */
     getLngLat() {
         return this._lngLat;
@@ -56086,8 +56845,8 @@ class Popup extends performance.Evented {
     /**
      * Sets the geographical location of the popup's anchor, and moves the popup to it. Replaces trackPointer() behavior.
      *
-     * @param lnglat The geographical location to set as the popup's anchor.
-     * @returns {Popup} `this`
+     * @param lnglat - The geographical location to set as the popup's anchor.
+     * @returns `this`
      */
     setLngLat(lnglat) {
         this._lngLat = performance.LngLat.convert(lnglat);
@@ -56108,11 +56867,13 @@ class Popup extends performance.Evented {
      * Tracks the popup anchor to the cursor position on screens with a pointer device (it will be hidden on touchscreens). Replaces the `setLngLat` behavior.
      * For most use cases, set `closeOnClick` and `closeButton` to `false`.
      * @example
-     * var popup = new maplibregl.Popup({ closeOnClick: false, closeButton: false })
+     * ```ts
+     * let popup = new maplibregl.Popup({ closeOnClick: false, closeButton: false })
      *   .setHTML("<h1>Hello World!</h1>")
      *   .trackPointer()
      *   .addTo(map);
-     * @returns {Popup} `this`
+     * ```
+     * @returns `this`
      */
     trackPointer() {
         this._trackPointer = true;
@@ -56132,14 +56893,16 @@ class Popup extends performance.Evented {
     /**
      * Returns the `Popup`'s HTML element.
      * @example
-     * // Change the `Popup` element's font size
-     * var popup = new maplibregl.Popup()
+     * Change the `Popup` element's font size
+     * ```ts
+     * let popup = new maplibregl.Popup()
      *   .setLngLat([-96, 37.8])
      *   .setHTML("<p>Hello World!</p>")
      *   .addTo(map);
-     * var popupElem = popup.getElement();
+     * let popupElem = popup.getElement();
      * popupElem.style.fontSize = "25px";
-     * @returns {HTMLElement} element
+     * ```
+     * @returns element
      */
     getElement() {
         return this._container;
@@ -56151,13 +56914,15 @@ class Popup extends performance.Evented {
      * so it cannot insert raw HTML. Use this method for security against XSS
      * if the popup content is user-provided.
      *
-     * @param text Textual content for the popup.
-     * @returns {Popup} `this`
+     * @param text - Textual content for the popup.
+     * @returns `this`
      * @example
-     * var popup = new maplibregl.Popup()
+     * ```ts
+     * let popup = new maplibregl.Popup()
      *   .setLngLat(e.lngLat)
      *   .setText('Hello, world!')
      *   .addTo(map);
+     * ```
      */
     setText(text) {
         return this.setDOMContent(document.createTextNode(text));
@@ -56169,17 +56934,19 @@ class Popup extends performance.Evented {
      * used only with trusted content. Consider {@link Popup#setText} if
      * the content is an untrusted text string.
      *
-     * @param html A string representing HTML content for the popup.
-     * @returns {Popup} `this`
+     * @param html - A string representing HTML content for the popup.
+     * @returns `this`
      * @example
-     * var popup = new maplibregl.Popup()
+     * ```ts
+     * let popup = new maplibregl.Popup()
      *   .setLngLat(e.lngLat)
      *   .setHTML("<h1>Hello World!</h1>")
      *   .addTo(map);
-     * @see [Display a popup](https://maplibre.org/maplibre-gl-js-docs/example/popup/)
-     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-hover/)
-     * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js-docs/example/popup-on-click/)
-     * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js-docs/example/set-popup/)
+     * ```
+     * @see [Display a popup](https://maplibre.org/maplibre-gl-js/docs/examples/popup/)
+     * @see [Display a popup on hover](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-hover/)
+     * @see [Display a popup on click](https://maplibre.org/maplibre-gl-js/docs/examples/popup-on-click/)
+     * @see [Attach a popup to a marker instance](https://maplibre.org/maplibre-gl-js/docs/examples/set-popup/)
      */
     setHTML(html) {
         const frag = document.createDocumentFragment();
@@ -56197,17 +56964,18 @@ class Popup extends performance.Evented {
     /**
      * Returns the popup's maximum width.
      *
-     * @returns {string} The maximum width of the popup.
+     * @returns The maximum width of the popup.
      */
     getMaxWidth() {
-        return this._container && this._container.style.maxWidth;
+        var _a;
+        return (_a = this._container) === null || _a === void 0 ? void 0 : _a.style.maxWidth;
     }
     /**
      * Sets the popup's maximum width. This is setting the CSS property `max-width`.
      * Available values can be found here: https://developer.mozilla.org/en-US/docs/Web/CSS/max-width
      *
-     * @param maxWidth A string representing the value for the maximum width.
-     * @returns {Popup} `this`
+     * @param maxWidth - A string representing the value for the maximum width.
+     * @returns `this`
      */
     setMaxWidth(maxWidth) {
         this.options.maxWidth = maxWidth;
@@ -56217,16 +56985,18 @@ class Popup extends performance.Evented {
     /**
      * Sets the popup's content to the element provided as a DOM node.
      *
-     * @param htmlNode A DOM node to be used as content for the popup.
-     * @returns {Popup} `this`
+     * @param htmlNode - A DOM node to be used as content for the popup.
+     * @returns `this`
      * @example
-     * // create an element with the popup content
-     * var div = document.createElement('div');
+     * Create an element with the popup content
+     * ```ts
+     * let div = document.createElement('div');
      * div.innerHTML = 'Hello, world!';
-     * var popup = new maplibregl.Popup()
+     * let popup = new maplibregl.Popup()
      *   .setLngLat(e.lngLat)
      *   .setDOMContent(div)
      *   .addTo(map);
+     * ```
      */
     setDOMContent(htmlNode) {
         if (this._content) {
@@ -56250,11 +57020,13 @@ class Popup extends performance.Evented {
     /**
      * Adds a CSS class to the popup container element.
      *
-     * @param {string} className Non-empty string with CSS class name to add to popup container
+     * @param className - Non-empty string with CSS class name to add to popup container
      *
      * @example
+     * ```ts
      * let popup = new maplibregl.Popup()
      * popup.addClassName('some-class')
+     * ```
      */
     addClassName(className) {
         if (this._container) {
@@ -56264,11 +57036,13 @@ class Popup extends performance.Evented {
     /**
      * Removes a CSS class from the popup container element.
      *
-     * @param {string} className Non-empty string with CSS class name to remove from popup container
+     * @param className - Non-empty string with CSS class name to remove from popup container
      *
      * @example
+     * ```ts
      * let popup = new maplibregl.Popup()
      * popup.removeClassName('some-class')
+     * ```
      */
     removeClassName(className) {
         if (this._container) {
@@ -56278,8 +57052,8 @@ class Popup extends performance.Evented {
     /**
      * Sets the popup's offset.
      *
-     * @param offset Sets the popup's offset.
-     * @returns {Popup} `this`
+     * @param offset - Sets the popup's offset.
+     * @returns `this`
      */
     setOffset(offset) {
         this.options.offset = offset;
@@ -56289,13 +57063,15 @@ class Popup extends performance.Evented {
     /**
      * Add or remove the given CSS class on the popup container, depending on whether the container currently has that class.
      *
-     * @param {string} className Non-empty string with CSS class name to add/remove
+     * @param className - Non-empty string with CSS class name to add/remove
      *
-     * @returns {boolean} if the class was removed return false, if class was added, then return true
+     * @returns if the class was removed return false, if class was added, then return true, undefined if there is no container
      *
      * @example
+     * ```ts
      * let popup = new maplibregl.Popup()
      * popup.toggleClassName('toggleClass')
+     * ```
      */
     toggleClassName(className) {
         if (this._container) {
@@ -56311,72 +57087,6 @@ class Popup extends performance.Evented {
             this._closeButton.addEventListener('click', this._onClose);
         }
     }
-    _onMouseUp(event) {
-        this._update(event.point);
-    }
-    _onMouseMove(event) {
-        this._update(event.point);
-    }
-    _onDrag(event) {
-        this._update(event.point);
-    }
-    _update(cursor) {
-        const hasPosition = this._lngLat || this._trackPointer;
-        if (!this._map || !hasPosition || !this._content) {
-            return;
-        }
-        if (!this._container) {
-            this._container = DOM.create('div', 'maplibregl-popup', this._map.getContainer());
-            this._tip = DOM.create('div', 'maplibregl-popup-tip', this._container);
-            this._container.appendChild(this._content);
-            if (this.options.className) {
-                this.options.className.split(' ').forEach(name => this._container.classList.add(name));
-            }
-            if (this._trackPointer) {
-                this._container.classList.add('maplibregl-popup-track-pointer');
-            }
-        }
-        if (this.options.maxWidth && this._container.style.maxWidth !== this.options.maxWidth) {
-            this._container.style.maxWidth = this.options.maxWidth;
-        }
-        if (this._map.transform.renderWorldCopies && !this._trackPointer) {
-            this._lngLat = smartWrap(this._lngLat, this._pos, this._map.transform);
-        }
-        if (this._trackPointer && !cursor)
-            return;
-        const pos = this._pos = this._trackPointer && cursor ? cursor : this._map.project(this._lngLat);
-        let anchor = this.options.anchor;
-        const offset = normalizeOffset(this.options.offset);
-        if (!anchor) {
-            const width = this._container.offsetWidth;
-            const height = this._container.offsetHeight;
-            let anchorComponents;
-            if (pos.y + offset.bottom.y < height) {
-                anchorComponents = ['top'];
-            }
-            else if (pos.y > this._map.transform.height - height) {
-                anchorComponents = ['bottom'];
-            }
-            else {
-                anchorComponents = [];
-            }
-            if (pos.x < width / 2) {
-                anchorComponents.push('left');
-            }
-            else if (pos.x > this._map.transform.width - width / 2) {
-                anchorComponents.push('right');
-            }
-            if (anchorComponents.length === 0) {
-                anchor = 'bottom';
-            }
-            else {
-                anchor = anchorComponents.join('-');
-            }
-        }
-        const offsetedPos = pos.add(offset[anchor]).round();
-        DOM.setTransform(this._container, `${anchorTranslate[anchor]} translate(${offsetedPos.x}px,${offsetedPos.y}px)`);
-        applyAnchorClass(this._container, anchor, 'popup');
-    }
     _focusFirstElement() {
         if (!this.options.focusAfterOpen || !this._container)
             return;
@@ -56384,32 +57094,29 @@ class Popup extends performance.Evented {
         if (firstFocusable)
             firstFocusable.focus();
     }
-    _onClose() {
-        this.remove();
-    }
 }
 function normalizeOffset(offset) {
     if (!offset) {
-        return normalizeOffset(new performance.pointGeometry(0, 0));
+        return normalizeOffset(new performance.Point(0, 0));
     }
     else if (typeof offset === 'number') {
         // input specifies a radius from which to calculate offsets at all positions
-        const cornerOffset = Math.round(Math.sqrt(0.5 * Math.pow(offset, 2)));
+        const cornerOffset = Math.round(Math.abs(offset) / Math.SQRT2);
         return {
-            'center': new performance.pointGeometry(0, 0),
-            'top': new performance.pointGeometry(0, offset),
-            'top-left': new performance.pointGeometry(cornerOffset, cornerOffset),
-            'top-right': new performance.pointGeometry(-cornerOffset, cornerOffset),
-            'bottom': new performance.pointGeometry(0, -offset),
-            'bottom-left': new performance.pointGeometry(cornerOffset, -cornerOffset),
-            'bottom-right': new performance.pointGeometry(-cornerOffset, -cornerOffset),
-            'left': new performance.pointGeometry(offset, 0),
-            'right': new performance.pointGeometry(-offset, 0)
+            'center': new performance.Point(0, 0),
+            'top': new performance.Point(0, offset),
+            'top-left': new performance.Point(cornerOffset, cornerOffset),
+            'top-right': new performance.Point(-cornerOffset, cornerOffset),
+            'bottom': new performance.Point(0, -offset),
+            'bottom-left': new performance.Point(cornerOffset, -cornerOffset),
+            'bottom-right': new performance.Point(-cornerOffset, -cornerOffset),
+            'left': new performance.Point(offset, 0),
+            'right': new performance.Point(-offset, 0)
         };
     }
-    else if (offset instanceof performance.pointGeometry || Array.isArray(offset)) {
+    else if (offset instanceof performance.Point || Array.isArray(offset)) {
         // input specifies a single offset to be applied to all positions
-        const convertedOffset = performance.pointGeometry.convert(offset);
+        const convertedOffset = performance.Point.convert(offset);
         return {
             'center': convertedOffset,
             'top': convertedOffset,
@@ -56425,138 +57132,105 @@ function normalizeOffset(offset) {
     else {
         // input specifies an offset per position
         return {
-            'center': performance.pointGeometry.convert(offset['center'] || [0, 0]),
-            'top': performance.pointGeometry.convert(offset['top'] || [0, 0]),
-            'top-left': performance.pointGeometry.convert(offset['top-left'] || [0, 0]),
-            'top-right': performance.pointGeometry.convert(offset['top-right'] || [0, 0]),
-            'bottom': performance.pointGeometry.convert(offset['bottom'] || [0, 0]),
-            'bottom-left': performance.pointGeometry.convert(offset['bottom-left'] || [0, 0]),
-            'bottom-right': performance.pointGeometry.convert(offset['bottom-right'] || [0, 0]),
-            'left': performance.pointGeometry.convert(offset['left'] || [0, 0]),
-            'right': performance.pointGeometry.convert(offset['right'] || [0, 0])
+            'center': performance.Point.convert(offset['center'] || [0, 0]),
+            'top': performance.Point.convert(offset['top'] || [0, 0]),
+            'top-left': performance.Point.convert(offset['top-left'] || [0, 0]),
+            'top-right': performance.Point.convert(offset['top-right'] || [0, 0]),
+            'bottom': performance.Point.convert(offset['bottom'] || [0, 0]),
+            'bottom-left': performance.Point.convert(offset['bottom-left'] || [0, 0]),
+            'bottom-right': performance.Point.convert(offset['bottom-right'] || [0, 0]),
+            'left': performance.Point.convert(offset['left'] || [0, 0]),
+            'right': performance.Point.convert(offset['right'] || [0, 0])
         };
     }
 }
 
+/**
+ * This is a private namespace for utility functions that will get automatically stripped
+ * out in production builds.
+ */
+const Debug = {
+    extend(dest, ...sources) {
+        return performance.extend(dest, ...sources);
+    },
+    run(fn) {
+        fn();
+    },
+    logToElement(message, overwrite = false, id = 'log') {
+        const el = window.document.getElementById(id);
+        if (el) {
+            if (overwrite)
+                el.innerHTML = '';
+            el.innerHTML += `<br>${message}`;
+        }
+    }
+};
+
 const version = packageJSON.version;
-const exported = {
-    supported,
-    setRTLTextPlugin: performance.setRTLTextPlugin,
-    getRTLTextPluginStatus: performance.getRTLTextPluginStatus,
-    Map: Map$1,
-    NavigationControl,
-    GeolocateControl,
-    AttributionControl,
-    LogoControl,
-    ScaleControl,
-    FullscreenControl,
-    TerrainControl,
-    Popup,
-    Marker,
-    Style,
-    LngLat: performance.LngLat,
-    LngLatBounds,
-    Point: performance.pointGeometry,
-    MercatorCoordinate: performance.MercatorCoordinate,
-    Evented: performance.Evented,
-    AJAXError: performance.AJAXError,
-    config: performance.config,
-    CanvasSource,
-    GeoJSONSource,
-    ImageSource,
-    RasterDEMTileSource,
-    RasterTileSource,
-    VectorTileSource,
-    VideoSource,
-    /**
-     * Initializes resources like WebWorkers that can be shared across maps to lower load
-     * times in some situations. `maplibregl.workerUrl` and `maplibregl.workerCount`, if being
-     * used, must be set before `prewarm()` is called to have an effect.
-     *
-     * By default, the lifecycle of these resources is managed automatically, and they are
-     * lazily initialized when a Map is first created. By invoking `prewarm()`, these
-     * resources will be created ahead of time, and will not be cleared when the last Map
-     * is removed from the page. This allows them to be re-used by new Map instances that
-     * are created later. They can be manually cleared by calling
-     * `maplibregl.clearPrewarmedResources()`. This is only necessary if your web page remains
-     * active but stops using maps altogether.
-     *
-     * This is primarily useful when using GL-JS maps in a single page app, wherein a user
-     * would navigate between various views that can cause Map instances to constantly be
-     * created and destroyed.
-     *
-     * @function prewarm
-     * @example
-     * maplibregl.prewarm()
-     */
-    prewarm,
-    /**
-     * Clears up resources that have previously been created by `maplibregl.prewarm()`.
-     * Note that this is typically not necessary. You should only call this function
-     * if you expect the user of your app to not return to a Map view at any point
-     * in your application.
-     *
-     * @function clearPrewarmedResources
-     * @example
-     * maplibregl.clearPrewarmedResources()
-     */
-    clearPrewarmedResources,
+/**
+ * `maplibregl` is the global object that allows configurations that are not specific to a map instance
+ *
+ * @group Main
+ */
+class MapLibreGL {
     /**
      * Returns the package version of the library
-     * @returns {string} Package version of the library
+     * @returns Package version of the library
      */
-    get version() {
+    static get version() {
         return version;
-    },
+    }
     /**
      * Gets and sets the number of web workers instantiated on a page with GL JS maps.
-     * By default, it is set to half the number of CPU cores (capped at 6).
+     * By default, workerCount is 1 except for Safari browser where it is set to half the number of CPU cores (capped at 3).
      * Make sure to set this property before creating any map instances for it to have effect.
      *
-     * @var {string} workerCount
-     * @returns {number} Number of workers currently configured.
+     * @returns Number of workers currently configured.
      * @example
+     * ```ts
      * maplibregl.workerCount = 2;
+     * ```
      */
-    get workerCount() {
+    static get workerCount() {
         return WorkerPool.workerCount;
-    },
-    set workerCount(count) {
+    }
+    static set workerCount(count) {
         WorkerPool.workerCount = count;
-    },
+    }
     /**
      * Gets and sets the maximum number of images (raster tiles, sprites, icons) to load in parallel,
      * which affects performance in raster-heavy maps. 16 by default.
      *
-     * @var {string} maxParallelImageRequests
-     * @returns {number} Number of parallel requests currently configured.
+     * @returns Number of parallel requests currently configured.
      * @example
+     * ```ts
      * maplibregl.maxParallelImageRequests = 10;
+     * ```
      */
-    get maxParallelImageRequests() {
+    static get maxParallelImageRequests() {
         return performance.config.MAX_PARALLEL_IMAGE_REQUESTS;
-    },
-    set maxParallelImageRequests(numRequests) {
+    }
+    static set maxParallelImageRequests(numRequests) {
         performance.config.MAX_PARALLEL_IMAGE_REQUESTS = numRequests;
-    },
-    get workerUrl() {
+    }
+    static get workerUrl() {
         return performance.config.WORKER_URL;
-    },
-    set workerUrl(value) {
+    }
+    static set workerUrl(value) {
         performance.config.WORKER_URL = value;
-    },
+    }
     /**
      * Sets a custom load tile function that will be called when using a source that starts with a custom url schema.
      * The example below will be triggered for custom:// urls defined in the sources list in the style definitions.
      * The function passed will receive the request parameters and should call the callback with the resulting request,
      * for example a pbf vector tile, non-compressed, represented as ArrayBuffer.
      *
-     * @function addProtocol
-     * @param {string} customProtocol - the protocol to hook, for example 'custom'
-     * @param {Function} loadFn - the function to use when trying to fetch a tile specified by the customProtocol
+     * @param customProtocol - the protocol to hook, for example 'custom'
+     * @param loadFn - the function to use when trying to fetch a tile specified by the customProtocol
      * @example
-     * // this will fetch a file using the fetch API (this is obviously a non iteresting example...)
-     * maplibre.addProtocol('custom', (params, callback) => {
+     * This will fetch a file using the fetch API (this is obviously a non interesting example...)
+     * ```ts
+     * maplibregl.addProtocol('custom', (params, callback) => {
             fetch(`https://${params.url.split("://")[1]}`)
                 .then(t => {
                     if (t.status == 200) {
@@ -56573,34 +57247,126 @@ const exported = {
             return { cancel: () => { } };
         });
      * // the following is an example of a way to return an error when trying to load a tile
-     * maplibre.addProtocol('custom2', (params, callback) => {
+     * maplibregl.addProtocol('custom2', (params, callback) => {
      *      callback(new Error('someErrorMessage'));
      *      return { cancel: () => { } };
      * });
+     * ```
      */
-    addProtocol(customProtocol, loadFn) {
+    static addProtocol(customProtocol, loadFn) {
         performance.config.REGISTERED_PROTOCOLS[customProtocol] = loadFn;
-    },
+    }
     /**
-     * Removes a previusly added protocol
+     * Removes a previously added protocol
      *
-     * @function removeProtocol
-     * @param {string} customProtocol - the custom protocol to remove registration for
+     * @param customProtocol - the custom protocol to remove registration for
      * @example
+     * ```ts
      * maplibregl.removeProtocol('custom');
+     * ```
      */
-    removeProtocol(customProtocol) {
+    static removeProtocol(customProtocol) {
         delete performance.config.REGISTERED_PROTOCOLS[customProtocol];
     }
-};
+}
+MapLibreGL.Map = Map$1;
+MapLibreGL.NavigationControl = NavigationControl;
+MapLibreGL.GeolocateControl = GeolocateControl;
+MapLibreGL.AttributionControl = AttributionControl;
+MapLibreGL.LogoControl = LogoControl;
+MapLibreGL.ScaleControl = ScaleControl;
+MapLibreGL.FullscreenControl = FullscreenControl;
+MapLibreGL.TerrainControl = TerrainControl;
+MapLibreGL.Popup = Popup;
+MapLibreGL.Marker = Marker;
+MapLibreGL.Style = Style;
+MapLibreGL.LngLat = performance.LngLat;
+MapLibreGL.LngLatBounds = LngLatBounds;
+MapLibreGL.Point = performance.Point;
+MapLibreGL.MercatorCoordinate = performance.MercatorCoordinate;
+MapLibreGL.Evented = performance.Evented;
+MapLibreGL.AJAXError = performance.AJAXError;
+MapLibreGL.config = performance.config;
+MapLibreGL.CanvasSource = CanvasSource;
+MapLibreGL.GeoJSONSource = GeoJSONSource;
+MapLibreGL.ImageSource = ImageSource;
+MapLibreGL.RasterDEMTileSource = RasterDEMTileSource;
+MapLibreGL.RasterTileSource = RasterTileSource;
+MapLibreGL.VectorTileSource = VectorTileSource;
+MapLibreGL.VideoSource = VideoSource;
+/**
+ * Sets the map's [RTL text plugin](https://www.mapbox.com/mapbox-gl-js/plugins/#mapbox-gl-rtl-text).
+ * Necessary for supporting the Arabic and Hebrew languages, which are written right-to-left.
+ *
+ * @param pluginURL - URL pointing to the Mapbox RTL text plugin source.
+ * @param callback - Called with an error argument if there is an error.
+ * @param lazy - If set to `true`, mapboxgl will defer loading the plugin until rtl text is encountered,
+ * rtl text will then be rendered only after the plugin finishes loading.
+ * @example
+ * ```ts
+ * maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.js');
+ * ```
+ * @see [Add support for right-to-left scripts](https://maplibre.org/maplibre-gl-js/docs/examples/mapbox-gl-rtl-text/)
+ */
+MapLibreGL.setRTLTextPlugin = performance.setRTLTextPlugin;
+/**
+ * Gets the map's [RTL text plugin](https://www.mapbox.com/mapbox-gl-js/plugins/#mapbox-gl-rtl-text) status.
+ * The status can be `unavailable` (i.e. not requested or removed), `loading`, `loaded` or `error`.
+ * If the status is `loaded` and the plugin is requested again, an error will be thrown.
+ *
+ * @example
+ * ```ts
+ * const pluginStatus = maplibregl.getRTLTextPluginStatus();
+ * ```
+ */
+MapLibreGL.getRTLTextPluginStatus = performance.getRTLTextPluginStatus;
+/**
+ * Initializes resources like WebWorkers that can be shared across maps to lower load
+ * times in some situations. `maplibregl.workerUrl` and `maplibregl.workerCount`, if being
+ * used, must be set before `prewarm()` is called to have an effect.
+ *
+ * By default, the lifecycle of these resources is managed automatically, and they are
+ * lazily initialized when a Map is first created. By invoking `prewarm()`, these
+ * resources will be created ahead of time, and will not be cleared when the last Map
+ * is removed from the page. This allows them to be re-used by new Map instances that
+ * are created later. They can be manually cleared by calling
+ * `maplibregl.clearPrewarmedResources()`. This is only necessary if your web page remains
+ * active but stops using maps altogether.
+ *
+ * This is primarily useful when using GL-JS maps in a single page app, wherein a user
+ * would navigate between various views that can cause Map instances to constantly be
+ * created and destroyed.
+ *
+ * @example
+ * ```ts
+ * maplibregl.prewarm()
+ * ```
+ */
+MapLibreGL.prewarm = prewarm;
+/**
+ * Clears up resources that have previously been created by `maplibregl.prewarm()`.
+ * Note that this is typically not necessary. You should only call this function
+ * if you expect the user of your app to not return to a Map view at any point
+ * in your application.
+ *
+ * @example
+ * ```ts
+ * maplibregl.clearPrewarmedResources()
+ * ```
+ */
+MapLibreGL.clearPrewarmedResources = clearPrewarmedResources;
 //This gets automatically stripped out in production builds.
-Debug.extend(exported, { isSafari: performance.isSafari, getPerformanceMetrics: performance.PerformanceUtils.getPerformanceMetrics });
+Debug.extend(MapLibreGL, { isSafari: performance.isSafari, getPerformanceMetrics: performance.PerformanceUtils.getPerformanceMetrics });
 
-return exported;
+return MapLibreGL;
 
 }));
 
 //
+// Our custom intro provides a specialized "define()" function, called by the
+// AMD modules below, that sets up the worker blob URL and then executes the
+// main module, storing its exported value as 'maplibregl'
+
 
 var maplibregl$1 = maplibregl;
 
