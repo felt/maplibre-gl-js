@@ -2,6 +2,7 @@
 /types/
 /dist_type/
 /test/bench/results/
+/dist/
 /docs/API
 /docs/examples
 /docs/example
@@ -16,6 +17,7 @@ coverage
 .nyc_output
 *_generated.js
 *_generated.js.map
+test/examples
 test/integration/**/results*.html
 test/integration/**/actual.png
 test/integration/**/actual.json
