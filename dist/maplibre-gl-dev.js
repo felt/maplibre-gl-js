@@ -46161,8 +46161,7 @@ class Program {
         gl.shaderSource(fragmentShader, fragmentSource);
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            console.log(gl.getShaderInfoLog(fragmentShader));
-            throw new Error(`Could not compile fragment shader: `);
+            throw new Error(`Could not compile fragment shader: ${gl.getShaderInfoLog(fragmentShader)}`);
         }
         gl.attachShader(this.program, fragmentShader);
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -46186,10 +46185,8 @@ class Program {
             }
         }
         gl.linkProgram(this.program);
-        console.log("!!!");
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-            console.log(gl.getProgramInfoLog(this.program));
-            throw new Error(`Program failed to link:}`);
+            throw new Error(`Program failed to link: ${gl.getProgramInfoLog(this.program)}`);
         }
         gl.deleteShader(vertexShader);
         gl.deleteShader(fragmentShader);
