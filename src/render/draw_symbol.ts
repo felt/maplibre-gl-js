@@ -82,7 +82,10 @@ export function drawSymbols(painter: Painter, sourceCache: SourceCache, layer: S
     }
 
     if (layer.paint.get('icon-opacity').constantOr(1) !== 0) {
-        drawLayerSymbols(painter, sourceCache, layer, coords, false,
+        const iconImage = layer.layout.get('icon-image').value;
+        // The type check below is annoying but types seem to be weong because we expect a ResolvedImage but get a string
+        const isMSDF = iconImage.kind === 'constant' && typeof iconImage.value === 'string' && (iconImage.value as string).includes('msdf:');
+        drawLayerSymbols(painter, sourceCache, layer, coords, false, isMSDF,
             layer.paint.get('icon-translate'),
             layer.paint.get('icon-translate-anchor'),
             layer.layout.get('icon-rotation-alignment'),
@@ -93,7 +96,7 @@ export function drawSymbols(painter: Painter, sourceCache: SourceCache, layer: S
     }
 
     if (layer.paint.get('text-opacity').constantOr(1) !== 0) {
-        drawLayerSymbols(painter, sourceCache, layer, coords, true,
+        drawLayerSymbols(painter, sourceCache, layer, coords, true, false,
             layer.paint.get('text-translate'),
             layer.paint.get('text-translate-anchor'),
             layer.layout.get('text-rotation-alignment'),
@@ -297,6 +300,7 @@ function drawLayerSymbols(
     layer: SymbolStyleLayer,
     coords: Array<OverscaledTileID>,
     isText: boolean,
+    isMSDF: boolean,
     translate: [number, number],
     translateAnchor: 'map' | 'viewport',
     rotationAlignment: SymbolLayerSpecification['layout']['text-rotation-alignment'],
@@ -408,7 +412,7 @@ function drawLayerSymbols(
             if (!bucket.iconsInText) {
                 uniformValues = symbolSDFUniformValues(sizeData.kind,
                     size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix,
-                    uLabelPlaneMatrix, uglCoordMatrix, translation, isText, texSize, true, pitchedTextRescaling);
+                    uLabelPlaneMatrix, uglCoordMatrix, translation, isText, isMSDF, texSize, true, pitchedTextRescaling);
             } else {
                 uniformValues = symbolTextAndIconUniformValues(sizeData.kind,
                     size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix,
@@ -417,7 +421,7 @@ function drawLayerSymbols(
         } else {
             uniformValues = symbolIconUniformValues(sizeData.kind,
                 size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix,
-                uLabelPlaneMatrix, uglCoordMatrix, translation, isText, texSize, pitchedTextRescaling);
+                uLabelPlaneMatrix, uglCoordMatrix, translation, isText, false, texSize, pitchedTextRescaling);
         }
 
         const state = {

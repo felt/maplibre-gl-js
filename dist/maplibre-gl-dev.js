@@ -36220,7 +36220,7 @@ var scripts = {
 	"start-docs": "docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material",
 	start: "run-p watch-css watch-dev start-server",
 	"start-bench": "run-p watch-css watch-benchmarks start-server",
-	lint: "eslint --cache --ext .ts,.tsx,.js,.html --ignore-path .gitignore .",
+	lint: "eslint --cache --ext .ts,.tsx,.js,.html --ignore-path .eslintignore .",
 	"lint-css": "stylelint **/*.css --fix -f verbose",
 	test: "run-p lint lint-css test-render jest",
 	jest: "jest",
@@ -45781,7 +45781,7 @@ var symbolIconFrag = 'uniform sampler2D u_texture;varying vec2 v_tex;varying flo
 var symbolIconVert = 'attribute vec4 a_pos_offset;attribute vec4 a_data;attribute vec4 a_pixeloffset;attribute vec3 a_projected_pos;attribute float a_fade_opacity;uniform bool u_is_size_zoom_constant;uniform bool u_is_size_feature_constant;uniform highp float u_size_t;uniform highp float u_size;uniform highp float u_camera_to_center_distance;uniform highp float u_pitch;uniform bool u_rotate_symbol;uniform highp float u_aspect_ratio;uniform float u_fade_change;uniform mat4 u_matrix;uniform mat4 u_label_plane_matrix;uniform mat4 u_coord_matrix;uniform bool u_is_text;uniform bool u_pitch_with_map;uniform vec2 u_texsize;uniform bool u_is_along_line;uniform bool u_is_variable_anchor;uniform vec2 u_translation;uniform float u_pitched_scale;varying vec2 v_tex;varying float v_fade_opacity;vec4 projectTileWithElevation(vec2 posInTile,float elevation) {return u_matrix*vec4(posInTile,elevation,1.0);}\n#pragma mapbox: define lowp float opacity\nvoid main() {\n#pragma mapbox: initialize lowp float opacity\nvec2 a_pos=a_pos_offset.xy;vec2 a_offset=a_pos_offset.zw;vec2 a_tex=a_data.xy;vec2 a_size=a_data.zw;float a_size_min=floor(a_size[0]*0.5);vec2 a_pxoffset=a_pixeloffset.xy;vec2 a_minFontScale=a_pixeloffset.zw/256.0;float ele=get_elevation(a_pos);highp float segment_angle=-a_projected_pos[2];float size;if (!u_is_size_zoom_constant && !u_is_size_feature_constant) {size=mix(a_size_min,a_size[1],u_size_t)/128.0;} else if (u_is_size_zoom_constant && !u_is_size_feature_constant) {size=a_size_min/128.0;} else {size=u_size;}vec2 translated_a_pos=a_pos+u_translation;vec4 projectedPoint=projectTileWithElevation(translated_a_pos,ele);highp float camera_to_anchor_distance=projectedPoint.w;highp float distance_ratio=u_pitch_with_map ?\ncamera_to_anchor_distance/u_camera_to_center_distance :\nu_camera_to_center_distance/camera_to_anchor_distance;highp float perspective_ratio=clamp(0.5+0.5*distance_ratio,0.0,4.0);size*=perspective_ratio;float fontScale=u_is_text ? size/24.0 : size;highp float symbol_rotation=0.0;if (u_rotate_symbol) {vec4 offsetProjectedPoint=projectTileWithElevation(translated_a_pos+vec2(1,0),ele);vec2 a=projectedPoint.xy/projectedPoint.w;vec2 b=offsetProjectedPoint.xy/offsetProjectedPoint.w;symbol_rotation=atan((b.y-a.y)/u_aspect_ratio,b.x-a.x);}highp float angle_sin=sin(segment_angle+symbol_rotation);highp float angle_cos=cos(segment_angle+symbol_rotation);mat2 rotation_matrix=mat2(angle_cos,-1.0*angle_sin,angle_sin,angle_cos);vec4 projected_pos;if (u_is_along_line || u_is_variable_anchor) {projected_pos=vec4(a_projected_pos.xy,ele,1.0);} else if (u_pitch_with_map) {projected_pos=u_label_plane_matrix*vec4(a_projected_pos.xy+u_translation,ele,1.0);} else {projected_pos=u_label_plane_matrix*projectTileWithElevation(a_projected_pos.xy+u_translation,ele);}float z=float(u_pitch_with_map)*projected_pos.z/projected_pos.w;float projectionScaling=1.0;vec4 finalPos=u_coord_matrix*vec4(projected_pos.xy/projected_pos.w+rotation_matrix*(a_offset/32.0*max(a_minFontScale,fontScale)+a_pxoffset/16.0)*projectionScaling,z,1.0);if(u_pitch_with_map) {finalPos=projectTileWithElevation(finalPos.xy,finalPos.z);}gl_Position=finalPos;v_tex=a_tex/u_texsize;vec2 fade_opacity=unpack_opacity(a_fade_opacity);float fade_change=fade_opacity[1] > 0.5 ? u_fade_change :-u_fade_change;float visibility=calculate_visibility(projectedPoint);v_fade_opacity=max(0.0,min(visibility,fade_opacity[0]+fade_change));}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
-var symbolSDFFrag = '#define SDF_PX 8.0\nuniform bool u_is_halo;uniform sampler2D u_texture;uniform sampler2D u_texture_2;uniform highp float u_gamma_scale;uniform lowp float u_device_pixel_ratio;uniform bool u_is_text;varying vec2 v_data0;varying vec3 v_data1;\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nfloat median(vec3 values) {return max(min(values.r,values.g),min(max(values.r,values.g),values.b));}float screenPxRange(float fontScale) {return fontScale*SDF_PX;}vec4 renderText(vec4 fill_color,vec4 halo_color,float opacity,float halo_width,float halo_blur,float EDGE_GAMMA,vec2 tex,float gamma_scale,float size,float fade_opacity) {float fontScale=size/24.0;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float inner_edge=(256.0-64.0)/256.0;if (u_is_halo) {color=halo_color;gamma=(halo_blur*1.19/SDF_PX+EDGE_GAMMA)/(fontScale*u_gamma_scale);inner_edge=inner_edge+gamma*gamma_scale;}lowp float dist=texture2D(u_texture,tex).a;highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(inner_edge-gamma_scaled,inner_edge+gamma_scaled,dist);if (u_is_halo) {lowp float halo_edge=(6.0-halo_width/fontScale)/SDF_PX;alpha=min(smoothstep(halo_edge-gamma_scaled,halo_edge+gamma_scaled,dist),1.0-alpha);}return color*(alpha*opacity*fade_opacity);}vec4 renderMSDFIcon(vec4 fill_color,vec4 halo_color,float opacity,float EDGE_GAMMA,vec2 tex,float gamma_scale,float size,float fade_opacity) {float fontScale=size;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float inner_edge=(256.0-64.0)/256.0;vec3 s=texture2D(u_texture,tex).rgb;float sd=median(s);float dist=sd-0.5;if (u_is_halo) {color=halo_color;s=texture2D(u_texture_2,tex).rgb;sd=median(s);dist=sd-0.5;}float clampedDistance=clamp(dist*screenPxRange(fontScale)+0.5,0.0,1.0);highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(inner_edge-gamma_scaled,inner_edge+gamma_scaled,clampedDistance);return color*(alpha*opacity*fade_opacity);}void main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nfloat EDGE_GAMMA=0.105/u_device_pixel_ratio;vec2 tex=v_data0.xy;float gamma_scale=v_data1.x;float size=v_data1.y;float fade_opacity=v_data1[2];gl_FragColor=u_is_text ? renderText(fill_color,halo_color,opacity,halo_width,halo_blur,EDGE_GAMMA,tex,gamma_scale,size,fade_opacity) : renderMSDFIcon(fill_color,halo_color,opacity,EDGE_GAMMA,tex,gamma_scale,size,fade_opacity);\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
+var symbolSDFFrag = '#define SDF_PX 8.0\nuniform bool u_is_halo;uniform sampler2D u_texture;uniform sampler2D u_texture_2;uniform highp float u_gamma_scale;uniform lowp float u_device_pixel_ratio;uniform bool u_is_text;uniform bool u_is_msdf;varying vec2 v_data0;varying vec3 v_data1;\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nfloat median(vec3 values) {return max(min(values.r,values.g),min(max(values.r,values.g),values.b));}float screenPxRange(float fontScale) {return fontScale*SDF_PX;}vec4 renderText(bool is_text,vec4 fill_color,vec4 halo_color,float opacity,float halo_width,float halo_blur,float EDGE_GAMMA,vec2 tex,float gamma_scale,float size,float fade_opacity) {float fontScale=is_text ? size/24.0 : size;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float inner_edge=(256.0-64.0)/256.0;if (u_is_halo) {color=halo_color;gamma=(halo_blur*1.19/SDF_PX+EDGE_GAMMA)/(fontScale*u_gamma_scale);inner_edge=inner_edge+gamma*gamma_scale;}lowp float dist=texture2D(u_texture,tex).a;highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(inner_edge-gamma_scaled,inner_edge+gamma_scaled,dist);if (u_is_halo) {lowp float halo_edge=(6.0-halo_width/fontScale)/SDF_PX;alpha=min(smoothstep(halo_edge-gamma_scaled,halo_edge+gamma_scaled,dist),1.0-alpha);}return color*(alpha*opacity*fade_opacity);}vec4 renderMSDFIcon(vec4 fill_color,vec4 halo_color,float opacity,float EDGE_GAMMA,vec2 tex,float gamma_scale,float size,float fade_opacity) {float fontScale=size;lowp vec4 color=fill_color;highp float gamma=EDGE_GAMMA/(fontScale*u_gamma_scale);lowp float inner_edge=(256.0-64.0)/256.0;vec3 s=texture2D(u_texture,tex).rgb;float sd=median(s);float dist=sd-0.5;if (u_is_halo) {color=halo_color;s=texture2D(u_texture_2,tex).rgb;sd=median(s);dist=sd-0.5;}float clampedDistance=clamp(dist*screenPxRange(fontScale)+0.5,0.0,1.0);highp float gamma_scaled=gamma*gamma_scale;highp float alpha=smoothstep(inner_edge-gamma_scaled,inner_edge+gamma_scaled,clampedDistance);return color*(alpha*opacity*fade_opacity);}void main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nfloat EDGE_GAMMA=0.105/u_device_pixel_ratio;vec2 tex=v_data0.xy;float gamma_scale=v_data1.x;float size=v_data1.y;float fade_opacity=v_data1[2];gl_FragColor=u_is_text || !u_is_msdf ? renderText(u_is_text,fill_color,halo_color,opacity,halo_width,halo_blur,EDGE_GAMMA,tex,gamma_scale,size,fade_opacity) : renderMSDFIcon(fill_color,halo_color,opacity,EDGE_GAMMA,tex,gamma_scale,size,fade_opacity);\n#ifdef OVERDRAW_INSPECTOR\ngl_FragColor=vec4(1.0);\n#endif\n}';
 
 // This file is generated. Edit build/generate-shaders.ts, then run `npm run codegen`.
 var symbolSDFVert = 'attribute vec4 a_pos_offset;attribute vec4 a_data;attribute vec4 a_pixeloffset;attribute vec3 a_projected_pos;attribute float a_fade_opacity;uniform bool u_is_size_zoom_constant;uniform bool u_is_size_feature_constant;uniform highp float u_size_t;uniform highp float u_size;uniform mat4 u_matrix;uniform mat4 u_label_plane_matrix;uniform mat4 u_coord_matrix;uniform bool u_is_text;uniform bool u_pitch_with_map;uniform bool u_is_along_line;uniform bool u_is_variable_anchor;uniform highp float u_pitch;uniform bool u_rotate_symbol;uniform highp float u_aspect_ratio;uniform highp float u_camera_to_center_distance;uniform float u_fade_change;uniform vec2 u_texsize;uniform vec2 u_translation;uniform float u_pitched_scale;varying vec2 v_data0;varying vec3 v_data1;vec4 projectTileWithElevation(vec2 posInTile,float elevation) {return u_matrix*vec4(posInTile,elevation,1.0);}\n#pragma mapbox: define highp vec4 fill_color\n#pragma mapbox: define highp vec4 halo_color\n#pragma mapbox: define lowp float opacity\n#pragma mapbox: define lowp float halo_width\n#pragma mapbox: define lowp float halo_blur\nvoid main() {\n#pragma mapbox: initialize highp vec4 fill_color\n#pragma mapbox: initialize highp vec4 halo_color\n#pragma mapbox: initialize lowp float opacity\n#pragma mapbox: initialize lowp float halo_width\n#pragma mapbox: initialize lowp float halo_blur\nvec2 a_pos=a_pos_offset.xy;vec2 a_offset=a_pos_offset.zw;vec2 a_tex=a_data.xy;vec2 a_size=a_data.zw;float a_size_min=floor(a_size[0]*0.5);vec2 a_pxoffset=a_pixeloffset.xy;float ele=get_elevation(a_pos);highp float segment_angle=-a_projected_pos[2];float size;if (!u_is_size_zoom_constant && !u_is_size_feature_constant) {size=mix(a_size_min,a_size[1],u_size_t)/128.0;} else if (u_is_size_zoom_constant && !u_is_size_feature_constant) {size=a_size_min/128.0;} else {size=u_size;}vec2 translated_a_pos=a_pos+u_translation;vec4 projectedPoint=projectTileWithElevation(translated_a_pos,ele);highp float camera_to_anchor_distance=projectedPoint.w;highp float distance_ratio=u_pitch_with_map ?\ncamera_to_anchor_distance/u_camera_to_center_distance :\nu_camera_to_center_distance/camera_to_anchor_distance;highp float perspective_ratio=clamp(0.5+0.5*distance_ratio,0.0,4.0);size*=perspective_ratio;float fontScale=u_is_text ? size/24.0 : size;highp float symbol_rotation=0.0;if (u_rotate_symbol) {vec4 offsetProjectedPoint=projectTileWithElevation(translated_a_pos+vec2(1,0),ele);vec2 a=projectedPoint.xy/projectedPoint.w;vec2 b=offsetProjectedPoint.xy/offsetProjectedPoint.w;symbol_rotation=atan((b.y-a.y)/u_aspect_ratio,b.x-a.x);}highp float angle_sin=sin(segment_angle+symbol_rotation);highp float angle_cos=cos(segment_angle+symbol_rotation);mat2 rotation_matrix=mat2(angle_cos,-1.0*angle_sin,angle_sin,angle_cos);vec4 projected_pos;if (u_is_along_line || u_is_variable_anchor) {projected_pos=vec4(a_projected_pos.xy,ele,1.0);} else if (u_pitch_with_map) {projected_pos=u_label_plane_matrix*vec4(a_projected_pos.xy+u_translation,ele,1.0);} else {projected_pos=u_label_plane_matrix*projectTileWithElevation(a_projected_pos.xy+u_translation,ele);}float z=float(u_pitch_with_map)*projected_pos.z/projected_pos.w;float projectionScaling=1.0;vec4 finalPos=u_coord_matrix*vec4(projected_pos.xy/projected_pos.w+rotation_matrix*(a_offset/32.0*fontScale+a_pxoffset)*projectionScaling,z,1.0);if(u_pitch_with_map) {finalPos=projectTileWithElevation(finalPos.xy,finalPos.z);}float gamma_scale=finalPos.w;gl_Position=finalPos;vec2 fade_opacity=unpack_opacity(a_fade_opacity);float visibility=calculate_visibility(projectedPoint);float fade_change=fade_opacity[1] > 0.5 ? u_fade_change :-u_fade_change;float interpolated_fade_opacity=max(0.0,min(visibility,fade_opacity[0]+fade_change));v_data0=a_tex/u_texsize;v_data1=vec3(gamma_scale,size,interpolated_fade_opacity);}';
@@ -46162,7 +46162,7 @@ class Program {
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
             console.log(gl.getShaderInfoLog(fragmentShader));
-            throw new Error(`Could not compile fragment shader:`);
+            throw new Error(`Could not compile fragment shader: `);
         }
         gl.attachShader(this.program, fragmentShader);
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -46186,9 +46186,10 @@ class Program {
             }
         }
         gl.linkProgram(this.program);
+        console.log("!!!");
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
             console.log(gl.getProgramInfoLog(this.program));
-            throw new Error(`Program failed to link:`);
+            throw new Error(`Program failed to link:}`);
         }
         gl.deleteShader(vertexShader);
         gl.deleteShader(fragmentShader);
@@ -46710,6 +46711,7 @@ const symbolIconUniforms = (context, locations) => ({
     'u_label_plane_matrix': new performance$1.UniformMatrix4f(context, locations.u_label_plane_matrix),
     'u_coord_matrix': new performance$1.UniformMatrix4f(context, locations.u_coord_matrix),
     'u_is_text': new performance$1.Uniform1i(context, locations.u_is_text),
+    'u_is_msdf': new performance$1.Uniform1i(context, locations.u_is_msdf),
     'u_pitch_with_map': new performance$1.Uniform1i(context, locations.u_pitch_with_map),
     'u_is_along_line': new performance$1.Uniform1i(context, locations.u_is_along_line),
     'u_is_variable_anchor': new performance$1.Uniform1i(context, locations.u_is_variable_anchor),
@@ -46732,6 +46734,7 @@ const symbolSDFUniforms = (context, locations) => ({
     'u_label_plane_matrix': new performance$1.UniformMatrix4f(context, locations.u_label_plane_matrix),
     'u_coord_matrix': new performance$1.UniformMatrix4f(context, locations.u_coord_matrix),
     'u_is_text': new performance$1.Uniform1i(context, locations.u_is_text),
+    'u_is_msdf': new performance$1.Uniform1i(context, locations.u_is_msdf),
     'u_pitch_with_map': new performance$1.Uniform1i(context, locations.u_pitch_with_map),
     'u_is_along_line': new performance$1.Uniform1i(context, locations.u_is_along_line),
     'u_is_variable_anchor': new performance$1.Uniform1i(context, locations.u_is_variable_anchor),
@@ -46758,6 +46761,7 @@ const symbolTextAndIconUniforms = (context, locations) => ({
     'u_label_plane_matrix': new performance$1.UniformMatrix4f(context, locations.u_label_plane_matrix),
     'u_coord_matrix': new performance$1.UniformMatrix4f(context, locations.u_coord_matrix),
     'u_is_text': new performance$1.Uniform1i(context, locations.u_is_text),
+    'u_is_msdf': new performance$1.Uniform1i(context, locations.u_is_msdf),
     'u_pitch_with_map': new performance$1.Uniform1i(context, locations.u_pitch_with_map),
     'u_is_along_line': new performance$1.Uniform1i(context, locations.u_is_along_line),
     'u_is_variable_anchor': new performance$1.Uniform1i(context, locations.u_is_variable_anchor),
@@ -46771,7 +46775,7 @@ const symbolTextAndIconUniforms = (context, locations) => ({
     'u_translation': new performance$1.Uniform2f(context, locations.u_translation),
     'u_pitched_scale': new performance$1.Uniform1f(context, locations.u_pitched_scale),
 });
-const symbolIconUniformValues = (functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, texSize, pitchedScale) => {
+const symbolIconUniformValues = (functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, isMSDF, texSize, pitchedScale) => {
     const transform = painter.transform;
     return {
         'u_is_size_zoom_constant': +(functionType === 'constant' || functionType === 'source'),
@@ -46787,6 +46791,7 @@ const symbolIconUniformValues = (functionType, size, rotateInShader, pitchWithMa
         'u_label_plane_matrix': labelPlaneMatrix,
         'u_coord_matrix': glCoordMatrix,
         'u_is_text': +isText,
+        'u_is_msdf': +isMSDF,
         'u_pitch_with_map': +pitchWithMap,
         'u_is_along_line': isAlongLine,
         'u_is_variable_anchor': isVariableAnchor,
@@ -46796,9 +46801,9 @@ const symbolIconUniformValues = (functionType, size, rotateInShader, pitchWithMa
         'u_pitched_scale': pitchedScale
     };
 };
-const symbolSDFUniformValues = (functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, texSize, isHalo, pitchedScale) => {
+const symbolSDFUniformValues = (functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, isMSDF, texSize, isHalo, pitchedScale) => {
     const transform = painter.transform;
-    return performance$1.extend(symbolIconUniformValues(functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, texSize, pitchedScale), {
+    return performance$1.extend(symbolIconUniformValues(functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, isText, isMSDF, texSize, pitchedScale), {
         'u_gamma_scale': (pitchWithMap ? Math.cos(transform._pitch) * transform.cameraToCenterDistance : 1),
         'u_device_pixel_ratio': painter.pixelRatio,
         'u_is_halo': +isHalo,
@@ -46806,7 +46811,7 @@ const symbolSDFUniformValues = (functionType, size, rotateInShader, pitchWithMap
     });
 };
 const symbolTextAndIconUniformValues = (functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, texSizeSDF, texSizeIcon, pitchedScale) => {
-    return performance$1.extend(symbolSDFUniformValues(functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, true, texSizeSDF, true, pitchedScale), {
+    return performance$1.extend(symbolSDFUniformValues(functionType, size, rotateInShader, pitchWithMap, isAlongLine, isVariableAnchor, painter, matrix, labelPlaneMatrix, glCoordMatrix, translation, true, false, texSizeSDF, true, pitchedScale), {
         'u_texsize_icon': texSizeIcon,
         'u_texture_icon': 1
     });
@@ -47949,10 +47954,13 @@ function drawSymbols(painter, sourceCache, layer, coords, variableOffsets) {
         updateVariableAnchors(coords, painter, layer, sourceCache, layer.layout.get('text-rotation-alignment'), layer.layout.get('text-pitch-alignment'), layer.paint.get('text-translate'), layer.paint.get('text-translate-anchor'), variableOffsets);
     }
     if (layer.paint.get('icon-opacity').constantOr(1) !== 0) {
-        drawLayerSymbols(painter, sourceCache, layer, coords, false, layer.paint.get('icon-translate'), layer.paint.get('icon-translate-anchor'), layer.layout.get('icon-rotation-alignment'), layer.layout.get('icon-pitch-alignment'), layer.layout.get('icon-keep-upright'), stencilMode, colorMode);
+        const iconImage = layer.layout.get('icon-image').value;
+        // The type check below is annoying but types seem to be weong because we expect a ResolvedImage but get a string
+        const isMSDF = iconImage.kind === 'constant' && typeof iconImage.value === 'string' && iconImage.value.includes('msdf:');
+        drawLayerSymbols(painter, sourceCache, layer, coords, false, isMSDF, layer.paint.get('icon-translate'), layer.paint.get('icon-translate-anchor'), layer.layout.get('icon-rotation-alignment'), layer.layout.get('icon-pitch-alignment'), layer.layout.get('icon-keep-upright'), stencilMode, colorMode);
     }
     if (layer.paint.get('text-opacity').constantOr(1) !== 0) {
-        drawLayerSymbols(painter, sourceCache, layer, coords, true, layer.paint.get('text-translate'), layer.paint.get('text-translate-anchor'), layer.layout.get('text-rotation-alignment'), layer.layout.get('text-pitch-alignment'), layer.layout.get('text-keep-upright'), stencilMode, colorMode);
+        drawLayerSymbols(painter, sourceCache, layer, coords, true, false, layer.paint.get('text-translate'), layer.paint.get('text-translate-anchor'), layer.layout.get('text-rotation-alignment'), layer.layout.get('text-pitch-alignment'), layer.layout.get('text-keep-upright'), stencilMode, colorMode);
     }
     if (sourceCache.map.showCollisionBoxes) {
         drawCollisionDebug(painter, sourceCache, layer, coords, true);
@@ -48103,7 +48111,7 @@ function getSymbolProgramName(isSDF, isText, bucket) {
         return 'symbolIcon';
     }
 }
-function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate, translateAnchor, rotationAlignment, pitchAlignment, keepUpright, stencilMode, colorMode) {
+function drawLayerSymbols(painter, sourceCache, layer, coords, isText, isMSDF, translate, translateAnchor, rotationAlignment, pitchAlignment, keepUpright, stencilMode, colorMode) {
     const context = painter.context;
     const gl = context.gl;
     const tr = painter.transform;
@@ -48188,14 +48196,14 @@ function drawLayerSymbols(painter, sourceCache, layer, coords, isText, translate
         let uniformValues;
         if (isSDF) {
             if (!bucket.iconsInText) {
-                uniformValues = symbolSDFUniformValues(sizeData.kind, size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix, uLabelPlaneMatrix, uglCoordMatrix, translation, isText, texSize, true, pitchedTextRescaling);
+                uniformValues = symbolSDFUniformValues(sizeData.kind, size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix, uLabelPlaneMatrix, uglCoordMatrix, translation, isText, isMSDF, texSize, true, pitchedTextRescaling);
             }
             else {
                 uniformValues = symbolTextAndIconUniformValues(sizeData.kind, size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix, uLabelPlaneMatrix, uglCoordMatrix, translation, texSize, texSizeIcon, pitchedTextRescaling);
             }
         }
         else {
-            uniformValues = symbolIconUniformValues(sizeData.kind, size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix, uLabelPlaneMatrix, uglCoordMatrix, translation, isText, texSize, pitchedTextRescaling);
+            uniformValues = symbolIconUniformValues(sizeData.kind, size, rotateInShader, pitchWithMap, alongLine, shaderVariableAnchor, painter, matrix, uLabelPlaneMatrix, uglCoordMatrix, translation, isText, false, texSize, pitchedTextRescaling);
         }
         const state = {
             program,

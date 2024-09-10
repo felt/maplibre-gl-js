@@ -6,6 +6,7 @@ uniform sampler2D u_texture_2;
 uniform highp float u_gamma_scale;
 uniform lowp float u_device_pixel_ratio;
 uniform bool u_is_text;
+uniform bool u_is_msdf;
 
 in vec2 v_data0;
 in vec3 v_data1;
@@ -31,9 +32,9 @@ float screenPxRange(float fontScale) {
     return fontScale * SDF_PX;
 }
 
-vec4 renderText(vec4 fill_color, vec4 halo_color, float opacity, float halo_width, float halo_blur, float EDGE_GAMMA, vec2 tex, float gamma_scale, float size, float fade_opacity) {
+vec4 renderText(bool is_text, vec4 fill_color, vec4 halo_color, float opacity, float halo_width, float halo_blur, float EDGE_GAMMA, vec2 tex, float gamma_scale, float size, float fade_opacity) {
 
-    float fontScale = size / 24.0;
+    float fontScale = is_text ? size / 24.0 : size;
 
     lowp vec4 color = fill_color;
     highp float gamma = EDGE_GAMMA / (fontScale * u_gamma_scale);
@@ -98,7 +99,7 @@ void main() {
     float size = v_data1.y;
     float fade_opacity = v_data1[2];
 
-    fragColor = u_is_text ? renderText(fill_color, halo_color, opacity, halo_width, halo_blur, EDGE_GAMMA, tex, gamma_scale, size, fade_opacity) : renderMSDFIcon(fill_color, halo_color, opacity, EDGE_GAMMA, tex, gamma_scale, size, fade_opacity);
+    fragColor = u_is_text || !u_is_msdf ? renderText(u_is_text, fill_color, halo_color, opacity, halo_width, halo_blur, EDGE_GAMMA, tex, gamma_scale, size, fade_opacity) : renderMSDFIcon(fill_color, halo_color, opacity, EDGE_GAMMA, tex, gamma_scale, size, fade_opacity);
 
 #ifdef OVERDRAW_INSPECTOR
     fragColor = vec4(1.0);
