@@ -161,7 +161,7 @@
     "start-docs": "docker run --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material",
     "start": "run-p watch-css watch-dev start-server",
     "start-bench": "run-p watch-css watch-benchmarks start-server",
-    "lint": "eslint --cache --ext .ts,.tsx,.js,.html --ignore-path .gitignore .",
+    "lint": "eslint --cache --ext .ts,.tsx,.js,.html --ignore-path .eslintignore .",
     "lint-css": "stylelint **/*.css --fix -f verbose",
     "test": "run-p lint lint-css test-render jest",
     "jest": "jest",
